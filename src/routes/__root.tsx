@@ -87,13 +87,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "ثواني — منصة التسوق والتوصيل الأولى في العراق. مطاعم، مخابز، كوزمتك، ومواد إنشائية. كل ما تحتاجه في ثواني.",
       },
-      { property: "og:title", content: "ثواني — كل ما تحتاجه في ثواني" },
+      { property: "og:title", content: "ثواني — تسوق وتوصيل سريع في العراق" },
       {
         property: "og:description",
-        content: "تسوق من مطاعم، مخابز، كوزمتك ومواد إنشائية قريبة منك — توصيل سريع بأمان.",
+        content: "ثواني — منصة التسوق والتوصيل الأولى في العراق. مطاعم، مخابز، كوزمتك، ومواد إنشائية. كل ما تحتاجه في ثواني.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ثواني — تسوق وتوصيل سريع في العراق" },
+      { name: "twitter:description", content: "ثواني — منصة التسوق والتوصيل الأولى في العراق. مطاعم، مخابز، كوزمتك، ومواد إنشائية. كل ما تحتاجه في ثواني." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5c45070-6d0d-43d1-8e63-020f669b07c5/id-preview-92625705--dc837d29-2bf5-4cb7-b71d-f3b3f79c280d.lovable.app-1783851116131.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c5c45070-6d0d-43d1-8e63-020f669b07c5/id-preview-92625705--dc837d29-2bf5-4cb7-b71d-f3b3f79c280d.lovable.app-1783851116131.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
