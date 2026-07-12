@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomNav } from "../components/BottomNav";
 import { ThemeProvider } from "../lib/theme";
+import { CartProvider } from "../lib/cart";
+import { OrdersProvider } from "../lib/orders";
 
 function NotFoundComponent() {
   return (
