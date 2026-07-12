@@ -151,7 +151,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AppFrame />
+        <CartProvider>
+          <OrdersProvider>
+            <AppFrame />
+          </OrdersProvider>
+        </CartProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
