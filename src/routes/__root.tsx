@@ -131,9 +131,7 @@ function AppFrame() {
   const hideNav =
     pathname === "/welcome" ||
     pathname.startsWith("/checkout") ||
-    pathname.startsWith("/order/") ||
-    pathname.startsWith("/product/") ||
-    pathname.startsWith("/store/");
+    pathname.startsWith("/order/");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
