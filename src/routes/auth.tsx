@@ -23,13 +23,16 @@ function AuthPage() {
     if (!loading && user) navigate({ to: "/profile" });
   }, [user, loading, navigate]);
 
+  const [info, setInfo] = useState<string | null>(null);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -38,6 +41,10 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        if (!data.session) {
+          setInfo("تم إنشاء حسابك. يمكنك الآن تسجيل الدخول.");
+          setMode("signin");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -48,6 +55,7 @@ function AuthPage() {
       setBusy(false);
     }
   };
+
 
   return (
     <>
@@ -135,6 +143,12 @@ function AuthPage() {
               {error}
             </p>
           )}
+          {info && (
+            <p className="rounded-xl bg-success/15 px-3 py-2 text-xs font-black text-success">
+              {info}
+            </p>
+          )}
+
 
           <button
             type="submit"
