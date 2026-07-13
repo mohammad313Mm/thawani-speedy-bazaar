@@ -44,11 +44,11 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
           <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow">
-            <span className="text-6xl font-black">ث</span>
+            <span className="text-6xl font-black">ص</span>
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tight">ثواني</h1>
+          <h1 className="text-4xl font-black tracking-tight">الصافي</h1>
           <p className="mt-3 max-w-xs text-sm font-medium opacity-90 animate-fade-in-slow">
             {message}
           </p>
