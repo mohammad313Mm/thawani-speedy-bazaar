@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
+import { adminActOnApplication } from "../lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -212,8 +213,24 @@ function ApplicationsPanel() {
 
   const act = async (id: string, next: "approved" | "rejected") => {
     const note = next === "rejected" ? window.prompt("سبب الرفض (اختياري)") : null;
-    await supabase.from(table).update({ status: next, admin_note: note }).eq("id", id);
-    load();
+    let password = "";
+    try {
+      password = sessionStorage.getItem("thawani_admin_pass") ?? "";
+    } catch {
+      // ignore
+    }
+    if (!password) {
+      password = window.prompt("أعد إدخال كلمة مرور الإدارة") ?? "";
+      if (!password) return;
+    }
+    try {
+      await adminActOnApplication({
+        data: { password, kind: tab, id, decision: next, note: note || null },
+      });
+      load();
+    } catch (e) {
+      window.alert((e as Error).message || "تعذّر تنفيذ الإجراء");
+    }
   };
 
   return (

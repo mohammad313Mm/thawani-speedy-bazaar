@@ -25,6 +25,7 @@ function AdminLoginPage() {
     if (normalizedPhone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
       try {
         sessionStorage.setItem(ADMIN_PASS_KEY, "1");
+        sessionStorage.setItem("thawani_admin_pass", password);
       } catch {
         // ignore
       }
