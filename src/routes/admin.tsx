@@ -28,6 +28,7 @@ type Application = {
   user_id: string;
   full_name: string;
   phone: string;
+  email?: string | null;
   status: "pending" | "approved" | "rejected";
   admin_note: string | null;
   created_at: string;
