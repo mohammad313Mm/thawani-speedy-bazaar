@@ -11,8 +11,8 @@ export const Route = createFileRoute("/")({
 });
 
 const WELCOME_MESSAGES = [
-  "كل ما تحتاجه... في ثواني.",
-  "مرحباً بك في ثواني.",
+  "كل ما تحتاجه... مع الصافي.",
+  "مرحباً بك في الصافي.",
   "كل احتياجات عائلتك... في مكان واحد.",
   "ابدأ تجربة تسوق أسرع.",
   "اكتشف أفضل المتاجر القريبة منك.",
@@ -44,11 +44,11 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
           <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow">
-            <span className="text-6xl font-black">ث</span>
+            <span className="text-6xl font-black">ص</span>
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tight">ثواني</h1>
+          <h1 className="text-4xl font-black tracking-tight">الصافي</h1>
           <p className="mt-3 max-w-xs text-sm font-medium opacity-90 animate-fade-in-slow">
             {message}
           </p>
@@ -146,7 +146,7 @@ function HomePage() {
         {/* Welcome message */}
         <div className="mt-4 animate-fade-in">
           <h2 className="text-2xl font-black tracking-tight text-foreground">
-            مرحباً بك في ثواني
+            مرحباً بك في الصافي
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             اكتشف كل ما تحتاجه من متاجر قريبة منك.

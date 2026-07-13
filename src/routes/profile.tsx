@@ -92,7 +92,7 @@ function ProfilePage() {
         </button>
 
         <p className="text-center text-[11px] text-muted-foreground">
-          ثواني — الإصدار ١٫٠٫٠
+          الصافي — الإصدار ١٫٠٫٠
         </p>
       </main>
     </>
