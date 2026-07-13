@@ -119,7 +119,7 @@ function ProfilePage() {
         )}
 
         <p className="text-center text-[11px] text-muted-foreground">
-          الصافي — الإصدار ١٫٠٫٠
+          ثواني — الإصدار ١٫٠٫٠
         </p>
       </main>
     </>

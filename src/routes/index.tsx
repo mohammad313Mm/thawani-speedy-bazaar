@@ -4,15 +4,16 @@ import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
-import { CATEGORIES } from "../lib/data";
+import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
+import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
 const WELCOME_MESSAGES = [
-  "كل ما تحتاجه... مع الصافي.",
-  "مرحباً بك في الصافي.",
+  "كل ما تحتاجه... مع ثواني.",
+  "مرحباً بك في ثواني.",
   "كل احتياجات عائلتك... في مكان واحد.",
   "ابدأ تجربة تسوق أسرع.",
   "اكتشف أفضل المتاجر القريبة منك.",
@@ -44,11 +45,11 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
           <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow">
-            <span className="text-6xl font-black">ص</span>
+            <span className="text-6xl font-black">ث</span>
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tight">الصافي</h1>
+          <h1 className="text-4xl font-black tracking-tight">ثواني</h1>
           <p className="mt-3 max-w-xs text-sm font-medium opacity-90 animate-fade-in-slow">
             {message}
           </p>
@@ -153,6 +154,106 @@ function LocationCard({
   );
 }
 
+function SearchResults({ query }: { query: string }) {
+  const q = query.toLowerCase();
+  const stores = STORES.filter(
+    (s) =>
+      s.name.toLowerCase().includes(q) ||
+      s.tags.some((t) => t.toLowerCase().includes(q)) ||
+      s.description.toLowerCase().includes(q),
+  ).slice(0, 6);
+  const products = PRODUCTS.filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q),
+  ).slice(0, 8);
+  const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
+  const empty = stores.length + products.length + cats.length === 0;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-fade-in">
+      {empty && (
+        <div className="p-6 text-center text-sm font-semibold text-muted-foreground">
+          لا توجد نتائج مطابقة لـ "{query}"
+        </div>
+      )}
+      {cats.length > 0 && (
+        <div className="border-b border-border/60 p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">الأقسام</p>
+          <div className="flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <Link
+                key={c.key}
+                to="/category/$key"
+                params={{ key: c.key }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
+              >
+                <span>{c.icon}</span>
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {stores.length > 0 && (
+        <div className="border-b border-border/60 p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">المتاجر</p>
+          <ul className="space-y-2">
+            {stores.map((s) => (
+              <li key={s.id}>
+                <Link
+                  to="/store/$id"
+                  params={{ id: s.id }}
+                  className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
+                >
+                  <img src={s.logo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground">{s.name}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {s.tags.join(" • ")}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-primary">
+                    {s.isOpen ? "مفتوح" : "مغلق"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {products.length > 0 && (
+        <div className="p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">المنتجات</p>
+          <ul className="space-y-2">
+            {products.map((p) => (
+              <li key={p.id}>
+                <Link
+                  to="/product/$id"
+                  params={{ id: p.id }}
+                  className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
+                >
+                  <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground">{p.name}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{p.description}</p>
+                  </div>
+                  <span className="shrink-0 text-xs font-black text-primary">
+                    {formatIQD(p.discountPrice ?? p.price)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [location, setLocation] = useState<string | null>(null);
@@ -205,7 +306,7 @@ function HomePage() {
         {/* Welcome message */}
         <div className="mt-4 animate-fade-in">
           <h2 className="text-2xl font-black tracking-tight text-foreground">
-            مرحباً بك في الصافي
+            مرحباً بك في ثواني
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             اكتشف كل ما تحتاجه من متاجر قريبة منك.
@@ -219,10 +320,11 @@ function HomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث عن مطعم، مخبز، كوزمتك، مواد إنشائية..."
+              placeholder="ابحث عن متجر، مطعم، بقالة، كوزمتك، حلويات، منتج..."
               className="h-14 w-full rounded-2xl border border-border bg-card pr-12 pl-4 text-sm font-medium text-foreground shadow-soft outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:shadow-elegant"
             />
           </div>
+          {search.trim().length > 0 && <SearchResults query={search.trim()} />}
         </div>
 
         <LocationCard location={location} onLocation={setLocation} />

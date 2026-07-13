@@ -62,7 +62,7 @@ function AuthPage() {
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         <section className="rounded-3xl bg-gradient-warm p-5 text-white shadow-elegant">
-          <p className="text-lg font-black">مرحباً بك في الصافي</p>
+          <p className="text-lg font-black">مرحباً بك في ثواني</p>
           <p className="mt-1 text-xs opacity-90">
             سجل دخولك لتتبع طلباتك، أو أنشئ حساباً للانضمام كصاحب متجر أو مندوب توصيل.
           </p>

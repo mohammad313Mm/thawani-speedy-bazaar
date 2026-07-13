@@ -22,7 +22,7 @@ function CartPage() {
   const apply = () => {
     const c = coupon.trim().toUpperCase();
     if (!c) return;
-    if (c === "ALSAFI30") setApplied({ code: c, discount: Math.round(subtotal * 0.3) });
+    if (c === "THAWANI30") setApplied({ code: c, discount: Math.round(subtotal * 0.3) });
     else if (c === "FREE") setApplied({ code: c, discount: deliveryFee });
     else setApplied({ code: c, discount: 0 });
   };

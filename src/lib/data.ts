@@ -513,7 +513,7 @@ export const BANNERS = [
   {
     id: "b1",
     title: "خصم ٣٠٪ على المطاعم",
-    subtitle: "لفترة محدودة — استخدم كود ALSAFI30",
+    subtitle: "لفترة محدودة — استخدم كود THAWANI30",
     image: img("photo-1414235077428-338989a2e8c0"),
     cta: "اطلب الآن",
     color: "from-[oklch(0.55_0.22_27)] to-[oklch(0.72_0.18_55)]",
