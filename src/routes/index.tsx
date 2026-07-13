@@ -220,10 +220,12 @@ function HomePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ابحث عن مطعم، مخبز، كوزمتك، مواد إنشائية..."
+              placeholder="ابحث عن متجر، مطعم، بقالة، كوزمتك، حلويات، منتج..."
               className="h-14 w-full rounded-2xl border border-border bg-card pr-12 pl-4 text-sm font-medium text-foreground shadow-soft outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:shadow-elegant"
             />
           </div>
+          {search.trim().length > 0 && <SearchResults query={search.trim()} />}
+        </div>
         </div>
 
         <LocationCard location={location} onLocation={setLocation} />
