@@ -154,6 +154,106 @@ function LocationCard({
   );
 }
 
+function SearchResults({ query }: { query: string }) {
+  const q = query.toLowerCase();
+  const stores = STORES.filter(
+    (s) =>
+      s.name.toLowerCase().includes(q) ||
+      s.tags.some((t) => t.toLowerCase().includes(q)) ||
+      s.description.toLowerCase().includes(q),
+  ).slice(0, 6);
+  const products = PRODUCTS.filter(
+    (p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q),
+  ).slice(0, 8);
+  const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
+  const empty = stores.length + products.length + cats.length === 0;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-fade-in">
+      {empty && (
+        <div className="p-6 text-center text-sm font-semibold text-muted-foreground">
+          لا توجد نتائج مطابقة لـ "{query}"
+        </div>
+      )}
+      {cats.length > 0 && (
+        <div className="border-b border-border/60 p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">الأقسام</p>
+          <div className="flex flex-wrap gap-2">
+            {cats.map((c) => (
+              <Link
+                key={c.key}
+                to="/category/$key"
+                params={{ key: c.key }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
+              >
+                <span>{c.icon}</span>
+                {c.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {stores.length > 0 && (
+        <div className="border-b border-border/60 p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">المتاجر</p>
+          <ul className="space-y-2">
+            {stores.map((s) => (
+              <li key={s.id}>
+                <Link
+                  to="/store/$id"
+                  params={{ id: s.id }}
+                  className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
+                >
+                  <img src={s.logo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground">{s.name}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {s.tags.join(" • ")}
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-primary">
+                    {s.isOpen ? "مفتوح" : "مغلق"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {products.length > 0 && (
+        <div className="p-3">
+          <p className="mb-2 text-[11px] font-bold text-muted-foreground">المنتجات</p>
+          <ul className="space-y-2">
+            {products.map((p) => (
+              <li key={p.id}>
+                <Link
+                  to="/product/$id"
+                  params={{ id: p.id }}
+                  className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
+                >
+                  <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground">{p.name}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">{p.description}</p>
+                  </div>
+                  <span className="shrink-0 text-xs font-black text-primary">
+                    {formatIQD(p.discountPrice ?? p.price)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [location, setLocation] = useState<string | null>(null);
