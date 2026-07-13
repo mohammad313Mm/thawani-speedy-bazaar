@@ -79,11 +79,10 @@ function ProfilePage() {
           />
         </Section>
 
-        {isAdmin && (
-          <Section title="الإدارة">
-            <ItemLink to="/admin" icon={<ShieldCheck />} label="لوحة الإدارة" />
-          </Section>
-        )}
+        <Section title="الإدارة">
+          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
+        </Section>
+
 
         <Section title="الحساب">
           <Item icon={<MapPin />} label="عناويني" />
