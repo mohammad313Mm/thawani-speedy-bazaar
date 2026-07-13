@@ -68,15 +68,24 @@ type AdminNotif = {
 };
 
 function AdminPage() {
-  const { user, roles, loading } = useAuth();
+  const { loading } = useAuth();
   const navigate = useNavigate();
-  const isAdmin = roles.includes("admin");
+  const [passOk, setPassOk] = useState(false);
   const [section, setSection] = useState<Section>("apps");
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
-  }, [user, loading, navigate]);
+    try {
+      const ok = sessionStorage.getItem("thawani_admin_pass_ok") === "1";
+      if (!ok) navigate({ to: "/admin-login" });
+      else setPassOk(true);
+    } catch {
+      navigate({ to: "/admin-login" });
+    }
+  }, [navigate]);
+
+  const isAdmin = passOk;
+
 
   // realtime unread count for the bell
   useEffect(() => {
