@@ -23,11 +23,13 @@ function MerchantApplyPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [storeName, setStoreName] = useState("");
   const [app, setApp] = useState<App | null>(null);
   const [fetching, setFetching] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth" });
@@ -35,9 +37,10 @@ function MerchantApplyPage() {
 
   useEffect(() => {
     if (!user) return;
+    setEmail(user.email ?? "");
     supabase
       .from("merchant_applications")
-      .select("id, full_name, phone, store_name, status, admin_note")
+      .select("id, full_name, phone, email, store_name, status, admin_note")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -45,6 +48,7 @@ function MerchantApplyPage() {
           setApp(data as App);
           setFullName(data.full_name);
           setPhone(data.phone);
+          setEmail(data.email ?? user.email ?? "");
           setStoreName(data.store_name ?? "");
         }
         setFetching(false);
@@ -63,6 +67,7 @@ function MerchantApplyPage() {
           user_id: user.id,
           full_name: fullName,
           phone,
+          email: email || null,
           store_name: storeName || null,
           status: "pending",
         },
@@ -71,7 +76,10 @@ function MerchantApplyPage() {
       .select()
       .single();
     if (error) setError(error.message);
-    else setApp(data as App);
+    else {
+      setApp(data as App);
+      setJustSubmitted(true);
+    }
     setBusy(false);
   };
 
