@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          read_at: string | null
+          ref_id: string | null
+          ref_table: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          ref_id?: string | null
+          ref_table?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          ref_id?: string | null
+          ref_table?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       driver_applications: {
         Row: {
           admin_note: string | null
@@ -92,6 +125,7 @@ export type Database = {
           full_name: string | null
           id: string
           phone: string | null
+          status: Database["public"]["Enums"]["account_status"]
           updated_at: string
         }
         Insert: {
@@ -99,6 +133,7 @@ export type Database = {
           full_name?: string | null
           id: string
           phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
         Update: {
@@ -106,7 +141,53 @@ export type Database = {
           full_name?: string | null
           id?: string
           phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      stores: {
+        Row: {
+          address: string | null
+          category: string | null
+          commission_rate: number
+          created_at: string
+          id: string
+          is_open: boolean
+          name: string
+          owner_id: string
+          phone: string | null
+          status: Database["public"]["Enums"]["account_status"]
+          updated_at: string
+          working_hours: string | null
+        }
+        Insert: {
+          address?: string | null
+          category?: string | null
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          name: string
+          owner_id: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          working_hours?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string | null
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          is_open?: boolean
+          name?: string
+          owner_id?: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["account_status"]
+          updated_at?: string
+          working_hours?: string | null
         }
         Relationships: []
       }
@@ -145,6 +226,7 @@ export type Database = {
       }
     }
     Enums: {
+      account_status: "active" | "suspended"
       app_role: "customer" | "merchant" | "driver" | "admin"
       application_status: "pending" | "approved" | "rejected"
     }
@@ -274,6 +356,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      account_status: ["active", "suspended"],
       app_role: ["customer", "merchant", "driver", "admin"],
       application_status: ["pending", "approved", "rejected"],
     },
