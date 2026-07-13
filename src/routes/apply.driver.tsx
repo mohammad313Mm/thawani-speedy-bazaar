@@ -112,6 +112,12 @@ function DriverApplyPage() {
           </p>
         </section>
 
+        {justSubmitted && app?.status === "pending" && (
+          <div className="rounded-2xl bg-success/15 p-4 text-sm font-black text-success">
+            تم إرسال طلبك إلى الإدارة، يرجى الانتظار لحين الموافقة
+          </div>
+        )}
+
         {app && (
           <StatusBanner
             status={approved ? "approved" : app.status}
@@ -124,7 +130,8 @@ function DriverApplyPage() {
           <form onSubmit={submit} className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
             <TextField label="الاسم الكامل" value={fullName} onChange={setFullName} required />
             <TextField label="رقم الهاتف" value={phone} onChange={setPhone} required inputMode="tel" />
-            <TextField label="نوع المركبة (اختياري)" value={vehicle} onChange={setVehicle} />
+            <TextField label="البريد الإلكتروني" value={email} onChange={setEmail} required inputMode="text" />
+            <TextField label="نوع المركبة" value={vehicle} onChange={setVehicle} required />
             {error && (
               <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
                 {error}
