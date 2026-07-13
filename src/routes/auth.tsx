@@ -143,6 +143,12 @@ function AuthPage() {
               {error}
             </p>
           )}
+          {info && (
+            <p className="rounded-xl bg-success/15 px-3 py-2 text-xs font-black text-success">
+              {info}
+            </p>
+          )}
+
 
           <button
             type="submit"
