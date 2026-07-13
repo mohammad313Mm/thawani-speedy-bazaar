@@ -146,7 +146,7 @@ function HomePage() {
         {/* Welcome message */}
         <div className="mt-4 animate-fade-in">
           <h2 className="text-2xl font-black tracking-tight text-foreground">
-            مرحباً بك في ثواني
+            مرحباً بك في الصافي
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             اكتشف كل ما تحتاجه من متاجر قريبة منك.
