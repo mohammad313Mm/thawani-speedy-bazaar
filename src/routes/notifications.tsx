@@ -10,7 +10,7 @@ const MOCK = [
     id: "n1",
     icon: "🎉",
     title: "خصم ٣٠٪ على المطاعم",
-    body: "استخدم كود ALSAFI30 قبل انتهاء العرض.",
+    body: "استخدم كود THAWANI30 قبل انتهاء العرض.",
     time: "قبل دقيقتين",
     unread: true,
   },

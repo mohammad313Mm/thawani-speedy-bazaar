@@ -14,7 +14,7 @@ export function AppHeader({ location, onLocationClick }: HeaderProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
             <span className="text-lg font-black text-primary-foreground">ث</span>
           </div>
-          <span className="text-lg font-black tracking-tight text-foreground">الصافي</span>
+          <span className="text-lg font-black tracking-tight text-foreground">ثواني</span>
         </Link>
 
         {location && (
