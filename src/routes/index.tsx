@@ -226,7 +226,6 @@ function HomePage() {
           </div>
           {search.trim().length > 0 && <SearchResults query={search.trim()} />}
         </div>
-        </div>
 
         <LocationCard location={location} onLocation={setLocation} />
 
