@@ -66,7 +66,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     key: "desserts",
-    name: "الحلويات والمشروبات",
+    name: "الحلويات والمرطبات",
     description: "حلويات ومشروبات باردة ومنعشة",
     icon: "🍰",
     color: "from-[oklch(0.72_0.18_15)] to-[oklch(0.78_0.16_320)]",
