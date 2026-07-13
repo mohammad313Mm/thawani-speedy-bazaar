@@ -58,40 +58,99 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
   );
 }
 
-function LocationPrompt({ onLocation }: { onLocation: (loc: string) => void }) {
-  const [status, setStatus] = useState<"idle" | "requesting" | "denied">("idle");
+async function reverseGeocode(lat: number, lon: number): Promise<string> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=ar`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (!res.ok) throw new Error("geocode failed");
+    const data = await res.json();
+    const a = data.address ?? {};
+    const parts = [
+      a.city || a.town || a.village || a.state,
+      a.suburb || a.neighbourhood || a.city_district || a.county,
+    ].filter(Boolean);
+    return parts.join(" — ") || data.display_name || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+  } catch {
+    return `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+  }
+}
 
-  const request = () => {
-    if (!("geolocation" in navigator)) {
-      onLocation("بابل — الهاشمية");
+type LocStatus = "idle" | "requesting" | "granted" | "denied" | "unsupported" | "error";
+
+function LocationCard({
+  location,
+  onLocation,
+}: {
+  location: string | null;
+  onLocation: (loc: string) => void;
+}) {
+  const [status, setStatus] = useState<LocStatus>("idle");
+
+  const request = useCallback(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setStatus("unsupported");
       return;
     }
     setStatus("requesting");
     navigator.geolocation.getCurrentPosition(
-      () => {
-        onLocation("بابل — الهاشمية");
+      async (pos) => {
+        const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        onLocation(label);
+        setStatus("granted");
       },
-      () => setStatus("denied"),
-      { timeout: 6000 },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) setStatus("denied");
+        else setStatus("error");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
-  };
+  }, [onLocation]);
 
-  if (status === "denied") {
-    return (
-      <div className="mx-4 mt-4 rounded-2xl border border-border bg-card p-4 shadow-soft">
-        <p className="text-sm font-semibold text-foreground">
-          يرجى تفعيل الموقع للحصول على أقرب المتاجر.
-        </p>
+  const message =
+    status === "denied"
+      ? "تم رفض إذن الموقع. يرجى تفعيل خدمات الموقع من إعدادات المتصفح أو اختيار الموقع يدوياً."
+      : status === "unsupported"
+      ? "المتصفح لا يدعم تحديد الموقع. يرجى اختيار الموقع يدوياً."
+      : status === "error"
+      ? "تعذر تحديد الموقع. حاول مرة أخرى أو اختر الموقع يدوياً."
+      : null;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-soft animate-fade-in">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MapPin className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-muted-foreground">موقع التوصيل</p>
+            <p className="truncate text-sm font-bold text-foreground">
+              {location ?? "لم يتم تحديد الموقع بعد"}
+            </p>
+          </div>
+        </div>
         <button
           onClick={request}
-          className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-elegant"
+          disabled={status === "requesting"}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
-          <MapPin className="h-4 w-4" /> تفعيل الموقع
+          {status === "requesting" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <MapPin className="h-3.5 w-3.5" />
+          )}
+          {status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
         </button>
       </div>
-    );
-  }
-  return null;
+      {message && (
+        <p className="mt-3 rounded-xl bg-muted/60 p-2.5 text-xs font-medium text-foreground">
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function HomePage() {
