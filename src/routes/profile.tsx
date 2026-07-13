@@ -27,9 +27,9 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { user, roles, signOut } = useAuth();
-  const isAdmin = roles.includes("admin");
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+
 
   return (
     <>
@@ -79,11 +79,10 @@ function ProfilePage() {
           />
         </Section>
 
-        {isAdmin && (
-          <Section title="الإدارة">
-            <ItemLink to="/admin" icon={<ShieldCheck />} label="لوحة الإدارة" />
-          </Section>
-        )}
+        <Section title="الإدارة">
+          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
+        </Section>
+
 
         <Section title="الحساب">
           <Item icon={<MapPin />} label="عناويني" />
