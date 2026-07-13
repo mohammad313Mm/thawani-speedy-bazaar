@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Search, MapPin, ChevronLeft } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
