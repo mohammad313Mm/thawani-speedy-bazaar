@@ -225,7 +225,7 @@ function HomePage() {
           </div>
         </div>
 
-        {!location && <LocationPrompt onLocation={setLocation} />}
+        <LocationCard location={location} onLocation={setLocation} />
 
         {/* Banners */}
         <section className="mt-6 animate-slide-up">
