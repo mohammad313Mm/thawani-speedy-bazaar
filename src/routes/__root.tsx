@@ -16,6 +16,7 @@ import { BottomNav } from "../components/BottomNav";
 import { ThemeProvider } from "../lib/theme";
 import { CartProvider } from "../lib/cart";
 import { OrdersProvider } from "../lib/orders";
+import { AuthProvider } from "../lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -152,13 +153,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <CartProvider>
-          <OrdersProvider>
-            <AppFrame />
-          </OrdersProvider>
-        </CartProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <CartProvider>
+            <OrdersProvider>
+              <AppFrame />
+            </OrdersProvider>
+          </CartProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
