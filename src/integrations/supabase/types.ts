@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           admin_note: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           phone: string
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           phone: string
@@ -73,6 +75,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string
@@ -87,6 +90,7 @@ export type Database = {
         Row: {
           admin_note: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           phone: string
@@ -98,6 +102,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           phone: string
@@ -109,6 +114,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           phone?: string
