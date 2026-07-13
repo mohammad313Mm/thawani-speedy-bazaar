@@ -4,7 +4,8 @@ import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
-import { CATEGORIES } from "../lib/data";
+import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
+import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
