@@ -257,6 +257,14 @@ function ApplicationsPanel() {
                   <p className="text-xs text-muted-foreground" dir="ltr">
                     {r.phone}
                   </p>
+                  {r.email && (
+                    <p className="text-xs text-muted-foreground" dir="ltr">
+                      {r.email}
+                    </p>
+                  )}
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    تاريخ التسجيل: {new Date(r.created_at).toLocaleDateString("ar-IQ")}
+                  </p>
                   {tab === "merchant" && r.store_name && (
                     <p className="mt-1 text-xs text-foreground">المتجر: {r.store_name}</p>
                   )}
