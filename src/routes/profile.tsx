@@ -27,9 +27,9 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { user, roles, signOut } = useAuth();
-  const isAdmin = roles.includes("admin");
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+
 
   return (
     <>
