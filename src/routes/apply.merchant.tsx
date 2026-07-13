@@ -12,6 +12,7 @@ type App = {
   id: string;
   full_name: string;
   phone: string;
+  email: string | null;
   store_name: string | null;
   status: "pending" | "approved" | "rejected";
   admin_note: string | null;
