@@ -265,17 +265,24 @@ function DriverDashboardPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-lg font-black">
-                {isAvailable ? "متوفر لاستلام الطلبات" : "غير متوفر"}
+                {inLockout
+                  ? "غير متوفر — بانتظار انتهاء المهلة"
+                  : isAvailable
+                    ? "متوفر لاستلام الطلبات"
+                    : "غير متوفر"}
               </p>
               <p className="mt-0.5 text-xs opacity-90">
-                {isAvailable
-                  ? "سيتم إشعارك بالطلبات الجديدة فوراً"
-                  : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
+                {inLockout
+                  ? `سيتم تفعيل الحالة تلقائياً بعد ${formatMs(lockoutRemainingMs)}`
+                  : isAvailable
+                    ? "سيتم إشعارك بالطلبات الجديدة فوراً"
+                    : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
               </p>
             </div>
             <button
               onClick={() => toggleAvailability(!isAvailable)}
-              className={`relative h-8 w-14 rounded-full transition-colors ${
+              disabled={inLockout}
+              className={`relative h-8 w-14 rounded-full transition-colors disabled:opacity-60 ${
                 isAvailable ? "bg-white/30" : "bg-black/30"
               }`}
               aria-label="تبديل الحالة"
@@ -289,8 +296,8 @@ function DriverDashboardPage() {
           </div>
         </section>
 
-        {/* Pending (incoming) */}
-        {isAvailable && (
+        {/* Pending (incoming) — hidden while an active order exists or lockout is running */}
+        {isAvailable && !hasActive && !inLockout && (
           <Section title="طلبات جديدة">
             {pending.length === 0 ? (
               <EmptyState text="لا توجد طلبات حالياً — سنُعلمك فور وصول طلب جديد." />
@@ -301,8 +308,8 @@ function DriverDashboardPage() {
                   order={o}
                   storeName={stores[o.store_id]?.name}
                   onAccept={() => acceptOrder(o.id)}
-                  onReject={() => rejectOrder(o.id)}
                   busy={busy === o.id}
+                  mode="incoming"
                 />
               ))
             )}
@@ -319,11 +326,14 @@ function DriverDashboardPage() {
                 key={o.id}
                 order={o}
                 storeName={stores[o.store_id]?.name}
-                showActions={false}
+                onDeliver={() => deliverOrder(o.id)}
+                busy={busy === o.id}
+                mode="active"
               />
             ))
           )}
         </Section>
+
 
         {/* History */}
         <Section title="السجل">
