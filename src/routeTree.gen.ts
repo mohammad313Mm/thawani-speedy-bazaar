@@ -18,6 +18,8 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
 import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
 import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as DriverLoginRouteImport } from './routes/driver-login'
+import { Route as DriverAuthRouteImport } from './routes/driver-auth'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -28,6 +30,7 @@ import { Route as StoreIdRouteImport } from './routes/store.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
 import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
+import { Route as DriverDashboardRouteImport } from './routes/driver.dashboard'
 import { Route as CategoryKeyRouteImport } from './routes/category.$key'
 import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
 import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
@@ -75,6 +78,16 @@ const MerchantAuthRoute = MerchantAuthRouteImport.update({
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverLoginRoute = DriverLoginRouteImport.update({
+  id: '/driver-login',
+  path: '/driver-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverAuthRoute = DriverAuthRouteImport.update({
+  id: '/driver-auth',
+  path: '/driver-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -127,6 +140,11 @@ const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
   path: '/merchant/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DriverDashboardRoute = DriverDashboardRouteImport.update({
+  id: '/driver/dashboard',
+  path: '/driver/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryKeyRoute = CategoryKeyRouteImport.update({
   id: '/category/$key',
   path: '/category/$key',
@@ -150,6 +168,8 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/driver-auth': typeof DriverAuthRoute
+  '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -162,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -174,6 +195,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/driver-auth': typeof DriverAuthRoute
+  '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -186,6 +209,7 @@ export interface FileRoutesByTo {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -199,6 +223,8 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
+  '/driver-auth': typeof DriverAuthRoute
+  '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -211,6 +237,7 @@ export interface FileRoutesById {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
@@ -225,6 +252,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/driver-auth'
+    | '/driver-login'
     | '/favorites'
     | '/merchant-auth'
     | '/merchant-login'
@@ -237,6 +266,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/driver/dashboard'
     | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
@@ -249,6 +279,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/driver-auth'
+    | '/driver-login'
     | '/favorites'
     | '/merchant-auth'
     | '/merchant-login'
@@ -261,6 +293,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/driver/dashboard'
     | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
@@ -273,6 +306,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cart'
     | '/checkout'
+    | '/driver-auth'
+    | '/driver-login'
     | '/favorites'
     | '/merchant-auth'
     | '/merchant-login'
@@ -285,6 +320,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/driver/dashboard'
     | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
@@ -298,6 +334,8 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
+  DriverAuthRoute: typeof DriverAuthRoute
+  DriverLoginRoute: typeof DriverLoginRoute
   FavoritesRoute: typeof FavoritesRoute
   MerchantAuthRoute: typeof MerchantAuthRoute
   MerchantLoginRoute: typeof MerchantLoginRoute
@@ -310,6 +348,7 @@ export interface RootRouteChildren {
   ApplyDriverRoute: typeof ApplyDriverRoute
   ApplyMerchantRoute: typeof ApplyMerchantRoute
   CategoryKeyRoute: typeof CategoryKeyRoute
+  DriverDashboardRoute: typeof DriverDashboardRoute
   MerchantDashboardRoute: typeof MerchantDashboardRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductIdRoute: typeof ProductIdRoute
@@ -379,6 +418,20 @@ declare module '@tanstack/react-router' {
       path: '/favorites'
       fullPath: '/favorites'
       preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver-login': {
+      id: '/driver-login'
+      path: '/driver-login'
+      fullPath: '/driver-login'
+      preLoaderRoute: typeof DriverLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver-auth': {
+      id: '/driver-auth'
+      path: '/driver-auth'
+      fullPath: '/driver-auth'
+      preLoaderRoute: typeof DriverAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -451,6 +504,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MerchantDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/driver/dashboard': {
+      id: '/driver/dashboard'
+      path: '/driver/dashboard'
+      fullPath: '/driver/dashboard'
+      preLoaderRoute: typeof DriverDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$key': {
       id: '/category/$key'
       path: '/category/$key'
@@ -482,6 +542,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
+  DriverAuthRoute: DriverAuthRoute,
+  DriverLoginRoute: DriverLoginRoute,
   FavoritesRoute: FavoritesRoute,
   MerchantAuthRoute: MerchantAuthRoute,
   MerchantLoginRoute: MerchantLoginRoute,
@@ -494,6 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyDriverRoute: ApplyDriverRoute,
   ApplyMerchantRoute: ApplyMerchantRoute,
   CategoryKeyRoute: CategoryKeyRoute,
+  DriverDashboardRoute: DriverDashboardRoute,
   MerchantDashboardRoute: MerchantDashboardRoute,
   OrderIdRoute: OrderIdRoute,
   ProductIdRoute: ProductIdRoute,
