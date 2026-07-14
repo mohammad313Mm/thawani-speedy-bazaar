@@ -1,14 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check } from "lucide-react";
+import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
 import { storeById, productById } from "../lib/data";
-import { formatIQD } from "../lib/format";
+import { formatIQD, formatDistanceKm } from "../lib/format";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
+
+function feeForDistance(km: number): number {
+  if (km < 4) return 1000;
+  if (km < 7) return 2000;
+  if (km < 12) return 3000;
+  return 5000;
+}
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -16,11 +24,14 @@ function CheckoutPage() {
   const { addOrder } = useOrders();
   const store = storeId ? storeById(storeId) : null;
 
-  const [address, setAddress] = useState("بابل — الهاشمية، بيت رقم ٥");
-  const [phone, setPhone] = useState("07701234567");
+  const [fullName, setFullName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [payment, setPayment] = useState<"cod" | "wallet">("cod");
   const [placing, setPlacing] = useState(false);
+  const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
+  const [locating, setLocating] = useState(false);
 
   if (!store || items.length === 0) {
     return (
@@ -33,10 +44,49 @@ function CheckoutPage() {
     );
   }
 
-  const deliveryFee = store.deliveryFee;
+  const deliveryFee = feeForDistance(distanceKm);
   const total = subtotal + deliveryFee;
 
+  const useMyLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("خدمة تحديد الموقع غير متاحة على هذا الجهاز");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          // Reverse-geocode via Nominatim (best-effort)
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ar`,
+          );
+          if (res.ok) {
+            const j = await res.json();
+            if (j.display_name) setAddress(j.display_name);
+          }
+          // Keep the store's declared distance as the source of truth for demo stores.
+          // Real stores with coordinates could compute Haversine here.
+          setDistanceKm(store.distanceKm);
+          toast.success("تم تحديد موقعك");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setLocating(false);
+        toast.error("تعذّر الوصول إلى موقعك");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
   const place = () => {
+    if (!fullName.trim()) return toast.error("الرجاء إدخال الاسم الكامل");
+    if (!phone.trim() || phone.trim().length < 10) return toast.error("الرجاء إدخال رقم هاتف صحيح");
+    if (!address.trim()) return toast.error("الرجاء إدخال عنوان التوصيل");
+    if (items.length === 0) return toast.error("السلة فارغة");
+
     setPlacing(true);
     setTimeout(async () => {
       const order = addOrder({
@@ -52,8 +102,6 @@ function CheckoutPage() {
         notes: notes || undefined,
         paymentMethod: payment,
       });
-      // Best-effort DB write so the merchant sees the order in real time.
-      // Silently ignored for demo/static stores whose id isn't a UUID.
       try {
         const { supabase } = await import("../integrations/supabase/client");
         const { data: userRes } = await supabase.auth.getUser();
@@ -61,7 +109,7 @@ function CheckoutPage() {
           local_order_id: order.id,
           store_id: store.id,
           customer_id: userRes.user?.id ?? null,
-          customer_name: (userRes.user?.user_metadata as { full_name?: string } | null)?.full_name ?? null,
+          customer_name: fullName,
           customer_phone: phone,
           address,
           notes: notes || null,
@@ -79,9 +127,11 @@ function CheckoutPage() {
         /* non-fatal */
       }
       clear();
-      navigate({ to: "/order/$id", params: { id: order.id } });
-    }, 900);
+      toast.success("تم استلام طلبك بنجاح");
+      navigate({ to: "/orders" });
+    }, 700);
   };
+
 
 
   return (
@@ -101,14 +151,41 @@ function CheckoutPage() {
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-4 pb-40">
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
-            <MapPin className="mb-1 inline h-3.5 w-3.5 text-primary" /> عنوان التوصيل
+            <User className="mb-1 inline h-3.5 w-3.5 text-primary" /> الاسم الكامل
           </label>
           <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="اكتب اسمك الكامل"
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
         </section>
+
+        <section className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-black text-foreground">
+              <MapPin className="mb-1 inline h-3.5 w-3.5 text-primary" /> عنوان التوصيل
+            </label>
+            <button
+              type="button"
+              onClick={useMyLocation}
+              disabled={locating}
+              className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary disabled:opacity-60"
+            >
+              {locating ? "..." : "استخدم موقعي"}
+            </button>
+          </div>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="أدخل عنوان التوصيل"
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            المسافة إلى {store.name}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
+          </p>
+        </section>
+
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
@@ -117,6 +194,7 @@ function CheckoutPage() {
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="07XXXXXXXXX"
             dir="ltr"
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />

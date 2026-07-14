@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Plus, Heart } from "lucide-react";
+import { toast } from "sonner";
 import type { Product } from "../lib/data";
 import { formatIQD } from "../lib/format";
 import { useCart } from "../lib/cart";
@@ -59,7 +60,10 @@ export function ProductCard({ product }: { product: Product }) {
           />
         </button>
         <button
-          onClick={() => addItem(product.id)}
+          onClick={() => {
+            addItem(product.id);
+            toast.success("تمت الإضافة إلى السلة", { description: product.name });
+          }}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-110 active:scale-95"
           aria-label="أضف إلى السلة"
         >
