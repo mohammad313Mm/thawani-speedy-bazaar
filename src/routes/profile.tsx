@@ -1,14 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   User,
-  MapPin,
-  CreditCard,
-  Bell,
-  Globe,
   Moon,
   Sun,
   Monitor,
-  HelpCircle,
   FileText,
   Shield,
   LogOut,
