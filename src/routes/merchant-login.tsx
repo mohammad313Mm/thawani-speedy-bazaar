@@ -55,6 +55,12 @@ function MerchantLoginPage() {
         .eq("user_id", signIn.user.id)
         .maybeSingle();
 
+      if (app?.status === "rejected") {
+        await supabase.auth.signOut();
+        setError("تم رفض طلبك. يرجى التواصل مع الإدارة.");
+        return;
+      }
+
       const { data: store } = await supabase
         .from("stores")
         .select("id")

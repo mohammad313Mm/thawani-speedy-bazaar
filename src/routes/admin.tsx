@@ -247,7 +247,18 @@ function ApplicationsPanel() {
 
   useEffect(() => {
     load();
-  }, [load]);
+    const ch = supabase
+      .channel(`admin_apps_${table}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table },
+        load,
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [load, table]);
 
   const act = async (id: string, next: "approved" | "rejected") => {
     const note = next === "rejected" ? window.prompt("سبب الرفض (اختياري)") : null;

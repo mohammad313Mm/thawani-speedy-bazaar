@@ -33,7 +33,7 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
       .from(table)
       .update({ status: data.decision, admin_note })
       .eq("id", data.id)
-      .select("user_id")
+      .select("*")
       .single();
     if (error) throw new Error(error.message);
 
@@ -41,6 +41,25 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
       const role = data.kind === "merchant" ? "merchant" : "driver";
       await supabaseAdmin.from("user_roles").insert({ user_id: updated.user_id, role }).select();
       await supabaseAdmin.from("profiles").update({ status: "active" }).eq("id", updated.user_id);
+
+      // For merchant approvals, ensure a store exists and is linked to this owner.
+      if (data.kind === "merchant") {
+        const { data: existing } = await supabaseAdmin
+          .from("stores")
+          .select("id")
+          .eq("owner_id", updated.user_id)
+          .maybeSingle();
+        if (!existing) {
+          await supabaseAdmin.from("stores").insert({
+            owner_id: updated.user_id,
+            name: (updated as { store_name?: string | null }).store_name || "متجري",
+            status: "active",
+            is_open: true,
+          });
+        } else {
+          await supabaseAdmin.from("stores").update({ status: "active" }).eq("id", existing.id);
+        }
+      }
     }
     return { ok: true };
   });
