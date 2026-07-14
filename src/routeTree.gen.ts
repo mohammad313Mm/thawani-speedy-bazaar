@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
@@ -38,6 +39,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersRoute = OrdersRouteImport.update({
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/apply/driver': typeof ApplyDriverRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/apply/driver': typeof ApplyDriverRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/apply/driver': typeof ApplyDriverRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/merchant-login'
     | '/notifications'
     | '/orders'
+    | '/privacy'
     | '/profile'
     | '/sitemap.xml'
     | '/apply/driver'
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/merchant-login'
     | '/notifications'
     | '/orders'
+    | '/privacy'
     | '/profile'
     | '/sitemap.xml'
     | '/apply/driver'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/merchant-login'
     | '/notifications'
     | '/orders'
+    | '/privacy'
     | '/profile'
     | '/sitemap.xml'
     | '/apply/driver'
@@ -279,6 +291,7 @@ export interface RootRouteChildren {
   MerchantLoginRoute: typeof MerchantLoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApplyDriverRoute: typeof ApplyDriverRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orders': {
@@ -447,6 +467,7 @@ const rootRouteChildren: RootRouteChildren = {
   MerchantLoginRoute: MerchantLoginRoute,
   NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApplyDriverRoute: ApplyDriverRoute,
@@ -460,13 +481,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

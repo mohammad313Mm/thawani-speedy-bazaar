@@ -101,13 +101,13 @@ function ProfilePage() {
               <ThemeChip current={theme} value="system" icon={<Monitor className="h-4 w-4" />} label="النظام" onClick={() => setTheme("system")} />
             </div>
           </div>
-        </Section>
+        </section>
 
 
 
         <Section title="الدعم">
           <Item icon={<FileText />} label="الشروط والأحكام" />
-          <Item icon={<Shield />} label="سياسة الخصوصية" />
+          <ItemLink to="/privacy" icon={<Shield />} label="سياسة الخصوصية" />
         </Section>
 
         {user && (
