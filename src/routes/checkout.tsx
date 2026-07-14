@@ -3,7 +3,7 @@ import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check } from "
 import { useState } from "react";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
-import { storeById } from "../lib/data";
+import { storeById, productById } from "../lib/data";
 import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/checkout")({
@@ -38,7 +38,7 @@ function CheckoutPage() {
 
   const place = () => {
     setPlacing(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       const order = addOrder({
         storeId: store.id,
         items,
@@ -52,10 +52,37 @@ function CheckoutPage() {
         notes: notes || undefined,
         paymentMethod: payment,
       });
+      // Best-effort DB write so the merchant sees the order in real time.
+      // Silently ignored for demo/static stores whose id isn't a UUID.
+      try {
+        const { supabase } = await import("../integrations/supabase/client");
+        const { data: userRes } = await supabase.auth.getUser();
+        await supabase.from("customer_orders").insert({
+          local_order_id: order.id,
+          store_id: store.id,
+          customer_id: userRes.user?.id ?? null,
+          customer_name: (userRes.user?.user_metadata as { full_name?: string } | null)?.full_name ?? null,
+          customer_phone: phone,
+          address,
+          notes: notes || null,
+          items: items.map((it) => {
+            const p = productById(it.productId);
+            return { name: p?.name ?? it.productId, qty: it.quantity, price: p?.price ?? 0 };
+          }),
+          subtotal,
+          delivery_fee: deliveryFee,
+          total,
+          payment_method: payment,
+          status: "pending",
+        });
+      } catch {
+        /* non-fatal */
+      }
       clear();
       navigate({ to: "/order/$id", params: { id: order.id } });
     }, 900);
   };
+
 
   return (
     <>

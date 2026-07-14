@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -23,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreIdRouteImport } from './routes/store.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
+import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
 import { Route as CategoryKeyRouteImport } from './routes/category.$key'
 import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
 import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
@@ -45,6 +47,11 @@ const OrdersRoute = OrdersRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantLoginRoute = MerchantLoginRouteImport.update({
+  id: '/merchant-login',
+  path: '/merchant-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -97,6 +104,11 @@ const OrderIdRoute = OrderIdRouteImport.update({
   path: '/order/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
+  id: '/merchant/dashboard',
+  path: '/merchant/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryKeyRoute = CategoryKeyRouteImport.update({
   id: '/category/$key',
   path: '/category/$key',
@@ -121,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
@@ -128,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -140,6 +154,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
@@ -147,6 +162,7 @@ export interface FileRoutesByTo {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -160,6 +176,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
@@ -167,6 +184,7 @@ export interface FileRoutesById {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -181,6 +199,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-login'
     | '/notifications'
     | '/orders'
     | '/profile'
@@ -188,6 +207,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -200,6 +220,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-login'
     | '/notifications'
     | '/orders'
     | '/profile'
@@ -207,6 +228,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -219,6 +241,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-login'
     | '/notifications'
     | '/orders'
     | '/profile'
@@ -226,6 +249,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -239,6 +263,7 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FavoritesRoute: typeof FavoritesRoute
+  MerchantLoginRoute: typeof MerchantLoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRoute
   ProfileRoute: typeof ProfileRoute
@@ -246,6 +271,7 @@ export interface RootRouteChildren {
   ApplyDriverRoute: typeof ApplyDriverRoute
   ApplyMerchantRoute: typeof ApplyMerchantRoute
   CategoryKeyRoute: typeof CategoryKeyRoute
+  MerchantDashboardRoute: typeof MerchantDashboardRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductIdRoute: typeof ProductIdRoute
   StoreIdRoute: typeof StoreIdRoute
@@ -279,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchant-login': {
+      id: '/merchant-login'
+      path: '/merchant-login'
+      fullPath: '/merchant-login'
+      preLoaderRoute: typeof MerchantLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favorites': {
@@ -351,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/merchant/dashboard': {
+      id: '/merchant/dashboard'
+      path: '/merchant/dashboard'
+      fullPath: '/merchant/dashboard'
+      preLoaderRoute: typeof MerchantDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$key': {
       id: '/category/$key'
       path: '/category/$key'
@@ -383,6 +423,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FavoritesRoute: FavoritesRoute,
+  MerchantLoginRoute: MerchantLoginRoute,
   NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRoute,
   ProfileRoute: ProfileRoute,
@@ -390,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyDriverRoute: ApplyDriverRoute,
   ApplyMerchantRoute: ApplyMerchantRoute,
   CategoryKeyRoute: CategoryKeyRoute,
+  MerchantDashboardRoute: MerchantDashboardRoute,
   OrderIdRoute: OrderIdRoute,
   ProductIdRoute: ProductIdRoute,
   StoreIdRoute: StoreIdRoute,
