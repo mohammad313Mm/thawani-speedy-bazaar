@@ -194,6 +194,7 @@ function CheckoutPage() {
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="07XXXXXXXXX"
             dir="ltr"
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
