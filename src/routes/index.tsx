@@ -44,8 +44,12 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
       <div className="animate-scale-in flex flex-col items-center gap-6">
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
-          <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow">
-            <span className="text-6xl font-black">ث</span>
+          <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow sm:h-40 sm:w-40">
+            <img
+              src={splashLogo.url}
+              alt="شعار ثواني"
+              className="h-full w-full object-contain"
+            />
           </div>
         </div>
         <div className="text-center">
