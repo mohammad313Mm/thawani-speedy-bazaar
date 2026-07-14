@@ -151,14 +151,41 @@ function CheckoutPage() {
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-4 pb-40">
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
-            <MapPin className="mb-1 inline h-3.5 w-3.5 text-primary" /> عنوان التوصيل
+            <User className="mb-1 inline h-3.5 w-3.5 text-primary" /> الاسم الكامل
           </label>
           <input
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="اكتب اسمك الكامل"
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
         </section>
+
+        <section className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-black text-foreground">
+              <MapPin className="mb-1 inline h-3.5 w-3.5 text-primary" /> عنوان التوصيل
+            </label>
+            <button
+              type="button"
+              onClick={useMyLocation}
+              disabled={locating}
+              className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold text-primary disabled:opacity-60"
+            >
+              {locating ? "..." : "استخدم موقعي"}
+            </button>
+          </div>
+          <input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="أدخل عنوان التوصيل"
+            className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+          />
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            المسافة إلى {store.name}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
+          </p>
+        </section>
+
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
