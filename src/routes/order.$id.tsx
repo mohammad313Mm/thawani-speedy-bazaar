@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, Phone, MessageCircle, MapPin, Check, X, Bike, ChefHat, Clock, Package } from "lucide-react";
 import { useOrders, STATUS_LABEL, STATUS_ORDER, type OrderStatus } from "../lib/orders";
-import { storeById, productById } from "../lib/data";
+import { storeById } from "../lib/data";
 import { formatIQD, formatMinutes } from "../lib/format";
 
 export const Route = createFileRoute("/order/$id")({
