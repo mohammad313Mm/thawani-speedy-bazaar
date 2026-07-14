@@ -32,6 +32,8 @@ function DriverDashboardPage() {
   const { user, roles, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAvailable, setIsAvailable] = useState(false);
+  const [unavailableUntil, setUnavailableUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Record<string, StoreInfo>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -47,18 +49,29 @@ function DriverDashboardPage() {
     }
   }, [user, roles, loading, navigate]);
 
-  // Load availability
+  // Tick every second while a lockout is pending
   useEffect(() => {
+    if (!unavailableUntil) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [unavailableUntil]);
+
+  // Load availability + lockout
+  const loadProfile = useCallback(async () => {
     if (!user) return;
-    supabase
+    const { data } = await supabase
       .from("profiles")
-      .select("is_available")
+      .select("is_available, unavailable_until")
       .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsAvailable(Boolean((data as { is_available?: boolean } | null)?.is_available));
-      });
+      .maybeSingle();
+    const row = data as { is_available?: boolean; unavailable_until?: string | null } | null;
+    setIsAvailable(Boolean(row?.is_available));
+    setUnavailableUntil(row?.unavailable_until ? new Date(row.unavailable_until).getTime() : null);
   }, [user]);
+
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
 
   const loadOrders = useCallback(async () => {
     if (!user) return;
