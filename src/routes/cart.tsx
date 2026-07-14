@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, Trash2, ShoppingBag, Tag } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../lib/cart";
-import { productById, storeById } from "../lib/data";
+import { storeById } from "../lib/data";
 import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/cart")({
@@ -69,7 +69,7 @@ function CartPage() {
 
       <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
         {items.map((it) => {
-          const p = productById(it.productId);
+          const p = it.product;
           if (!p) return null;
           const price = p.discountPrice ?? p.price;
           return (

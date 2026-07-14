@@ -182,7 +182,7 @@ function ProductPage() {
           <button
             disabled={!canAdd}
             onClick={() => {
-              addItem(product.id, qty);
+              addItem(product, qty);
               router.history.back();
             }}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-50"

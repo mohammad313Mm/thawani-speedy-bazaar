@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, Phone, MessageCircle, MapPin, Check, X, Bike, ChefHat, Clock, Package } from "lucide-react";
 import { useOrders, STATUS_LABEL, STATUS_ORDER, type OrderStatus } from "../lib/orders";
-import { storeById, productById } from "../lib/data";
+import { storeById } from "../lib/data";
 import { formatIQD, formatMinutes } from "../lib/format";
 
 export const Route = createFileRoute("/order/$id")({
@@ -160,7 +160,7 @@ function OrderPage() {
           </div>
           <div className="mt-3 space-y-2 border-t border-border pt-3">
             {order.items.map((it) => {
-              const p = productById(it.productId);
+              const p = it.product;
               if (!p) return null;
               return (
                 <div key={it.productId} className="flex items-center justify-between text-sm">

@@ -1,16 +1,17 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { productById, storeById } from "./data";
+import type { Product } from "./data";
 
 export interface CartItem {
   productId: string;
   quantity: number;
   notes?: string;
+  product: Product; // snapshot so DB-backed products work without a global lookup
 }
 
 interface CartContextValue {
   items: CartItem[];
   storeId: string | null;
-  addItem: (productId: string, qty?: number) => void;
+  addItem: (product: Product, qty?: number) => void;
   updateQty: (productId: string, qty: number) => void;
   removeItem: (productId: string) => void;
   clear: () => void;
@@ -42,7 +43,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const s = localStorage.getItem(KEY_STORE);
       const f = localStorage.getItem(KEY_FAV);
       const fs = localStorage.getItem(KEY_FAV_STORES);
-      if (i) setItems(JSON.parse(i));
+      if (i) {
+        const parsed = JSON.parse(i) as CartItem[];
+        // Drop legacy entries missing the product snapshot to prevent crashes.
+        setItems(parsed.filter((it) => it && it.product && it.productId));
+      }
       if (s) setStoreId(s);
       if (f) setFavorites(JSON.parse(f));
       if (fs) setFavStores(JSON.parse(fs));
@@ -63,28 +68,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(KEY_FAV_STORES, JSON.stringify(favStores));
   }, [favorites, favStores, hydrated]);
 
-  const addItem = (productId: string, qty = 1) => {
-    const p = productById(productId);
-    if (!p) return;
-    if (storeId && storeId !== p.storeId) {
+  const addItem = (product: Product, qty = 1) => {
+    if (!product) return;
+    if (storeId && storeId !== product.storeId) {
       if (
         !confirm(
           "سلتك تحتوي على منتجات من متجر آخر. هل تريد إفراغها وإضافة هذا المنتج؟",
         )
       )
         return;
-      setItems([{ productId, quantity: qty }]);
-      setStoreId(p.storeId);
+      setItems([{ productId: product.id, quantity: qty, product }]);
+      setStoreId(product.storeId);
       return;
     }
-    setStoreId(p.storeId);
+    setStoreId(product.storeId);
     setItems((prev) => {
-      const found = prev.find((i) => i.productId === productId);
+      const found = prev.find((i) => i.productId === product.id);
       if (found)
         return prev.map((i) =>
-          i.productId === productId ? { ...i, quantity: i.quantity + qty } : i,
+          i.productId === product.id
+            ? { ...i, quantity: i.quantity + qty, product }
+            : i,
         );
-      return [...prev, { productId, quantity: qty }];
+      return [...prev, { productId: product.id, quantity: qty, product }];
     });
   };
 
@@ -119,7 +125,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let sub = 0;
     let count = 0;
     for (const it of items) {
-      const p = productById(it.productId);
+      const p = it.product;
       if (!p) continue;
       const price = p.discountPrice ?? p.price;
       sub += price * it.quantity;
@@ -132,9 +138,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (items.length === 0 && storeId) setStoreId(null);
   }, [items, storeId]);
-
-  // (unused but keeps storeById import used for future extensions)
-  void storeById;
 
   return (
     <CartContext.Provider
