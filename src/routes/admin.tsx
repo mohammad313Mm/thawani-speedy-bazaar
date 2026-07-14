@@ -78,9 +78,21 @@ function AdminPage() {
 
   useEffect(() => {
     try {
-      const ok = sessionStorage.getItem("thawani_admin_pass_ok") === "1";
+      const ok =
+        localStorage.getItem("thawani_admin_pass_ok") === "1" ||
+        sessionStorage.getItem("thawani_admin_pass_ok") === "1";
       if (!ok) navigate({ to: "/admin-login" });
-      else setPassOk(true);
+      else {
+        // mirror to sessionStorage so downstream reads (admin actions) work
+        try {
+          const pass = localStorage.getItem("thawani_admin_pass");
+          if (pass) sessionStorage.setItem("thawani_admin_pass", pass);
+          sessionStorage.setItem("thawani_admin_pass_ok", "1");
+        } catch {
+          // ignore
+        }
+        setPassOk(true);
+      }
     } catch {
       navigate({ to: "/admin-login" });
     }
