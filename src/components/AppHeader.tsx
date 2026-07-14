@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Bell, MapPin, User } from "lucide-react";
+import thawaniLogo from "@/assets/thawani-logo.png.asset.json";
 
 interface HeaderProps {
   location?: string;
@@ -11,8 +12,13 @@ export function AppHeader({ location, onLocationClick }: HeaderProps) {
     <header className="sticky top-0 z-30 border-b border-border/40 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-primary shadow-elegant">
-            <span className="text-lg font-black text-primary-foreground">ث</span>
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-primary shadow-elegant ring-2 ring-primary/20">
+            <img
+              src={thawaniLogo.url}
+              alt="شعار ثواني"
+              className="h-full w-full object-cover"
+              loading="eager"
+            />
           </div>
           <span className="text-lg font-black tracking-tight text-foreground">ثواني</span>
         </Link>
