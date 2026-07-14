@@ -14,6 +14,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
+import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
@@ -52,6 +53,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const MerchantLoginRoute = MerchantLoginRouteImport.update({
   id: '/merchant-login',
   path: '/merchant-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantAuthRoute = MerchantAuthRouteImport.update({
+  id: '/merchant-auth',
+  path: '/merchant-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/favorites': typeof FavoritesRoute
+  '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
   '/orders': typeof OrdersRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
     | '/orders'
@@ -220,6 +230,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
     | '/orders'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/favorites'
+    | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
     | '/orders'
@@ -263,6 +275,7 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   FavoritesRoute: typeof FavoritesRoute
+  MerchantAuthRoute: typeof MerchantAuthRoute
   MerchantLoginRoute: typeof MerchantLoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OrdersRoute: typeof OrdersRoute
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/merchant-login'
       fullPath: '/merchant-login'
       preLoaderRoute: typeof MerchantLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchant-auth': {
+      id: '/merchant-auth'
+      path: '/merchant-auth'
+      fullPath: '/merchant-auth'
+      preLoaderRoute: typeof MerchantAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favorites': {
@@ -423,6 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   FavoritesRoute: FavoritesRoute,
+  MerchantAuthRoute: MerchantAuthRoute,
   MerchantLoginRoute: MerchantLoginRoute,
   NotificationsRoute: NotificationsRoute,
   OrdersRoute: OrdersRoute,
@@ -439,13 +460,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
