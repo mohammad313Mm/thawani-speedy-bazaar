@@ -50,7 +50,7 @@ function FavoritesPage() {
           (stores.length === 0 ? (
             <Empty label="لم تضف أي متجر إلى المفضلة" />
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               {stores.map((s) => s && <StoreCard key={s.id} store={s} />)}
             </div>
           ))}

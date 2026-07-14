@@ -11,9 +11,9 @@ export function StoreCard({ store }: { store: Store }) {
     <Link
       to="/store/$id"
       params={{ id: store.id }}
-      className="group block overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
     >
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative h-28 overflow-hidden sm:h-32">
         <img
           src={store.cover}
           alt={store.name}
@@ -26,7 +26,7 @@ export function StoreCard({ store }: { store: Store }) {
             e.preventDefault();
             toggleFavStore(store.id);
           }}
-          className="absolute top-3 left-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 backdrop-blur transition-transform hover:scale-110"
+          className="absolute top-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur transition-transform hover:scale-110"
           aria-label="مفضلة"
         >
           <Heart
@@ -34,9 +34,9 @@ export function StoreCard({ store }: { store: Store }) {
             strokeWidth={2.2}
           />
         </button>
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-2 right-2">
           <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${
               store.isOpen
                 ? "bg-success text-success-foreground"
                 : "bg-foreground/70 text-background"
@@ -46,32 +46,36 @@ export function StoreCard({ store }: { store: Store }) {
             {store.isOpen ? "مفتوح" : "مغلق"}
           </span>
         </div>
-        <div className="absolute bottom-3 right-3 flex items-center gap-2">
-          <div className="h-12 w-12 overflow-hidden rounded-2xl border-2 border-white bg-white shadow-elegant">
+        <div className="absolute bottom-2 right-2">
+          <div className="h-10 w-10 overflow-hidden rounded-2xl border-2 border-white bg-white shadow-elegant sm:h-11 sm:w-11">
             <img src={store.logo} alt="" className="h-full w-full object-cover" />
           </div>
         </div>
       </div>
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-1 flex-1 text-base font-bold text-foreground">{store.name}</h3>
-          <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-foreground">
-            <Star className="h-3 w-3 fill-accent text-accent" />
+      <div className="flex flex-1 flex-col p-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-1 flex-1 text-sm font-bold text-foreground sm:text-base">
+            {store.name}
+          </h3>
+          <div className="flex items-center gap-0.5 rounded-full bg-accent/20 px-1.5 py-0.5 text-[10px] font-bold text-foreground sm:px-2 sm:text-xs">
+            <Star className="h-2.5 w-2.5 fill-accent text-accent sm:h-3 sm:w-3" />
             {store.rating}
           </div>
         </div>
-        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+        <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground sm:text-xs">
           {store.tags.join(" • ")}
         </p>
-        <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" /> {formatMinutes(store.deliveryMin)}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3.5 w-3.5" /> {formatDistanceKm(store.distanceKm)}
-          </span>
-          <span className="mr-auto inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] text-foreground">
+        <div className="mt-auto pt-2 flex flex-col gap-1 text-[10px] font-semibold text-muted-foreground sm:flex-row sm:items-center sm:gap-2 sm:text-[11px]">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" /> {formatMinutes(store.deliveryMin)}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3 w-3" /> {formatDistanceKm(store.distanceKm)}
+            </span>
+          </div>
+          <span className="inline-flex items-center self-start rounded-full bg-muted px-2 py-0.5 text-[9px] text-foreground sm:self-auto">
             توصيل {formatIQD(store.deliveryFee)}
           </span>
         </div>
