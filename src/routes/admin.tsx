@@ -371,48 +371,78 @@ function getAdminPass(): string {
 
 /* ---------------- Stores ---------------- */
 
+type StoreFull = StoreRow & {
+  logo_url?: string | null;
+  cover_url?: string | null;
+  description?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  delivery_available?: boolean;
+  commission_type?: string;
+  commission_amount?: number;
+};
+
+const STORE_CATEGORIES: { value: string; label: string }[] = [
+  { value: "restaurants", label: "مطعم" },
+  { value: "cosmetics", label: "كوزمتك" },
+  { value: "grocery", label: "بقالة" },
+  { value: "sweets", label: "حلويات" },
+  { value: "drinks", label: "مشروبات" },
+];
+
 function StoresPanel() {
-  const [rows, setRows] = useState<(StoreRow & { logo_url?: string | null })[]>([]);
+  const [rows, setRows] = useState<StoreFull[]>([]);
   const [fetching, setFetching] = useState(false);
-  const [editing, setEditing] = useState<StoreRow | null>(null);
+  const [editing, setEditing] = useState<StoreFull | null>(null);
+  const [creating, setCreating] = useState(false);
   const [managingProducts, setManagingProducts] = useState<StoreRow | null>(null);
 
   const load = useCallback(async () => {
     setFetching(true);
     const { data } = await supabase.from("stores").select("*").order("created_at", { ascending: false });
-    setRows((data ?? []) as StoreRow[]);
+    setRows((data ?? []) as StoreFull[]);
     setFetching(false);
   }, []);
 
   useEffect(() => {
     load();
+    const ch = supabase
+      .channel("admin_stores")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stores" }, load)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [load]);
 
   const password = getAdminPass();
 
-  const toggleOpen = async (r: StoreRow) => {
+  const toggleOpen = async (r: StoreFull) => {
     await adminSaveStore({
       data: {
         password, id: r.id, name: r.name, category: r.category, phone: r.phone,
-        working_hours: r.working_hours, commission_rate: Number(r.commission_rate),
+        address: r.address ?? null, description: r.description ?? null,
+        working_hours: r.working_hours, logo_url: r.logo_url ?? null, cover_url: r.cover_url ?? null,
+        latitude: r.latitude ?? null, longitude: r.longitude ?? null,
+        commission_rate: Number(r.commission_rate),
+        commission_type: (r.commission_type as "percent" | "fixed") ?? "percent",
+        commission_amount: Number(r.commission_amount ?? 0),
+        delivery_available: r.delivery_available ?? true,
         is_open: !r.is_open,
       },
     });
-    load();
   };
-  const toggleStatus = async (r: StoreRow) => {
-    // status stays via supabase direct (needs admin role) — keep existing behavior
+  const toggleStatus = async (r: StoreFull) => {
     await supabase
       .from("stores")
       .update({ status: r.status === "active" ? "suspended" : "active" })
       .eq("id", r.id);
-    load();
   };
-  const remove = async (r: StoreRow) => {
+  const remove = async (r: StoreFull) => {
     if (!window.confirm(`حذف المتجر "${r.name}"؟`)) return;
     try {
       await adminDeleteStore({ data: { password, id: r.id } });
-      load();
     } catch (e) { window.alert((e as Error).message); }
   };
 
@@ -421,103 +451,162 @@ function StoresPanel() {
   }
 
   return (
-    <div className="space-y-3">
-      {fetching ? (
+    <section className="space-y-3">
+      <button
+        onClick={() => setCreating(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow-soft"
+      >
+        <Plus className="h-4 w-4" /> إضافة متجر
+      </button>
+
+      {fetching && rows.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>
       ) : rows.length === 0 ? (
         <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
-          لا توجد متاجر مسجّلة بعد.
+          لا توجد متاجر مسجّلة بعد. اضغط على "إضافة متجر" لبدء الإضافة.
         </p>
       ) : (
         rows.map((r) => (
-          <article key={r.id} className="space-y-2 rounded-2xl bg-card p-4 shadow-soft">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-start gap-3">
-                {r.logo_url ? (
-                  <img src={r.logo_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                    <Store className="h-5 w-5 text-muted-foreground" />
+          <article key={r.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+            {r.cover_url && (
+              <img src={r.cover_url} alt="" className="h-24 w-full object-cover" />
+            )}
+            <div className="space-y-2 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-3">
+                  {r.logo_url ? (
+                    <img src={r.logo_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                      <Store className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-black">{r.name}</p>
+                    {r.category && (
+                      <p className="text-xs text-muted-foreground">
+                        {STORE_CATEGORIES.find((c) => c.value === r.category)?.label ?? r.category}
+                      </p>
+                    )}
+                    {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
+                    <p className="mt-1 text-xs font-bold text-primary">
+                      <Percent className="inline h-3 w-3" /> {r.commission_type === "fixed"
+                        ? `${Number(r.commission_amount ?? 0).toLocaleString("ar-IQ")} د.ع`
+                        : `${r.commission_rate}%`}
+                    </p>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-sm font-black">{r.name}</p>
-                  {r.category && <p className="text-xs text-muted-foreground">{r.category}</p>}
-                  {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
-                  <p className="mt-1 text-xs font-bold text-primary">العمولة: {r.commission_rate}%</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-[10px] font-black">
+                  <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "متاح" : "مغلق"}</Badge>
+                  <Badge tone={r.status === "active" ? "success" : "danger"}>
+                    {r.status === "active" ? "نشط" : "موقوف"}
+                  </Badge>
+                  {r.delivery_available === false && <Badge tone="muted">بدون توصيل</Badge>}
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-1 text-[10px] font-black">
-                <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "مفتوح" : "مغلق"}</Badge>
-                <Badge tone={r.status === "active" ? "success" : "danger"}>
-                  {r.status === "active" ? "نشط" : "موقوف"}
-                </Badge>
-              </div>
-            </div>
 
-            <div className="flex flex-wrap gap-2 pt-1">
-              <IconBtn onClick={() => setManagingProducts(r)} label="المنتجات">
-                <Package className="h-3.5 w-3.5" />
-              </IconBtn>
-              <IconBtn onClick={() => setEditing(r)} label="تعديل">
-                <Pencil className="h-3.5 w-3.5" />
-              </IconBtn>
-              <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
-                <Power className="h-3.5 w-3.5" />
-              </IconBtn>
-              <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
-                <ShieldCheck className="h-3.5 w-3.5" />
-              </IconBtn>
-              <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
-                <Trash2 className="h-3.5 w-3.5" />
-              </IconBtn>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <IconBtn onClick={() => setManagingProducts(r)} label="المنتجات">
+                  <Package className="h-3.5 w-3.5" />
+                </IconBtn>
+                <IconBtn onClick={() => setEditing(r)} label="تعديل">
+                  <Pencil className="h-3.5 w-3.5" />
+                </IconBtn>
+                <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
+                  <Power className="h-3.5 w-3.5" />
+                </IconBtn>
+                <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                </IconBtn>
+                <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </IconBtn>
+              </div>
             </div>
           </article>
         ))
       )}
-      {editing && (
+
+      {(creating || editing) && (
         <StoreEditor
           store={editing}
-          onClose={() => setEditing(null)}
-          onSaved={() => { setEditing(null); load(); }}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
         />
       )}
-    </div>
+    </section>
   );
 }
 
 function StoreEditor({
   store, onClose, onSaved,
-}: { store: StoreRow & { logo_url?: string | null }; onClose: () => void; onSaved: () => void }) {
-  const [name, setName] = useState(store.name);
-  const [category, setCategory] = useState(store.category ?? "");
-  const [phone, setPhone] = useState(store.phone ?? "");
-  const [hours, setHours] = useState(store.working_hours ?? "");
-  const [commission, setCommission] = useState(String(store.commission_rate));
-  const [logoUrl, setLogoUrl] = useState<string>(store.logo_url ?? "");
+}: { store: StoreFull | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(store?.name ?? "");
+  const [category, setCategory] = useState(store?.category ?? "restaurants");
+  const [phone, setPhone] = useState(store?.phone ?? "");
+  const [address, setAddress] = useState(store?.address ?? "");
+  const [description, setDescription] = useState(store?.description ?? "");
+  const [hours, setHours] = useState(store?.working_hours ?? "");
+  const [commissionType, setCommissionType] = useState<"percent" | "fixed">(
+    (store?.commission_type as "percent" | "fixed") ?? "percent",
+  );
+  const [commissionRate, setCommissionRate] = useState(String(store?.commission_rate ?? 15));
+  const [commissionAmount, setCommissionAmount] = useState(String(store?.commission_amount ?? 0));
+  const [logoUrl, setLogoUrl] = useState<string>(store?.logo_url ?? "");
+  const [coverUrl, setCoverUrl] = useState<string>(store?.cover_url ?? "");
+  const [latitude, setLatitude] = useState<string>(store?.latitude != null ? String(store.latitude) : "");
+  const [longitude, setLongitude] = useState<string>(store?.longitude != null ? String(store.longitude) : "");
+  const [isOpen, setIsOpen] = useState<boolean>(store?.is_open ?? true);
+  const [deliveryAvailable, setDeliveryAvailable] = useState<boolean>(store?.delivery_available ?? true);
   const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
 
-  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const url = await compressImageToDataUrl(f, { maxWidth: 400, quality: 0.75 });
-    setLogoUrl(url);
+  const pickLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setLogoUrl(await compressImageToDataUrl(f, { maxWidth: 400, quality: 0.75 }));
+  };
+  const pickCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setCoverUrl(await compressImageToDataUrl(f, { maxWidth: 1400, quality: 0.75 }));
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) { window.alert("الموقع الجغرافي غير مدعوم"); return; }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude.toFixed(6));
+        setLongitude(pos.coords.longitude.toFixed(6));
+        setLocating(false);
+      },
+      () => { setLocating(false); window.alert("تعذّر تحديد الموقع"); },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
   };
 
   const save = async () => {
+    if (!name.trim()) { window.alert("اسم المتجر مطلوب"); return; }
     setSaving(true);
     try {
       await adminSaveStore({
         data: {
           password: getAdminPass(),
-          id: store.id,
-          name,
+          id: store?.id,
+          name: name.trim(),
           category: category || null,
           phone: phone || null,
+          address: address || null,
+          description: description || null,
           working_hours: hours || null,
           logo_url: logoUrl || null,
-          commission_rate: Number(commission) || 0,
-          is_open: store.is_open,
+          cover_url: coverUrl || null,
+          latitude: latitude ? Number(latitude) : null,
+          longitude: longitude ? Number(longitude) : null,
+          commission_rate: Number(commissionRate) || 0,
+          commission_type: commissionType,
+          commission_amount: Number(commissionAmount) || 0,
+          delivery_available: deliveryAvailable,
+          is_open: isOpen,
         },
       });
       onSaved();
@@ -525,13 +614,89 @@ function StoreEditor({
   };
 
   return (
-    <Modal title="تعديل المتجر" onClose={onClose}>
-      <ImagePicker url={logoUrl} onPick={pickImage} label="شعار المتجر" />
+    <Modal title={store ? "تعديل المتجر" : "متجر جديد"} onClose={onClose}>
+      <ImagePicker url={coverUrl} onPick={pickCover} label="صورة الغلاف" />
+      <ImagePicker url={logoUrl} onPick={pickLogo} label="شعار المتجر" />
       <Field label="اسم المتجر" value={name} onChange={setName} />
-      <Field label="التصنيف" value={category} onChange={setCategory} />
+
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">التصنيف</label>
+        <select value={category} onChange={(e) => setCategory(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          {STORE_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>{c.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <Field label="الوصف" value={description} onChange={setDescription} multiline />
       <Field label="الهاتف" value={phone} onChange={setPhone} dir="ltr" />
+      <Field label="العنوان" value={address} onChange={setAddress} />
+
+      <div className="space-y-2">
+        <label className="block text-xs font-bold text-muted-foreground">الموقع على الخريطة</label>
+        <div className="grid grid-cols-2 gap-2">
+          <input value={latitude} onChange={(e) => setLatitude(e.target.value)}
+            placeholder="خط العرض" dir="ltr"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+          <input value={longitude} onChange={(e) => setLongitude(e.target.value)}
+            placeholder="خط الطول" dir="ltr"
+            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+        </div>
+        <button type="button" onClick={useMyLocation}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-muted py-2 text-xs font-black">
+          <MapPin className="h-3.5 w-3.5" />
+          {locating ? "جارٍ التحديد..." : "استخدام موقعي الحالي"}
+        </button>
+        {latitude && longitude && (
+          <a href={`https://www.google.com/maps?q=${latitude},${longitude}`} target="_blank" rel="noreferrer"
+            className="block text-center text-[11px] font-bold text-primary underline">
+            عرض على خرائط جوجل
+          </a>
+        )}
+      </div>
+
       <Field label="أوقات الدوام" value={hours} onChange={setHours} />
-      <Field label="نسبة العمولة %" value={commission} onChange={setCommission} type="number" />
+
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" onClick={() => setIsOpen(true)}
+          className={`rounded-xl py-2 text-xs font-black ${isOpen ? "bg-success text-success-foreground" : "bg-muted"}`}>
+          متاح
+        </button>
+        <button type="button" onClick={() => setIsOpen(false)}
+          className={`rounded-xl py-2 text-xs font-black ${!isOpen ? "bg-destructive text-destructive-foreground" : "bg-muted"}`}>
+          غير متاح
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2">
+        <span className="text-xs font-bold">التوصيل متاح</span>
+        <button type="button" onClick={() => setDeliveryAvailable((v) => !v)}
+          className={`h-6 w-11 rounded-full transition-colors ${deliveryAvailable ? "bg-primary" : "bg-border"}`}>
+          <span className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            deliveryAvailable ? "translate-x-0.5" : "translate-x-[22px]"}`} />
+        </button>
+      </div>
+
+      <div className="space-y-2">
+        <label className="block text-xs font-bold text-muted-foreground">العمولة</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setCommissionType("percent")}
+            className={`rounded-xl py-2 text-xs font-black ${commissionType === "percent" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+            نسبة مئوية %
+          </button>
+          <button type="button" onClick={() => setCommissionType("fixed")}
+            className={`rounded-xl py-2 text-xs font-black ${commissionType === "fixed" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+            مبلغ ثابت
+          </button>
+        </div>
+        {commissionType === "percent" ? (
+          <Field label="نسبة العمولة %" value={commissionRate} onChange={setCommissionRate} type="number" />
+        ) : (
+          <Field label="مبلغ العمولة (د.ع)" value={commissionAmount} onChange={setCommissionAmount} type="number" />
+        )}
+      </div>
+
       <SaveBtn onClick={save} loading={saving} />
     </Modal>
   );
