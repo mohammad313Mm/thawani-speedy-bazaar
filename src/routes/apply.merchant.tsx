@@ -1,226 +1,236 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowRight, Store, Clock } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
-import { useAuth } from "../lib/auth";
+import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
 
 export const Route = createFileRoute("/apply/merchant")({
   component: MerchantApplyPage,
 });
 
-type App = {
-  id: string;
-  full_name: string;
-  phone: string;
-  email: string | null;
-  store_name: string | null;
-  status: "pending" | "approved" | "rejected";
-  admin_note: string | null;
-};
-
 function MerchantApplyPage() {
-  const { user, loading, roles, refreshRoles } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [storeName, setStoreName] = useState("");
-  const [app, setApp] = useState<App | null>(null);
-  const [fetching, setFetching] = useState(true);
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [justSubmitted, setJustSubmitted] = useState(false);
-
-  useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("merchant_applications")
-      .select("id, full_name, phone, email, store_name, status, admin_note")
-      .eq("user_id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setApp(data as App);
-          setFullName(data.full_name);
-          setPhone(data.phone);
-          setStoreName(data.store_name ?? "");
-        }
-        setFetching(false);
-      });
-  }, [user]);
+  const [submitted, setSubmitted] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    setBusy(true);
     setError(null);
-    const { data, error } = await supabase
-      .from("merchant_applications")
-      .upsert(
-        {
-          user_id: user.id,
-          full_name: fullName,
-          phone,
-          email: null,
-          store_name: storeName || null,
-          status: "pending",
-        },
-        { onConflict: "user_id" },
-      )
-      .select()
-      .single();
-    if (error) setError(error.message);
-    else {
-      setApp(data as App);
-      setJustSubmitted(true);
+
+    const normalized = normalizePhone(phone);
+    if (!fullName.trim() || !normalized || !password || !storeName.trim()) {
+      setError("يرجى تعبئة جميع الحقول المطلوبة");
+      return;
     }
-    setBusy(false);
+    if (password.length < 6) {
+      setError("يجب أن تكون كلمة المرور 6 أحرف على الأقل");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const email = phoneToEmail(normalized);
+
+      // 1) Create the auth user (phone + password). Sign-in is blocked at the
+      // merchant-login screen until the admin approves this application.
+      let userId: string | null = null;
+      const { data: signUp, error: signUpErr } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName, phone: normalized },
+        },
+      });
+
+      if (signUpErr) {
+        // Account may already exist — try to sign in so we can attach the app.
+        const { data: signIn, error: signInErr } =
+          await supabase.auth.signInWithPassword({ email, password });
+        if (signInErr || !signIn.user) {
+          setError(
+            "هذا الرقم مسجّل مسبقاً بكلمة مرور مختلفة. استخدم رقماً آخر أو سجّل الدخول.",
+          );
+          return;
+        }
+        userId = signIn.user.id;
+      } else {
+        userId = signUp.user?.id ?? null;
+      }
+
+      if (!userId) {
+        setError("تعذّر إنشاء الحساب، حاول مرة أخرى.");
+        return;
+      }
+
+      // 2) Upsert the merchant application → visible in Admin Dashboard.
+      const { error: appErr } = await supabase
+        .from("merchant_applications")
+        .upsert(
+          {
+            user_id: userId,
+            full_name: fullName,
+            phone: normalized,
+            store_name: storeName,
+            applicant_note: note || null,
+            status: "pending",
+            email: null,
+          },
+          { onConflict: "user_id" },
+        );
+
+      if (appErr) {
+        setError(appErr.message);
+        return;
+      }
+
+      // 3) Sign out so the applicant cannot access anything before approval.
+      await supabase.auth.signOut();
+      setSubmitted(true);
+    } finally {
+      setBusy(false);
+    }
   };
 
-  if (loading || fetching) return <Loading />;
-  const approved = roles.includes("merchant") || app?.status === "approved";
+  if (submitted) {
+    return (
+      <main className="mx-auto flex min-h-[80vh] max-w-md flex-col items-center justify-center px-6 py-8 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15 text-success">
+          <CheckCircle2 className="h-12 w-12" />
+        </div>
+        <h1 className="mt-5 text-xl font-black text-foreground">
+          تم إرسال طلبك بنجاح
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          تم إرسال طلبك بنجاح وهو الآن بانتظار موافقة الإدارة. ستتمكن من تسجيل
+          الدخول إلى لوحة تحكم المتجر بعد الموافقة على طلبك.
+        </p>
+        <button
+          onClick={() => navigate({ to: "/profile" })}
+          className="mt-8 h-12 w-full rounded-full bg-primary text-sm font-black text-primary-foreground shadow-elegant"
+        >
+          العودة إلى حسابي
+        </button>
+      </main>
+    );
+  }
 
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link to="/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+        <div className="mx-auto flex max-w-md items-center gap-3 px-4 py-3">
+          <button
+            onClick={() => history.back()}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
+            aria-label="رجوع"
+          >
             <ArrowRight className="h-5 w-5" />
-          </Link>
-          <h1 className="text-base font-black">الانضمام كصاحب متجر</h1>
+          </button>
+          <h1 className="text-lg font-black text-foreground">طلب انضمام متجر</h1>
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        <section className="rounded-3xl bg-gradient-warm p-5 text-white shadow-elegant">
+      <main className="mx-auto max-w-md px-4 py-6">
+        <section className="mb-5 rounded-3xl bg-gradient-warm p-5 text-white shadow-elegant">
           <Store className="h-8 w-8 opacity-90" />
           <p className="mt-2 text-lg font-black">انضم كصاحب متجر</p>
           <p className="mt-1 text-xs opacity-90">
-            إدارة متجرك، منتجاتك، وطلباتك من مكان واحد بعد موافقة الإدارة.
+            املأ الاستمارة أدناه وسنقوم بمراجعة طلبك. لن تتمكن من تسجيل الدخول
+            حتى تتم الموافقة على طلبك من قبل الإدارة.
           </p>
         </section>
 
-        {justSubmitted && app?.status === "pending" && (
-          <div className="rounded-2xl bg-success/15 p-4 text-sm font-black text-success">
-            تم إرسال طلبك إلى الإدارة، يرجى الانتظار لحين الموافقة
-          </div>
-        )}
-
-        {app && (
-          <StatusBanner
-            status={approved ? "approved" : app.status}
-            note={app.admin_note}
-            onRefresh={refreshRoles}
+        <form onSubmit={submit} className="space-y-3 rounded-3xl bg-card p-5 shadow-soft">
+          <Field label="الاسم الكامل *" value={fullName} onChange={setFullName} />
+          <Field
+            label="رقم الهاتف *"
+            value={phone}
+            onChange={setPhone}
+            dir="ltr"
+            inputMode="tel"
+            placeholder="07XXXXXXXXX"
           />
-        )}
+          <Field
+            label="كلمة المرور *"
+            value={password}
+            onChange={setPassword}
+            type="password"
+          />
+          <Field label="اسم المتجر *" value={storeName} onChange={setStoreName} />
 
-        {!approved && (
-          <form onSubmit={submit} className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
-            <TextField label="الاسم الكامل" value={fullName} onChange={setFullName} required />
-            <TextField label="رقم الهاتف" value={phone} onChange={setPhone} required inputMode="tel" />
-            <TextField label="اسم المتجر" value={storeName} onChange={setStoreName} required />
+          <label className="block">
+            <span className="text-xs font-black text-foreground">
+              ملاحظات للإدارة (اختياري)
+            </span>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={4}
+              className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+              placeholder="أي معلومات إضافية تودّ إبلاغ الإدارة بها..."
+            />
+          </label>
 
-            {error && (
-              <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
-                {error}
-              </p>
-            )}
-            <button
-              type="submit"
-              disabled={busy}
-              className="w-full rounded-full bg-primary py-3 text-sm font-black text-primary-foreground shadow-elegant disabled:opacity-60"
-            >
-              {busy ? "..." : app ? "تحديث الطلب" : "إرسال الطلب"}
-            </button>
-          </form>
-        )}
+          {error && (
+            <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
+              {error}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-black text-primary-foreground shadow-elegant disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "إرسال طلب المتجر"}
+          </button>
+        </form>
+
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          لديك حساب متجر معتمد؟{" "}
+          <Link to="/merchant-login" className="font-black text-primary">
+            تسجيل الدخول
+          </Link>
+        </p>
       </main>
     </>
   );
 }
 
-export function StatusBanner({
-  status,
-  note,
-  onRefresh,
-}: {
-  status: "pending" | "approved" | "rejected";
-  note?: string | null;
-  onRefresh?: () => void;
-}) {
-  if (status === "pending") {
-    return (
-      <div className="flex items-start gap-3 rounded-2xl bg-accent/20 p-4">
-        <Clock className="mt-0.5 h-5 w-5 text-foreground" />
-        <div>
-          <p className="text-sm font-black">في انتظار موافقة الإدارة</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            سنقوم بمراجعة طلبك قريباً وسنعلمك بالنتيجة.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  if (status === "approved") {
-    return (
-      <div className="rounded-2xl bg-success/15 p-4">
-        <p className="text-sm font-black text-success">تمت الموافقة على حسابك</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          يمكنك الآن الدخول إلى لوحة التحكم الخاصة بك.
-        </p>
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="mt-3 rounded-full bg-primary px-4 py-1.5 text-xs font-black text-primary-foreground"
-          >
-            تحديث
-          </button>
-        )}
-      </div>
-    );
-  }
-  return (
-    <div className="rounded-2xl bg-destructive/10 p-4">
-      <p className="text-sm font-black text-destructive">تم رفض الطلب</p>
-      {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
-    </div>
-  );
-}
-
-export function TextField({
+function Field({
   label,
   value,
   onChange,
-  required,
+  type = "text",
   inputMode,
+  placeholder,
+  dir,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
-  required?: boolean;
-  inputMode?: "tel" | "text";
+  type?: string;
+  inputMode?: "tel" | "text" | "numeric";
+  placeholder?: string;
+  dir?: "ltr" | "rtl";
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-black text-muted-foreground">{label}</span>
+      <span className="text-xs font-black text-foreground">{label}</span>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        required={required}
+        type={type}
         inputMode={inputMode}
-        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+        placeholder={placeholder}
+        dir={dir}
+        className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
       />
     </label>
-  );
-}
-
-function Loading() {
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-    </div>
   );
 }
