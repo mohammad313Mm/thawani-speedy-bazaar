@@ -39,7 +39,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "stores" | "drivers" | "ads" | "areas" | "notifs";
+type Section = "apps" | "orders" | "stores" | "drivers" | "ads" | "areas" | "notifs";
 type AppKind = "merchant" | "driver";
 
 type Application = {
