@@ -24,11 +24,14 @@ function CheckoutPage() {
   const { addOrder } = useOrders();
   const store = storeId ? storeById(storeId) : null;
 
-  const [address, setAddress] = useState("بابل — الهاشمية، بيت رقم ٥");
-  const [phone, setPhone] = useState("07701234567");
+  const [fullName, setFullName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [payment, setPayment] = useState<"cod" | "wallet">("cod");
   const [placing, setPlacing] = useState(false);
+  const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
+  const [locating, setLocating] = useState(false);
 
   if (!store || items.length === 0) {
     return (
@@ -41,10 +44,49 @@ function CheckoutPage() {
     );
   }
 
-  const deliveryFee = store.deliveryFee;
+  const deliveryFee = feeForDistance(distanceKm);
   const total = subtotal + deliveryFee;
 
+  const useMyLocation = () => {
+    if (!("geolocation" in navigator)) {
+      toast.error("خدمة تحديد الموقع غير متاحة على هذا الجهاز");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          // Reverse-geocode via Nominatim (best-effort)
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ar`,
+          );
+          if (res.ok) {
+            const j = await res.json();
+            if (j.display_name) setAddress(j.display_name);
+          }
+          // Keep the store's declared distance as the source of truth for demo stores.
+          // Real stores with coordinates could compute Haversine here.
+          setDistanceKm(store.distanceKm);
+          toast.success("تم تحديد موقعك");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setLocating(false);
+        toast.error("تعذّر الوصول إلى موقعك");
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
   const place = () => {
+    if (!fullName.trim()) return toast.error("الرجاء إدخال الاسم الكامل");
+    if (!phone.trim() || phone.trim().length < 10) return toast.error("الرجاء إدخال رقم هاتف صحيح");
+    if (!address.trim()) return toast.error("الرجاء إدخال عنوان التوصيل");
+    if (items.length === 0) return toast.error("السلة فارغة");
+
     setPlacing(true);
     setTimeout(async () => {
       const order = addOrder({
@@ -60,8 +102,6 @@ function CheckoutPage() {
         notes: notes || undefined,
         paymentMethod: payment,
       });
-      // Best-effort DB write so the merchant sees the order in real time.
-      // Silently ignored for demo/static stores whose id isn't a UUID.
       try {
         const { supabase } = await import("../integrations/supabase/client");
         const { data: userRes } = await supabase.auth.getUser();
@@ -69,7 +109,7 @@ function CheckoutPage() {
           local_order_id: order.id,
           store_id: store.id,
           customer_id: userRes.user?.id ?? null,
-          customer_name: (userRes.user?.user_metadata as { full_name?: string } | null)?.full_name ?? null,
+          customer_name: fullName,
           customer_phone: phone,
           address,
           notes: notes || null,
@@ -87,9 +127,11 @@ function CheckoutPage() {
         /* non-fatal */
       }
       clear();
-      navigate({ to: "/order/$id", params: { id: order.id } });
-    }, 900);
+      toast.success("تم استلام طلبك بنجاح");
+      navigate({ to: "/orders" });
+    }, 700);
   };
+
 
 
   return (
