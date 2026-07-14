@@ -23,7 +23,6 @@ function MerchantApplyPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [storeName, setStoreName] = useState("");
   const [app, setApp] = useState<App | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -37,7 +36,6 @@ function MerchantApplyPage() {
 
   useEffect(() => {
     if (!user) return;
-    setEmail(user.email ?? "");
     supabase
       .from("merchant_applications")
       .select("id, full_name, phone, email, store_name, status, admin_note")
@@ -48,7 +46,6 @@ function MerchantApplyPage() {
           setApp(data as App);
           setFullName(data.full_name);
           setPhone(data.phone);
-          setEmail(data.email ?? user.email ?? "");
           setStoreName(data.store_name ?? "");
         }
         setFetching(false);
@@ -67,7 +64,7 @@ function MerchantApplyPage() {
           user_id: user.id,
           full_name: fullName,
           phone,
-          email: email || null,
+          email: null,
           store_name: storeName || null,
           status: "pending",
         },
