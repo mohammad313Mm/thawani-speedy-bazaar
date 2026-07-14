@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Shield, Calendar, Phone, Mail, Globe } from "lucide-react";
+import { ArrowLeft, Shield, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -104,12 +104,6 @@ const arSections = [
       "قد يتم تحديث هذه السياسة بشكل دوري. سيتم إشعارك داخل التطبيق عند إجراء تغييرات جوهرية.",
     ],
   },
-  {
-    title: "١٠. تواصل معنا",
-    content: [
-      "للاستفسارات أو الطلبات المتعلقة بالخصوصية، يمكنك التواصل معنا عبر:",
-    ],
-  },
 ];
 
 const enSections = [
@@ -198,12 +192,6 @@ const enSections = [
     title: "9. Privacy Policy Updates",
     content: [
       "This Privacy Policy may be updated periodically. You will be notified inside the app whenever significant changes are made.",
-    ],
-  },
-  {
-    title: "10. Contact Us",
-    content: [
-      "For inquiries or requests related to privacy, you can reach us through:",
     ],
   },
 ];
