@@ -200,7 +200,7 @@ function CheckoutPage() {
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
           <p className="mt-2 text-[11px] text-muted-foreground">
-            المسافة إلى {store.name}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
+            المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
           </p>
         </section>
 
