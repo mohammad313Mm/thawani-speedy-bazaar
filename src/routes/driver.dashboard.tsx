@@ -60,16 +60,27 @@ function DriverDashboardPage() {
 
   const loadOrders = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    // Own assigned/finished orders
+    const { data: mine } = await supabase
       .from("customer_orders")
       .select("*")
       .eq("driver_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
-    const rows = (data ?? []) as Order[];
-    setOrders(rows);
+    // Available pool: approved by store or admin, not yet claimed
+    const { data: pool } = await supabase
+      .from("customer_orders")
+      .select("*")
+      .is("driver_id", null)
+      .in("status", ["accepted", "preparing", "ready"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+    const rows = [...((pool ?? []) as Order[]), ...((mine ?? []) as Order[])];
+    const seen = new Set<string>();
+    const deduped = rows.filter((r) => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+    setOrders(deduped);
 
-    const storeIds = Array.from(new Set(rows.map((r) => r.store_id)));
+    const storeIds = Array.from(new Set(deduped.map((r) => r.store_id)));
     if (storeIds.length) {
       const { data: s } = await supabase
         .from("stores")
@@ -86,16 +97,12 @@ function DriverDashboardPage() {
   useEffect(() => {
     if (!user) return;
     loadOrders();
+    // Any change on customer_orders — RLS scopes what this driver can see.
     const ch = supabase
       .channel(`driver_orders_${user.id}`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "customer_orders",
-          filter: `driver_id=eq.${user.id}`,
-        },
+        { event: "*", schema: "public", table: "customer_orders" },
         loadOrders,
       )
       .subscribe();
@@ -110,22 +117,33 @@ function DriverDashboardPage() {
     await supabase.from("profiles").update({ is_available: next }).eq("id", user.id);
   };
 
+  // Claim: RLS + trigger ensure only one driver wins.
   const acceptOrder = async (id: string) => {
+    if (!user) return;
     setBusy(id);
-    await supabase
+    const { data, error } = await supabase
       .from("customer_orders")
-      .update({ status: "driver_assigned" })
-      .eq("id", id);
+      .update({ driver_id: user.id, status: "driver_assigned" })
+      .eq("id", id)
+      .is("driver_id", null)
+      .select("id")
+      .maybeSingle();
+    if (error || !data) {
+      alert("تم استلام هذا الطلب من قِبل مندوب آخر");
+    }
     await loadOrders();
     setBusy(null);
   };
 
   const rejectOrder = async (id: string) => {
+    if (!user) return;
     setBusy(id);
+    // Release only if this driver already claimed it; otherwise it's a "skip".
     await supabase
       .from("customer_orders")
       .update({ driver_id: null, status: "ready" })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("driver_id", user.id);
     await loadOrders();
     setBusy(null);
   };
@@ -139,10 +157,10 @@ function DriverDashboardPage() {
   }
 
   const pending = isAvailable
-    ? orders.filter((o) => !["driver_assigned", "delivered", "cancelled"].includes(o.status))
+    ? orders.filter((o) => o.driver_id === null && ["accepted", "preparing", "ready"].includes(o.status))
     : [];
-  const active = orders.filter((o) => o.status === "driver_assigned");
-  const history = orders.filter((o) => ["delivered", "cancelled"].includes(o.status));
+  const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
+  const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
 
   return (
     <>
