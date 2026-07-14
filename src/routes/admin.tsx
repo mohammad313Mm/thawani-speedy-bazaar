@@ -186,6 +186,9 @@ function AdminPage() {
           <SectionBtn active={section === "apps"} onClick={() => setSection("apps")} icon={<FileText className="h-4 w-4" />}>
             الطلبات
           </SectionBtn>
+          <SectionBtn active={section === "orders"} onClick={() => setSection("orders")} icon={<ShoppingBag className="h-4 w-4" />}>
+            طلبات الزبائن
+          </SectionBtn>
           <SectionBtn active={section === "stores"} onClick={() => setSection("stores")} icon={<Store className="h-4 w-4" />}>
             المتاجر
           </SectionBtn>
