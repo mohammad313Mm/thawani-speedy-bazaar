@@ -1512,3 +1512,161 @@ function SaveBtn({ onClick, loading, disabled }: { onClick: () => void; loading:
   );
 }
 
+
+/* ---------------- Customer Orders (Admin) ---------------- */
+
+type AdminOrderRow = {
+  id: string;
+  local_order_id: string | null;
+  store_id: string;
+  customer_name: string | null;
+  customer_phone: string;
+  address: string;
+  notes: string | null;
+  items: Array<{ name: string; qty: number; price: number }>;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  payment_method: string;
+  status: string;
+  driver_id: string | null;
+  created_at: string;
+};
+
+const ORDER_STATUS_LABEL: Record<string, string> = {
+  pending: "قيد مراجعة المتجر",
+  accepted: "مقبول من الإدارة",
+  preparing: "قيد التحضير",
+  ready: "جاهز للاستلام",
+  driver_assigned: "تم تعيين المندوب",
+  delivered: "تم التوصيل",
+  rejected: "مرفوض",
+  cancelled: "ملغي",
+};
+
+function OrdersPanel() {
+  const [orders, setOrders] = useState<AdminOrderRow[]>([]);
+  const [stores, setStores] = useState<Record<string, { id: string; name: string }>>({});
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "active" | "done">("pending");
+
+  const load = useCallback(async () => {
+    const password = sessionStorage.getItem("thawani_admin_pass") ?? "";
+    try {
+      const res = await adminListOrders({ data: { password } });
+      setOrders(res.orders as AdminOrderRow[]);
+      setStores(res.stores);
+    } catch {
+      /* ignore */
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("admin_customer_orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "customer_orders" }, load)
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [load]);
+
+  const act = async (id: string, status: string) => {
+    const password = sessionStorage.getItem("thawani_admin_pass") ?? "";
+    await adminUpdateOrderStatus({ data: { password, id, status: status as "accepted" } });
+    await load();
+  };
+
+  const filtered = orders.filter((o) => {
+    if (filter === "all") return true;
+    if (filter === "pending") return o.status === "pending";
+    if (filter === "active") return ["accepted", "preparing", "ready", "driver_assigned"].includes(o.status);
+    return ["delivered", "rejected", "cancelled"].includes(o.status);
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 overflow-x-auto rounded-2xl bg-muted p-1">
+        {(["pending", "active", "done", "all"] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-black ${
+              filter === f ? "bg-primary text-primary-foreground" : "text-foreground"
+            }`}
+          >
+            {f === "pending" ? "بانتظار الموافقة" : f === "active" ? "نشطة" : f === "done" ? "منتهية" : "الكل"}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="py-8 text-center text-xs text-muted-foreground">جاري التحميل...</div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          لا توجد طلبات في هذا القسم.
+        </div>
+      ) : (
+        filtered.map((o) => (
+          <article key={o.id} className="rounded-2xl bg-card p-4 shadow-soft">
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black text-foreground" dir="ltr">
+                  #{(o.local_order_id ?? o.id).slice(-6).toUpperCase()}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {new Date(o.created_at).toLocaleString("ar-IQ")}
+                </p>
+              </div>
+              <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+                {ORDER_STATUS_LABEL[o.status] ?? o.status}
+              </span>
+            </div>
+
+            <div className="space-y-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+              <p><span className="font-bold text-foreground">المتجر:</span> {stores[o.store_id]?.name ?? "—"}</p>
+              <p><span className="font-bold text-foreground">الزبون:</span> {o.customer_name ?? "—"}</p>
+              <p dir="ltr"><span className="font-bold text-foreground">الهاتف:</span> {o.customer_phone}</p>
+              <p><span className="font-bold text-foreground">العنوان:</span> {o.address}</p>
+              {o.notes && <p><span className="font-bold text-foreground">ملاحظات:</span> {o.notes}</p>}
+              <p><span className="font-bold text-foreground">الدفع:</span> {o.payment_method === "cod" ? "عند الاستلام" : o.payment_method}</p>
+            </div>
+
+            <div className="mt-2 space-y-1 border-t border-border/60 pt-2 text-xs">
+              {(o.items ?? []).map((it, i) => (
+                <div key={i} className="flex justify-between">
+                  <span>{it.name} × {it.qty}</span>
+                  <span className="text-muted-foreground">{(it.price * it.qty).toLocaleString("ar-IQ")} د.ع</span>
+                </div>
+              ))}
+              <div className="flex justify-between pt-1"><span>التوصيل</span><span>{o.delivery_fee.toLocaleString("ar-IQ")} د.ع</span></div>
+              <div className="flex justify-between border-t border-border/60 pt-1 font-black">
+                <span>الإجمالي</span>
+                <span className="text-primary">{o.total.toLocaleString("ar-IQ")} د.ع</span>
+              </div>
+            </div>
+
+            {o.status === "pending" && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => act(o.id, "rejected")}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-xs font-black text-destructive"
+                >
+                  <X className="h-4 w-4" /> رفض
+                </button>
+                <button
+                  onClick={() => act(o.id, "accepted")}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-black text-primary-foreground"
+                >
+                  <Check className="h-4 w-4" /> موافقة
+                </button>
+              </div>
+            )}
+          </article>
+        ))
+      )}
+    </div>
+  );
+}
