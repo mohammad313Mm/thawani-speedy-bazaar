@@ -94,11 +94,13 @@ export type Database = {
       }
       customer_orders: {
         Row: {
+          accepted_at: string | null
           address: string
           created_at: string
           customer_id: string | null
           customer_name: string | null
           customer_phone: string
+          delivered_at: string | null
           delivery_fee: number
           driver_id: string | null
           id: string
@@ -113,11 +115,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           address: string
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           customer_phone: string
+          delivered_at?: string | null
           delivery_fee?: number
           driver_id?: string | null
           id?: string
@@ -132,11 +136,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           address?: string
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
           customer_phone?: string
+          delivered_at?: string | null
           delivery_fee?: number
           driver_id?: string | null
           id?: string
@@ -364,6 +370,7 @@ export type Database = {
           is_available: boolean
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
+          unavailable_until: string | null
           updated_at: string
         }
         Insert: {
@@ -373,6 +380,7 @@ export type Database = {
           is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          unavailable_until?: string | null
           updated_at?: string
         }
         Update: {
@@ -382,6 +390,7 @@ export type Database = {
           is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
+          unavailable_until?: string | null
           updated_at?: string
         }
         Relationships: []
