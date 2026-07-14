@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Mail, Lock, User as UserIcon, Phone } from "lucide-react";
+import { ArrowRight, Lock, User as UserIcon, Phone } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
+import { phoneToEmail, normalizePhone } from "../lib/phone-auth";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -10,7 +11,6 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -31,13 +31,18 @@ function AuthPage() {
     setInfo(null);
     setBusy(true);
     try {
+      const normalized = normalizePhone(phone);
+      if (!normalized) {
+        throw new Error("رقم الهاتف غير صالح");
+      }
+      const email = phoneToEmail(normalized);
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/profile`,
-            data: { full_name: fullName, phone },
+            data: { full_name: fullName, phone: normalized },
           },
         });
         if (error) throw error;
@@ -47,7 +52,7 @@ function AuthPage() {
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) throw new Error("رقم الهاتف أو كلمة المرور غير صحيحة");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "حدث خطأ");
@@ -92,36 +97,25 @@ function AuthPage() {
 
         <form onSubmit={submit} className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
           {mode === "signup" && (
-            <>
-              <Field icon={<UserIcon className="h-4 w-4" />} label="الاسم الكامل">
-                <input
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-transparent text-sm outline-none"
-                  placeholder="مثال: علي محمد"
-                />
-              </Field>
-              <Field icon={<Phone className="h-4 w-4" />} label="رقم الهاتف">
-                <input
-                  required
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-transparent text-sm outline-none"
-                  placeholder="07XX XXX XXXX"
-                />
-              </Field>
-            </>
+            <Field icon={<UserIcon className="h-4 w-4" />} label="الاسم الكامل">
+              <input
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-transparent text-sm outline-none"
+                placeholder="مثال: علي محمد"
+              />
+            </Field>
           )}
-          <Field icon={<Mail className="h-4 w-4" />} label="البريد الإلكتروني">
+          <Field icon={<Phone className="h-4 w-4" />} label="رقم الهاتف">
             <input
               required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              inputMode="tel"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               className="w-full bg-transparent text-sm outline-none"
-              placeholder="you@example.com"
+              placeholder="07XX XXX XXXX"
               dir="ltr"
             />
           </Field>
