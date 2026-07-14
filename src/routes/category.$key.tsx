@@ -3,6 +3,7 @@ import { ArrowRight, SlidersHorizontal, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { categoryByKey, storesByCategory } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
+import { useDbStores } from "../lib/db-stores";
 
 export const Route = createFileRoute("/category/$key")({
   component: CategoryPage,
@@ -18,9 +19,11 @@ function CategoryPage() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>("recommended");
   const [openOnly, setOpenOnly] = useState(false);
+  const { stores: dbStores } = useDbStores();
 
   const stores = useMemo(() => {
-    let list = storesByCategory(category.key);
+    const dbForCat = dbStores.filter((s) => s.category === category.key);
+    let list = [...dbForCat, ...storesByCategory(category.key)];
     if (q.trim()) {
       const s = q.trim();
       list = list.filter(
@@ -40,7 +43,8 @@ function CategoryPage() {
         break;
     }
     return list;
-  }, [category.key, q, sort, openOnly]);
+  }, [category.key, q, sort, openOnly, dbStores]);
+
 
   return (
     <>
