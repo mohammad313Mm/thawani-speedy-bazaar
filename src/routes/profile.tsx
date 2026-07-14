@@ -93,11 +93,10 @@ function ProfilePage() {
           />
         </Section>
 
-        {isOwner && (
-          <Section title="الإدارة">
-            <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
-          </Section>
-        )}
+        <Section title="الإدارة">
+          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
+        </Section>
+
 
 
 

@@ -20,13 +20,11 @@ const WELCOME_MESSAGES = [
 ];
 
 function WelcomeSplash({ onDone }: { onDone: () => void }) {
-  const message = useMemo(
-    () => WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)],
-    [],
-  );
+  const [message, setMessage] = useState(WELCOME_MESSAGES[0]);
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
+    setMessage(WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]);
     const t1 = setTimeout(() => setFading(true), 2800);
     const t2 = setTimeout(onDone, 3500);
     return () => {
@@ -34,6 +32,7 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
       clearTimeout(t2);
     };
   }, [onDone]);
+
 
   return (
     <div
