@@ -22,7 +22,25 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { items, storeId, subtotal, clear } = useCart();
   const { addOrder } = useOrders();
-  const store = storeId ? storeById(storeId) : null;
+  const staticStore = storeId ? storeById(storeId) : null;
+  const [dbStore, setDbStore] = useState<ReturnType<typeof storeById> | null>(null);
+  useEffect(() => {
+    if (!storeId || staticStore) {
+      setDbStore(null);
+      return;
+    }
+    let alive = true;
+    (async () => {
+      const { supabase } = await import("../integrations/supabase/client");
+      const { adaptDbStore } = await import("../lib/db-stores");
+      const { data } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
+      if (alive) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [storeId, staticStore]);
+  const store = staticStore ?? dbStore;
 
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
@@ -33,7 +51,7 @@ function CheckoutPage() {
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
 
-  if (!store || items.length === 0) {
+  if (items.length === 0) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">لا يوجد لديك طلب لإتمامه.</p>
