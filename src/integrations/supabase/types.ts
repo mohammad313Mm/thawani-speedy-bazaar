@@ -92,6 +92,74 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_orders: {
+        Row: {
+          address: string
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string
+          delivery_fee: number
+          driver_id: string | null
+          id: string
+          items: Json
+          local_order_id: string | null
+          notes: string | null
+          payment_method: string
+          status: string
+          store_id: string
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone: string
+          delivery_fee?: number
+          driver_id?: string | null
+          id?: string
+          items?: Json
+          local_order_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          status?: string
+          store_id: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string
+          delivery_fee?: number
+          driver_id?: string | null
+          id?: string
+          items?: Json
+          local_order_id?: string | null
+          notes?: string | null
+          payment_method?: string
+          status?: string
+          store_id?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_areas: {
         Row: {
           city: string | null
