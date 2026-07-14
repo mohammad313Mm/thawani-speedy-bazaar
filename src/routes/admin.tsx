@@ -21,7 +21,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "stores" | "drivers" | "notifs";
+type Section = "apps" | "stores" | "drivers" | "ads" | "areas" | "notifs";
 type AppKind = "merchant" | "driver";
 
 type Application = {
