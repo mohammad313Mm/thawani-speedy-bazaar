@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../lib/cart";
-import { productById, storeById } from "../lib/data";
+import { productById, storeById, type Store } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
 import { ProductCard } from "../components/ProductCard";
+import { useDbStores } from "../lib/db-stores";
 
 export const Route = createFileRoute("/favorites")({
   component: FavoritesPage,
@@ -13,8 +14,11 @@ export const Route = createFileRoute("/favorites")({
 function FavoritesPage() {
   const { favStores, favorites } = useCart();
   const [tab, setTab] = useState<"stores" | "products">("stores");
+  const { stores: dbStores } = useDbStores();
 
-  const stores = favStores.map((id) => storeById(id)).filter(Boolean);
+  const stores: Store[] = favStores
+    .map((id) => storeById(id) ?? dbStores.find((s) => s.id === id) ?? null)
+    .filter((s): s is Store => Boolean(s));
   const products = favorites.map((id) => productById(id)).filter(Boolean);
 
   return (
@@ -51,7 +55,9 @@ function FavoritesPage() {
             <Empty label="لم تضف أي متجر إلى المفضلة" />
           ) : (
             <div className="grid grid-cols-2 gap-4">
-              {stores.map((s) => s && <StoreCard key={s.id} store={s} />)}
+              {stores.map((s) => (
+                <StoreCard key={s.id} store={s} />
+              ))}
             </div>
           ))}
         {tab === "products" &&
