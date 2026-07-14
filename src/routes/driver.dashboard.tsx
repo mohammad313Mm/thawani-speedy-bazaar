@@ -157,10 +157,10 @@ function DriverDashboardPage() {
   }
 
   const pending = isAvailable
-    ? orders.filter((o) => !["driver_assigned", "delivered", "cancelled"].includes(o.status))
+    ? orders.filter((o) => o.driver_id === null && ["accepted", "preparing", "ready"].includes(o.status))
     : [];
-  const active = orders.filter((o) => o.status === "driver_assigned");
-  const history = orders.filter((o) => ["delivered", "cancelled"].includes(o.status));
+  const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
+  const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
 
   return (
     <>
