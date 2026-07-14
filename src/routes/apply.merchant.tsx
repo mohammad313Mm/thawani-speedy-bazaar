@@ -234,3 +234,75 @@ function Field({
     </label>
   );
 }
+
+// Re-exports kept for apply.driver.tsx which shares these UI helpers.
+export function TextField({
+  label,
+  value,
+  onChange,
+  required,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  required?: boolean;
+  inputMode?: "tel" | "text";
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-black text-muted-foreground">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        inputMode={inputMode}
+        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
+      />
+    </label>
+  );
+}
+
+export function StatusBanner({
+  status,
+  note,
+  onRefresh,
+}: {
+  status: "pending" | "approved" | "rejected";
+  note?: string | null;
+  onRefresh?: () => void;
+}) {
+  if (status === "pending") {
+    return (
+      <div className="rounded-2xl bg-accent/20 p-4">
+        <p className="text-sm font-black">في انتظار موافقة الإدارة</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          سنقوم بمراجعة طلبك قريباً وسنعلمك بالنتيجة.
+        </p>
+      </div>
+    );
+  }
+  if (status === "approved") {
+    return (
+      <div className="rounded-2xl bg-success/15 p-4">
+        <p className="text-sm font-black text-success">تمت الموافقة على حسابك</p>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className="mt-3 rounded-full bg-primary px-4 py-1.5 text-xs font-black text-primary-foreground"
+          >
+            تحديث
+          </button>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-2xl bg-destructive/10 p-4">
+      <p className="text-sm font-black text-destructive">
+        تم رفض طلبك. يرجى التواصل مع الإدارة.
+      </p>
+      {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}
+    </div>
+  );
+}
