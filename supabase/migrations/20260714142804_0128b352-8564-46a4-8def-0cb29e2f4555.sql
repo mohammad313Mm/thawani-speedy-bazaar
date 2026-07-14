@@ -1,0 +1,1 @@
+ALTER TABLE public.merchant_applications ADD COLUMN IF NOT EXISTS applicant_note text;

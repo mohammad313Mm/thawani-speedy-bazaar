@@ -264,6 +264,7 @@ export type Database = {
       merchant_applications: {
         Row: {
           admin_note: string | null
+          applicant_note: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -276,6 +277,7 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          applicant_note?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -288,6 +290,7 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          applicant_note?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
