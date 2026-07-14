@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Star, Clock, MapPin, Heart } from "lucide-react";
+import { toast } from "sonner";
 import type { Store } from "../lib/data";
 import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
 import { useCart } from "../lib/cart";
@@ -24,7 +25,10 @@ export function StoreCard({ store }: { store: Store }) {
         <button
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
+            const wasFav = fav;
             toggleFavStore(store.id);
+            toast.success(wasFav ? "تمت الإزالة من المفضلة" : "تمت الإضافة إلى المفضلة");
           }}
           className="absolute top-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur transition-transform hover:scale-110"
           aria-label="مفضلة"
