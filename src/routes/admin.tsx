@@ -1554,7 +1554,7 @@ function OrdersPanel() {
     const password = sessionStorage.getItem("thawani_admin_pass") ?? "";
     try {
       const res = await adminListOrders({ data: { password } });
-      setOrders(res.orders as AdminOrderRow[]);
+      setOrders(res.orders as unknown as AdminOrderRow[]);
       setStores(res.stores);
     } catch {
       /* ignore */
