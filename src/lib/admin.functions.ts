@@ -258,3 +258,56 @@ export const adminSetDriverAreas = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/* ============== Customer orders (approve / reject / list) ============== */
+
+export const adminListOrders = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => z.object({ password: z.string() }).parse(d))
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: orders, error } = await supabaseAdmin
+      .from("customer_orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    const storeIds = Array.from(new Set((orders ?? []).map((o) => o.store_id)));
+    let storeMap: Record<string, { id: string; name: string }> = {};
+    if (storeIds.length) {
+      const { data: stores } = await supabaseAdmin
+        .from("stores")
+        .select("id, name")
+        .in("id", storeIds);
+      storeMap = Object.fromEntries((stores ?? []).map((s) => [s.id, s as { id: string; name: string }]));
+    }
+    return { orders: orders ?? [], stores: storeMap };
+  });
+
+export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    z.object({
+      password: z.string(),
+      id: z.string().uuid(),
+      status: z.enum([
+        "pending",
+        "accepted",
+        "preparing",
+        "ready",
+        "driver_assigned",
+        "delivered",
+        "rejected",
+        "cancelled",
+      ]),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("customer_orders")
+      .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
