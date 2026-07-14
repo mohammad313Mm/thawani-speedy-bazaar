@@ -24,7 +24,6 @@ function DriverApplyPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [vehicle, setVehicle] = useState("");
   const [app, setApp] = useState<App | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -38,7 +37,6 @@ function DriverApplyPage() {
 
   useEffect(() => {
     if (!user) return;
-    setEmail(user.email ?? "");
     supabase
       .from("driver_applications")
       .select("id, full_name, phone, email, vehicle_type, status, admin_note")
@@ -49,7 +47,6 @@ function DriverApplyPage() {
           setApp(data as App);
           setFullName(data.full_name);
           setPhone(data.phone);
-          setEmail(data.email ?? user.email ?? "");
           setVehicle(data.vehicle_type ?? "");
         }
         setFetching(false);
@@ -68,7 +65,7 @@ function DriverApplyPage() {
           user_id: user.id,
           full_name: fullName,
           phone,
-          email: email || null,
+          email: null,
           vehicle_type: vehicle || null,
           status: "pending",
         },
