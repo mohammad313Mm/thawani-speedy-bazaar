@@ -108,13 +108,13 @@ function CheckoutPage() {
     setPlacing(true);
     setTimeout(async () => {
       const order = addOrder({
-        storeId: store.id,
+        storeId: storeId ?? "",
         items,
         subtotal,
         deliveryFee,
         discount: 0,
         total,
-        etaMin: store.deliveryMin,
+        etaMin: store?.deliveryMin ?? 30,
         address,
         phone,
         notes: notes || undefined,
