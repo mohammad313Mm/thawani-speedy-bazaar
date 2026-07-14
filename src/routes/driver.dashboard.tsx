@@ -377,18 +377,18 @@ function OrderCard({
   order,
   storeName,
   onAccept,
-  onReject,
-  showActions = true,
+  onDeliver,
   busy = false,
   muted = false,
+  mode = "history",
 }: {
   order: Order;
   storeName?: string;
   onAccept?: () => void;
-  onReject?: () => void;
-  showActions?: boolean;
+  onDeliver?: () => void;
   busy?: boolean;
   muted?: boolean;
+  mode?: "incoming" | "active" | "history";
 }) {
   return (
     <article
@@ -431,27 +431,40 @@ function OrderCard({
         </div>
       </div>
 
-      {showActions && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+      {mode === "incoming" && (
+        <div className="mt-3">
           <button
             disabled={busy}
             onClick={onAccept}
-            className="flex h-10 items-center justify-center gap-1 rounded-xl bg-success text-xs font-black text-success-foreground disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-success text-sm font-black text-success-foreground disabled:opacity-60"
           >
-            <Check className="h-4 w-4" /> قبول
+            <Check className="h-4 w-4" /> قبول الطلب
           </button>
+        </div>
+      )}
+
+      {mode === "active" && (
+        <div className="mt-3">
           <button
             disabled={busy}
-            onClick={onReject}
-            className="flex h-10 items-center justify-center gap-1 rounded-xl bg-destructive text-xs font-black text-destructive-foreground disabled:opacity-60"
+            onClick={onDeliver}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
           >
-            <X className="h-4 w-4" /> رفض
+            <PackageCheck className="h-4 w-4" /> تسليم الطلب
           </button>
         </div>
       )}
     </article>
   );
 }
+
+function formatMs(ms: number) {
+  const s = Math.ceil(ms / 1000);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2, "0")}`;
+}
+
 
 function Row({
   icon,
