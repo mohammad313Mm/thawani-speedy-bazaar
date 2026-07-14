@@ -18,6 +18,7 @@ import {
   Pencil,
   Package,
   Upload,
+  ShoppingBag,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
