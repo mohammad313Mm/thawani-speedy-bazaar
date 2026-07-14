@@ -935,3 +935,397 @@ function IconBtn({
     </button>
   );
 }
+
+/* ---------------- Ads ---------------- */
+
+type AdRow = {
+  id: string;
+  title: string;
+  image_url: string;
+  link_url: string | null;
+  position: string;
+  category: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function AdsPanel() {
+  const [rows, setRows] = useState<AdRow[]>([]);
+  const [editing, setEditing] = useState<AdRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from("advertisements").select("*").order("sort_order").order("created_at", { ascending: false });
+    setRows((data ?? []) as AdRow[]);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (r: AdRow) => {
+    try {
+      await adminSaveAd({
+        data: { password, id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url,
+                position: r.position, category: r.category, is_active: !r.is_active, sort_order: r.sort_order },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (r: AdRow) => {
+    if (!window.confirm(`حذف الإعلان "${r.title}"؟`)) return;
+    try { await adminDeleteAd({ data: { password, id: r.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> إعلان جديد
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد إعلانات.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+          <img src={r.image_url} alt="" className="h-32 w-full object-cover" />
+          <div className="space-y-2 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black">{r.title}</p>
+                <p className="text-xs text-muted-foreground">{r.position}{r.category ? ` · ${r.category}` : ""}</p>
+              </div>
+              <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشط" : "متوقف"}</Badge>
+            </div>
+            <div className="flex gap-2">
+              <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+            </div>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <AdEditor
+          ad={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => void; onSaved: () => void }) {
+  const [title, setTitle] = useState(ad?.title ?? "");
+  const [link, setLink] = useState(ad?.link_url ?? "");
+  const [pos, setPos] = useState(ad?.position ?? "home_top");
+  const [category, setCategory] = useState(ad?.category ?? "");
+  const [image, setImage] = useState(ad?.image_url ?? "");
+  const [sortOrder, setSortOrder] = useState(String(ad?.sort_order ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setImage(await compressImageToDataUrl(f, { maxWidth: 1200, quality: 0.8 }));
+  };
+  const save = async () => {
+    if (!title.trim() || !image) { window.alert("العنوان والصورة مطلوبان"); return; }
+    setSaving(true);
+    try {
+      await adminSaveAd({
+        data: {
+          password: getAdminPass(), id: ad?.id, title: title.trim(), image_url: image,
+          link_url: link || null, position: pos, category: category || null,
+          is_active: ad?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={ad ? "تعديل إعلان" : "إعلان جديد"} onClose={onClose}>
+      <ImagePicker url={image} onPick={pick} label="صورة الإعلان" />
+      <Field label="العنوان" value={title} onChange={setTitle} />
+      <Field label="الرابط (اختياري)" value={link} onChange={setLink} dir="ltr" />
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">الموقع</label>
+        <select value={pos} onChange={(e) => setPos(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          <option value="home_top">الرئيسية - أعلى</option>
+          <option value="home_middle">الرئيسية - وسط</option>
+          <option value="category">داخل التصنيف</option>
+        </select>
+      </div>
+      <Field label="التصنيف (لموقع category)" value={category} onChange={setCategory} />
+      <Field label="ترتيب العرض" value={sortOrder} onChange={setSortOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+/* ---------------- Areas ---------------- */
+
+type AreaRow = {
+  id: string;
+  name_ar: string;
+  name_en: string | null;
+  city: string | null;
+  fee_iqd: number;
+  min_order_iqd: number;
+  is_active: boolean;
+};
+
+function AreasPanel() {
+  const [rows, setRows] = useState<AreaRow[]>([]);
+  const [editing, setEditing] = useState<AreaRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from("delivery_areas").select("*").order("name_ar");
+    setRows((data ?? []) as AreaRow[]);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (r: AreaRow) => {
+    try {
+      await adminSaveArea({
+        data: { password, id: r.id, name_ar: r.name_ar, name_en: r.name_en, city: r.city,
+                fee_iqd: r.fee_iqd, min_order_iqd: r.min_order_iqd, is_active: !r.is_active },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (r: AreaRow) => {
+    if (!window.confirm(`حذف "${r.name_ar}"؟`)) return;
+    try { await adminDeleteArea({ data: { password, id: r.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => setCreating(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+          <Plus className="h-4 w-4" /> منطقة جديدة
+        </button>
+        <button onClick={() => setAssigning(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-muted py-3 text-sm font-black">
+          <Bike className="h-4 w-4" /> إسناد المندوبين
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد مناطق.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-black">{r.name_ar}</p>
+              {r.city && <p className="text-xs text-muted-foreground">{r.city}</p>}
+              <p className="mt-1 text-xs font-bold text-primary">
+                رسوم التوصيل: {r.fee_iqd.toLocaleString("ar-IQ")} د.ع
+              </p>
+              {r.min_order_iqd > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  الحد الأدنى: {r.min_order_iqd.toLocaleString("ar-IQ")} د.ع
+                </p>
+              )}
+            </div>
+            <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشطة" : "متوقفة"}</Badge>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <AreaEditor
+          area={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+      {assigning && <DriverAreaAssigner areas={rows} onClose={() => setAssigning(false)} />}
+    </section>
+  );
+}
+
+function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose: () => void; onSaved: () => void }) {
+  const [nameAr, setNameAr] = useState(area?.name_ar ?? "");
+  const [nameEn, setNameEn] = useState(area?.name_en ?? "");
+  const [city, setCity] = useState(area?.city ?? "");
+  const [fee, setFee] = useState(String(area?.fee_iqd ?? 3000));
+  const [minOrder, setMinOrder] = useState(String(area?.min_order_iqd ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!nameAr.trim()) { window.alert("الاسم مطلوب"); return; }
+    setSaving(true);
+    try {
+      await adminSaveArea({
+        data: {
+          password: getAdminPass(), id: area?.id, name_ar: nameAr.trim(),
+          name_en: nameEn || null, city: city || null,
+          fee_iqd: Math.round(Number(fee) || 0), min_order_iqd: Math.round(Number(minOrder) || 0),
+          is_active: area?.is_active ?? true,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={area ? "تعديل منطقة" : "منطقة جديدة"} onClose={onClose}>
+      <Field label="الاسم بالعربية" value={nameAr} onChange={setNameAr} />
+      <Field label="الاسم بالإنجليزية" value={nameEn} onChange={setNameEn} dir="ltr" />
+      <Field label="المدينة" value={city} onChange={setCity} />
+      <Field label="رسوم التوصيل (د.ع)" value={fee} onChange={setFee} type="number" />
+      <Field label="الحد الأدنى للطلب (د.ع)" value={minOrder} onChange={setMinOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+function DriverAreaAssigner({ areas, onClose }: { areas: AreaRow[]; onClose: () => void }) {
+  const [drivers, setDrivers] = useState<{ id: string; full_name: string | null; phone: string | null }[]>([]);
+  const [driverId, setDriverId] = useState<string>("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "driver");
+      const ids = (roles ?? []).map((r) => r.user_id);
+      if (ids.length === 0) return;
+      const { data } = await supabase.from("profiles").select("id, full_name, phone").in("id", ids);
+      setDrivers(data ?? []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!driverId) { setSelected(new Set()); return; }
+    (async () => {
+      const { data } = await supabase.from("driver_delivery_areas").select("area_id").eq("driver_id", driverId);
+      setSelected(new Set((data ?? []).map((r) => r.area_id)));
+    })();
+  }, [driverId]);
+
+  const toggle = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+  const save = async () => {
+    if (!driverId) return;
+    setSaving(true);
+    try {
+      await adminSetDriverAreas({
+        data: { password: getAdminPass(), driver_id: driverId, area_ids: Array.from(selected) },
+      });
+      onClose();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title="إسناد مناطق للمندوب" onClose={onClose}>
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">المندوب</label>
+        <select value={driverId} onChange={(e) => setDriverId(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          <option value="">اختر مندوباً</option>
+          {drivers.map((d) => (
+            <option key={d.id} value={d.id}>{d.full_name ?? d.phone ?? d.id.slice(0, 8)}</option>
+          ))}
+        </select>
+      </div>
+      {driverId && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground">المناطق</p>
+          <div className="grid grid-cols-2 gap-2">
+            {areas.map((a) => (
+              <button key={a.id} onClick={() => toggle(a.id)}
+                className={`rounded-xl border p-2 text-right text-xs font-bold ${
+                  selected.has(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"
+                }`}>
+                {a.name_ar}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <SaveBtn onClick={save} loading={saving} disabled={!driverId} />
+    </Modal>
+  );
+}
+
+/* ---------------- Shared UI ---------------- */
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center">
+      <div className="max-h-[92vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-background p-4 shadow-2xl sm:rounded-3xl">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-black">{title}</h3>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label, value, onChange, type = "text", dir, multiline,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  type?: string; dir?: "ltr" | "rtl"; multiline?: boolean;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-muted-foreground">{label}</label>
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} dir={dir}
+          rows={3}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+      ) : (
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} dir={dir}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+      )}
+    </div>
+  );
+}
+
+function ImagePicker({ url, onPick, label }: {
+  url: string; onPick: (e: React.ChangeEvent<HTMLInputElement>) => void; label: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-muted-foreground">{label}</label>
+      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-3 hover:border-primary">
+        {url ? (
+          <img src={url} alt="" className="h-16 w-16 rounded-xl object-cover" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-muted">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+          </div>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {url ? "تغيير الصورة" : "اختر صورة (يتم ضغطها تلقائياً)"}
+        </span>
+        <input type="file" accept="image/*" onChange={onPick} className="hidden" />
+      </label>
+    </div>
+  );
+}
+
+function SaveBtn({ onClick, loading, disabled }: { onClick: () => void; loading: boolean; disabled?: boolean }) {
+  return (
+    <button onClick={onClick} disabled={loading || disabled}
+      className="mt-2 w-full rounded-full bg-primary py-3 text-sm font-black text-primary-foreground disabled:opacity-60">
+      {loading ? "جارٍ الحفظ..." : "حفظ"}
+    </button>
+  );
+}
+
