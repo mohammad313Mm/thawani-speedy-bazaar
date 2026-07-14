@@ -77,9 +77,9 @@ function ProfilePage() {
 
         <Section title="المندوبين">
           <ItemLink
-            to="/apply/driver"
+            to={isDriver ? "/driver/dashboard" : "/driver-auth"}
             icon={<Bike />}
-            label={isDriver ? "لوحة تحكم المندوب" : "الانضمام كمندوب توصيل"}
+            label={isDriver ? "لوحة تحكم المندوب" : "دخول / تسجيل مندوب توصيل"}
             trailing={isDriver ? "مفعّل" : undefined}
           />
         </Section>
