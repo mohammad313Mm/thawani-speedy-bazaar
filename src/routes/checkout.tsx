@@ -85,7 +85,7 @@ function CheckoutPage() {
           }
           // Keep the store's declared distance as the source of truth for demo stores.
           // Real stores with coordinates could compute Haversine here.
-          setDistanceKm(store.distanceKm);
+          if (store) setDistanceKm(store.distanceKm);
           toast.success("تم تحديد موقعك");
         } finally {
           setLocating(false);
