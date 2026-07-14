@@ -12,10 +12,28 @@ import {
   Trash2,
   Power,
   Percent,
+  Image as ImageIcon,
+  MapPin,
+  Plus,
+  Pencil,
+  Package,
+  Upload,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
-import { adminActOnApplication } from "../lib/admin.functions";
+import {
+  adminActOnApplication,
+  adminSaveAd,
+  adminDeleteAd,
+  adminSaveArea,
+  adminDeleteArea,
+  adminSaveStore,
+  adminDeleteStore,
+  adminSaveProduct,
+  adminDeleteProduct,
+  adminSetDriverAreas,
+} from "../lib/admin.functions";
+import { compressImageToDataUrl } from "../lib/image-compress";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -161,7 +179,7 @@ function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-4">
-        <nav className="grid grid-cols-4 gap-2 rounded-2xl bg-muted p-1">
+        <nav className="no-scrollbar flex gap-2 overflow-x-auto rounded-2xl bg-muted p-1">
           <SectionBtn active={section === "apps"} onClick={() => setSection("apps")} icon={<FileText className="h-4 w-4" />}>
             الطلبات
           </SectionBtn>
@@ -170,6 +188,12 @@ function AdminPage() {
           </SectionBtn>
           <SectionBtn active={section === "drivers"} onClick={() => setSection("drivers")} icon={<Bike className="h-4 w-4" />}>
             المندوبين
+          </SectionBtn>
+          <SectionBtn active={section === "ads"} onClick={() => setSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
+            الإعلانات
+          </SectionBtn>
+          <SectionBtn active={section === "areas"} onClick={() => setSection("areas")} icon={<MapPin className="h-4 w-4" />}>
+            المناطق
           </SectionBtn>
           <SectionBtn
             active={section === "notifs"}
@@ -192,6 +216,8 @@ function AdminPage() {
         {section === "apps" && <ApplicationsPanel />}
         {section === "stores" && <StoresPanel />}
         {section === "drivers" && <DriversPanel />}
+        {section === "ads" && <AdsPanel />}
+        {section === "areas" && <AreasPanel />}
         {section === "notifs" && <NotificationsPanel />}
       </main>
     </>
