@@ -12,16 +12,34 @@ import {
   Trash2,
   Power,
   Percent,
+  Image as ImageIcon,
+  MapPin,
+  Plus,
+  Pencil,
+  Package,
+  Upload,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
-import { adminActOnApplication } from "../lib/admin.functions";
+import {
+  adminActOnApplication,
+  adminSaveAd,
+  adminDeleteAd,
+  adminSaveArea,
+  adminDeleteArea,
+  adminSaveStore,
+  adminDeleteStore,
+  adminSaveProduct,
+  adminDeleteProduct,
+  adminSetDriverAreas,
+} from "../lib/admin.functions";
+import { compressImageToDataUrl } from "../lib/image-compress";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "stores" | "drivers" | "notifs";
+type Section = "apps" | "stores" | "drivers" | "ads" | "areas" | "notifs";
 type AppKind = "merchant" | "driver";
 
 type Application = {
@@ -161,7 +179,7 @@ function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-4">
-        <nav className="grid grid-cols-4 gap-2 rounded-2xl bg-muted p-1">
+        <nav className="no-scrollbar flex gap-2 overflow-x-auto rounded-2xl bg-muted p-1">
           <SectionBtn active={section === "apps"} onClick={() => setSection("apps")} icon={<FileText className="h-4 w-4" />}>
             الطلبات
           </SectionBtn>
@@ -170,6 +188,12 @@ function AdminPage() {
           </SectionBtn>
           <SectionBtn active={section === "drivers"} onClick={() => setSection("drivers")} icon={<Bike className="h-4 w-4" />}>
             المندوبين
+          </SectionBtn>
+          <SectionBtn active={section === "ads"} onClick={() => setSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
+            الإعلانات
+          </SectionBtn>
+          <SectionBtn active={section === "areas"} onClick={() => setSection("areas")} icon={<MapPin className="h-4 w-4" />}>
+            المناطق
           </SectionBtn>
           <SectionBtn
             active={section === "notifs"}
@@ -192,6 +216,8 @@ function AdminPage() {
         {section === "apps" && <ApplicationsPanel />}
         {section === "stores" && <StoresPanel />}
         {section === "drivers" && <DriversPanel />}
+        {section === "ads" && <AdsPanel />}
+        {section === "areas" && <AreasPanel />}
         {section === "notifs" && <NotificationsPanel />}
       </main>
     </>
@@ -329,11 +355,27 @@ function ApplicationsPanel() {
   );
 }
 
+/* ---------------- Helpers ---------------- */
+
+function getAdminPass(): string {
+  try {
+    return (
+      sessionStorage.getItem("thawani_admin_pass") ||
+      localStorage.getItem("thawani_admin_pass") ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 /* ---------------- Stores ---------------- */
 
 function StoresPanel() {
-  const [rows, setRows] = useState<StoreRow[]>([]);
+  const [rows, setRows] = useState<(StoreRow & { logo_url?: string | null })[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [editing, setEditing] = useState<StoreRow | null>(null);
+  const [managingProducts, setManagingProducts] = useState<StoreRow | null>(null);
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -346,82 +388,310 @@ function StoresPanel() {
     load();
   }, [load]);
 
+  const password = getAdminPass();
+
   const toggleOpen = async (r: StoreRow) => {
-    await supabase.from("stores").update({ is_open: !r.is_open }).eq("id", r.id);
+    await adminSaveStore({
+      data: {
+        password, id: r.id, name: r.name, category: r.category, phone: r.phone,
+        working_hours: r.working_hours, commission_rate: Number(r.commission_rate),
+        is_open: !r.is_open,
+      },
+    });
     load();
   };
   const toggleStatus = async (r: StoreRow) => {
+    // status stays via supabase direct (needs admin role) — keep existing behavior
     await supabase
       .from("stores")
       .update({ status: r.status === "active" ? "suspended" : "active" })
       .eq("id", r.id);
     load();
   };
-  const setCommission = async (r: StoreRow) => {
-    const v = window.prompt("نسبة العمولة % لهذا المتجر", String(r.commission_rate));
-    if (v == null) return;
-    const num = Number(v);
-    if (Number.isNaN(num) || num < 0 || num > 100) return;
-    await supabase.from("stores").update({ commission_rate: num }).eq("id", r.id);
-    load();
-  };
   const remove = async (r: StoreRow) => {
     if (!window.confirm(`حذف المتجر "${r.name}"؟`)) return;
-    await supabase.from("stores").delete().eq("id", r.id);
-    load();
+    try {
+      await adminDeleteStore({ data: { password, id: r.id } });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
   };
 
-  if (fetching) return <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>;
-  if (rows.length === 0)
-    return (
-      <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
-        لا توجد متاجر مسجّلة بعد.
-      </p>
-    );
+  if (managingProducts) {
+    return <ProductsPanel store={managingProducts} onBack={() => setManagingProducts(null)} />;
+  }
 
   return (
     <div className="space-y-3">
-      {rows.map((r) => (
-        <article key={r.id} className="space-y-2 rounded-2xl bg-card p-4 shadow-soft">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-black">{r.name}</p>
-              {r.category && <p className="text-xs text-muted-foreground">{r.category}</p>}
-              {r.phone && (
-                <p className="text-xs text-muted-foreground" dir="ltr">
-                  {r.phone}
-                </p>
-              )}
-              {r.working_hours && <p className="text-xs text-foreground">الدوام: {r.working_hours}</p>}
-              <p className="mt-1 text-xs font-bold text-primary">العمولة: {r.commission_rate}%</p>
+      {fetching ? (
+        <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>
+      ) : rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد متاجر مسجّلة بعد.
+        </p>
+      ) : (
+        rows.map((r) => (
+          <article key={r.id} className="space-y-2 rounded-2xl bg-card p-4 shadow-soft">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                {r.logo_url ? (
+                  <img src={r.logo_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Store className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-black">{r.name}</p>
+                  {r.category && <p className="text-xs text-muted-foreground">{r.category}</p>}
+                  {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
+                  <p className="mt-1 text-xs font-bold text-primary">العمولة: {r.commission_rate}%</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1 text-[10px] font-black">
+                <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "مفتوح" : "مغلق"}</Badge>
+                <Badge tone={r.status === "active" ? "success" : "danger"}>
+                  {r.status === "active" ? "نشط" : "موقوف"}
+                </Badge>
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-1 text-[10px] font-black">
-              <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "مفتوح" : "مغلق"}</Badge>
-              <Badge tone={r.status === "active" ? "success" : "danger"}>
-                {r.status === "active" ? "نشط" : "موقوف"}
-              </Badge>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
-              <Power className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
-              <ShieldCheck className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => setCommission(r)} label="تعديل العمولة">
-              <Percent className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconBtn>
-          </div>
-        </article>
-      ))}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <IconBtn onClick={() => setManagingProducts(r)} label="المنتجات">
+                <Package className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => setEditing(r)} label="تعديل">
+                <Pencil className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
+                <Power className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconBtn>
+            </div>
+          </article>
+        ))
+      )}
+      {editing && (
+        <StoreEditor
+          store={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
     </div>
   );
 }
+
+function StoreEditor({
+  store, onClose, onSaved,
+}: { store: StoreRow & { logo_url?: string | null }; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(store.name);
+  const [category, setCategory] = useState(store.category ?? "");
+  const [phone, setPhone] = useState(store.phone ?? "");
+  const [hours, setHours] = useState(store.working_hours ?? "");
+  const [commission, setCommission] = useState(String(store.commission_rate));
+  const [logoUrl, setLogoUrl] = useState<string>(store.logo_url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = await compressImageToDataUrl(f, { maxWidth: 400, quality: 0.75 });
+    setLogoUrl(url);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminSaveStore({
+        data: {
+          password: getAdminPass(),
+          id: store.id,
+          name,
+          category: category || null,
+          phone: phone || null,
+          working_hours: hours || null,
+          logo_url: logoUrl || null,
+          commission_rate: Number(commission) || 0,
+          is_open: store.is_open,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title="تعديل المتجر" onClose={onClose}>
+      <ImagePicker url={logoUrl} onPick={pickImage} label="شعار المتجر" />
+      <Field label="اسم المتجر" value={name} onChange={setName} />
+      <Field label="التصنيف" value={category} onChange={setCategory} />
+      <Field label="الهاتف" value={phone} onChange={setPhone} dir="ltr" />
+      <Field label="أوقات الدوام" value={hours} onChange={setHours} />
+      <Field label="نسبة العمولة %" value={commission} onChange={setCommission} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+/* ---------------- Products ---------------- */
+
+type ProductRow = {
+  id: string;
+  store_id: string;
+  name_ar: string;
+  description: string | null;
+  price_iqd: number;
+  image_url: string | null;
+  category: string | null;
+  is_available: boolean;
+  sort_order: number;
+};
+
+function ProductsPanel({ store, onBack }: { store: StoreRow; onBack: () => void }) {
+  const [rows, setRows] = useState<ProductRow[]>([]);
+  const [editing, setEditing] = useState<ProductRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from("products").select("*").eq("store_id", store.id)
+      .order("sort_order").order("created_at", { ascending: false });
+    setRows((data ?? []) as ProductRow[]);
+  }, [store.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const del = async (p: ProductRow) => {
+    if (!window.confirm(`حذف "${p.name_ar}"؟`)) return;
+    try {
+      await adminDeleteProduct({ data: { password, id: p.id } });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const toggle = async (p: ProductRow) => {
+    try {
+      await adminSaveProduct({
+        data: {
+          password, id: p.id, store_id: p.store_id, name_ar: p.name_ar,
+          description: p.description, price_iqd: p.price_iqd, image_url: p.image_url,
+          category: p.category, is_available: !p.is_available, sort_order: p.sort_order,
+        },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-black">
+          <ArrowRight className="h-4 w-4" /> رجوع
+        </button>
+        <div className="min-w-0 text-right">
+          <p className="text-xs text-muted-foreground">منتجات</p>
+          <p className="truncate text-sm font-black">{store.name}</p>
+        </div>
+      </div>
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> إضافة منتج جديد
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد منتجات بعد.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {rows.map((p) => (
+            <article key={p.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+              {p.image_url ? (
+                <img src={p.image_url} alt="" className="h-28 w-full object-cover" />
+              ) : (
+                <div className="flex h-28 w-full items-center justify-center bg-muted">
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="space-y-1 p-3">
+                <p className="truncate text-sm font-black">{p.name_ar}</p>
+                <p className="text-xs font-bold text-primary">{p.price_iqd.toLocaleString("ar-IQ")} د.ع</p>
+                <Badge tone={p.is_available ? "success" : "muted"}>{p.is_available ? "متوفر" : "غير متوفر"}</Badge>
+                <div className="flex gap-1 pt-1">
+                  <IconBtn onClick={() => setEditing(p)} label="تعديل"><Pencil className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => toggle(p)} label={p.is_available ? "إخفاء" : "إظهار"}><Power className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => del(p)} label="حذف" tone="danger"><Trash2 className="h-3 w-3" /></IconBtn>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      {(creating || editing) && (
+        <ProductEditor
+          storeId={store.id}
+          product={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function ProductEditor({
+  storeId, product, onClose, onSaved,
+}: { storeId: string; product: ProductRow | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(product?.name_ar ?? "");
+  const [desc, setDesc] = useState(product?.description ?? "");
+  const [price, setPrice] = useState(String(product?.price_iqd ?? ""));
+  const [category, setCategory] = useState(product?.category ?? "");
+  const [image, setImage] = useState<string>(product?.image_url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = await compressImageToDataUrl(f, { maxWidth: 900, quality: 0.75 });
+    setImage(url);
+  };
+
+  const save = async () => {
+    if (!name.trim() || !price) { window.alert("الاسم والسعر مطلوبان"); return; }
+    setSaving(true);
+    try {
+      await adminSaveProduct({
+        data: {
+          password: getAdminPass(),
+          id: product?.id,
+          store_id: storeId,
+          name_ar: name.trim(),
+          description: desc || null,
+          price_iqd: Math.round(Number(price) || 0),
+          image_url: image || null,
+          category: category || null,
+          is_available: product?.is_available ?? true,
+          sort_order: product?.sort_order ?? 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={product ? "تعديل منتج" : "منتج جديد"} onClose={onClose}>
+      <ImagePicker url={image} onPick={pickImage} label="صورة المنتج" />
+      <Field label="اسم المنتج" value={name} onChange={setName} />
+      <Field label="السعر (د.ع)" value={price} onChange={setPrice} type="number" />
+      <Field label="التصنيف" value={category} onChange={setCategory} />
+      <Field label="الوصف" value={desc} onChange={setDesc} multiline />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
 
 /* ---------------- Drivers ---------------- */
 
@@ -665,3 +935,397 @@ function IconBtn({
     </button>
   );
 }
+
+/* ---------------- Ads ---------------- */
+
+type AdRow = {
+  id: string;
+  title: string;
+  image_url: string;
+  link_url: string | null;
+  position: string;
+  category: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function AdsPanel() {
+  const [rows, setRows] = useState<AdRow[]>([]);
+  const [editing, setEditing] = useState<AdRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from("advertisements").select("*").order("sort_order").order("created_at", { ascending: false });
+    setRows((data ?? []) as AdRow[]);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (r: AdRow) => {
+    try {
+      await adminSaveAd({
+        data: { password, id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url,
+                position: r.position, category: r.category, is_active: !r.is_active, sort_order: r.sort_order },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (r: AdRow) => {
+    if (!window.confirm(`حذف الإعلان "${r.title}"؟`)) return;
+    try { await adminDeleteAd({ data: { password, id: r.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> إعلان جديد
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد إعلانات.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+          <img src={r.image_url} alt="" className="h-32 w-full object-cover" />
+          <div className="space-y-2 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black">{r.title}</p>
+                <p className="text-xs text-muted-foreground">{r.position}{r.category ? ` · ${r.category}` : ""}</p>
+              </div>
+              <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشط" : "متوقف"}</Badge>
+            </div>
+            <div className="flex gap-2">
+              <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+            </div>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <AdEditor
+          ad={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => void; onSaved: () => void }) {
+  const [title, setTitle] = useState(ad?.title ?? "");
+  const [link, setLink] = useState(ad?.link_url ?? "");
+  const [pos, setPos] = useState(ad?.position ?? "home_top");
+  const [category, setCategory] = useState(ad?.category ?? "");
+  const [image, setImage] = useState(ad?.image_url ?? "");
+  const [sortOrder, setSortOrder] = useState(String(ad?.sort_order ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setImage(await compressImageToDataUrl(f, { maxWidth: 1200, quality: 0.8 }));
+  };
+  const save = async () => {
+    if (!title.trim() || !image) { window.alert("العنوان والصورة مطلوبان"); return; }
+    setSaving(true);
+    try {
+      await adminSaveAd({
+        data: {
+          password: getAdminPass(), id: ad?.id, title: title.trim(), image_url: image,
+          link_url: link || null, position: pos, category: category || null,
+          is_active: ad?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={ad ? "تعديل إعلان" : "إعلان جديد"} onClose={onClose}>
+      <ImagePicker url={image} onPick={pick} label="صورة الإعلان" />
+      <Field label="العنوان" value={title} onChange={setTitle} />
+      <Field label="الرابط (اختياري)" value={link} onChange={setLink} dir="ltr" />
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">الموقع</label>
+        <select value={pos} onChange={(e) => setPos(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          <option value="home_top">الرئيسية - أعلى</option>
+          <option value="home_middle">الرئيسية - وسط</option>
+          <option value="category">داخل التصنيف</option>
+        </select>
+      </div>
+      <Field label="التصنيف (لموقع category)" value={category} onChange={setCategory} />
+      <Field label="ترتيب العرض" value={sortOrder} onChange={setSortOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+/* ---------------- Areas ---------------- */
+
+type AreaRow = {
+  id: string;
+  name_ar: string;
+  name_en: string | null;
+  city: string | null;
+  fee_iqd: number;
+  min_order_iqd: number;
+  is_active: boolean;
+};
+
+function AreasPanel() {
+  const [rows, setRows] = useState<AreaRow[]>([]);
+  const [editing, setEditing] = useState<AreaRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase.from("delivery_areas").select("*").order("name_ar");
+    setRows((data ?? []) as AreaRow[]);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (r: AreaRow) => {
+    try {
+      await adminSaveArea({
+        data: { password, id: r.id, name_ar: r.name_ar, name_en: r.name_en, city: r.city,
+                fee_iqd: r.fee_iqd, min_order_iqd: r.min_order_iqd, is_active: !r.is_active },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (r: AreaRow) => {
+    if (!window.confirm(`حذف "${r.name_ar}"؟`)) return;
+    try { await adminDeleteArea({ data: { password, id: r.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => setCreating(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+          <Plus className="h-4 w-4" /> منطقة جديدة
+        </button>
+        <button onClick={() => setAssigning(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-muted py-3 text-sm font-black">
+          <Bike className="h-4 w-4" /> إسناد المندوبين
+        </button>
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد مناطق.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-black">{r.name_ar}</p>
+              {r.city && <p className="text-xs text-muted-foreground">{r.city}</p>}
+              <p className="mt-1 text-xs font-bold text-primary">
+                رسوم التوصيل: {r.fee_iqd.toLocaleString("ar-IQ")} د.ع
+              </p>
+              {r.min_order_iqd > 0 && (
+                <p className="text-[11px] text-muted-foreground">
+                  الحد الأدنى: {r.min_order_iqd.toLocaleString("ar-IQ")} د.ع
+                </p>
+              )}
+            </div>
+            <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشطة" : "متوقفة"}</Badge>
+          </div>
+          <div className="mt-2 flex gap-2">
+            <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <AreaEditor
+          area={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+      {assigning && <DriverAreaAssigner areas={rows} onClose={() => setAssigning(false)} />}
+    </section>
+  );
+}
+
+function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose: () => void; onSaved: () => void }) {
+  const [nameAr, setNameAr] = useState(area?.name_ar ?? "");
+  const [nameEn, setNameEn] = useState(area?.name_en ?? "");
+  const [city, setCity] = useState(area?.city ?? "");
+  const [fee, setFee] = useState(String(area?.fee_iqd ?? 3000));
+  const [minOrder, setMinOrder] = useState(String(area?.min_order_iqd ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!nameAr.trim()) { window.alert("الاسم مطلوب"); return; }
+    setSaving(true);
+    try {
+      await adminSaveArea({
+        data: {
+          password: getAdminPass(), id: area?.id, name_ar: nameAr.trim(),
+          name_en: nameEn || null, city: city || null,
+          fee_iqd: Math.round(Number(fee) || 0), min_order_iqd: Math.round(Number(minOrder) || 0),
+          is_active: area?.is_active ?? true,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={area ? "تعديل منطقة" : "منطقة جديدة"} onClose={onClose}>
+      <Field label="الاسم بالعربية" value={nameAr} onChange={setNameAr} />
+      <Field label="الاسم بالإنجليزية" value={nameEn} onChange={setNameEn} dir="ltr" />
+      <Field label="المدينة" value={city} onChange={setCity} />
+      <Field label="رسوم التوصيل (د.ع)" value={fee} onChange={setFee} type="number" />
+      <Field label="الحد الأدنى للطلب (د.ع)" value={minOrder} onChange={setMinOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+function DriverAreaAssigner({ areas, onClose }: { areas: AreaRow[]; onClose: () => void }) {
+  const [drivers, setDrivers] = useState<{ id: string; full_name: string | null; phone: string | null }[]>([]);
+  const [driverId, setDriverId] = useState<string>("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "driver");
+      const ids = (roles ?? []).map((r) => r.user_id);
+      if (ids.length === 0) return;
+      const { data } = await supabase.from("profiles").select("id, full_name, phone").in("id", ids);
+      setDrivers(data ?? []);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!driverId) { setSelected(new Set()); return; }
+    (async () => {
+      const { data } = await supabase.from("driver_delivery_areas").select("area_id").eq("driver_id", driverId);
+      setSelected(new Set((data ?? []).map((r) => r.area_id)));
+    })();
+  }, [driverId]);
+
+  const toggle = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+  const save = async () => {
+    if (!driverId) return;
+    setSaving(true);
+    try {
+      await adminSetDriverAreas({
+        data: { password: getAdminPass(), driver_id: driverId, area_ids: Array.from(selected) },
+      });
+      onClose();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title="إسناد مناطق للمندوب" onClose={onClose}>
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">المندوب</label>
+        <select value={driverId} onChange={(e) => setDriverId(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          <option value="">اختر مندوباً</option>
+          {drivers.map((d) => (
+            <option key={d.id} value={d.id}>{d.full_name ?? d.phone ?? d.id.slice(0, 8)}</option>
+          ))}
+        </select>
+      </div>
+      {driverId && (
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-muted-foreground">المناطق</p>
+          <div className="grid grid-cols-2 gap-2">
+            {areas.map((a) => (
+              <button key={a.id} onClick={() => toggle(a.id)}
+                className={`rounded-xl border p-2 text-right text-xs font-bold ${
+                  selected.has(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"
+                }`}>
+                {a.name_ar}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <SaveBtn onClick={save} loading={saving} disabled={!driverId} />
+    </Modal>
+  );
+}
+
+/* ---------------- Shared UI ---------------- */
+
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center">
+      <div className="max-h-[92vh] w-full max-w-md space-y-3 overflow-y-auto rounded-t-3xl bg-background p-4 shadow-2xl sm:rounded-3xl">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-black">{title}</h3>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Field({
+  label, value, onChange, type = "text", dir, multiline,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  type?: string; dir?: "ltr" | "rtl"; multiline?: boolean;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-muted-foreground">{label}</label>
+      {multiline ? (
+        <textarea value={value} onChange={(e) => onChange(e.target.value)} dir={dir}
+          rows={3}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+      ) : (
+        <input type={type} value={value} onChange={(e) => onChange(e.target.value)} dir={dir}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm" />
+      )}
+    </div>
+  );
+}
+
+function ImagePicker({ url, onPick, label }: {
+  url: string; onPick: (e: React.ChangeEvent<HTMLInputElement>) => void; label: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-bold text-muted-foreground">{label}</label>
+      <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-border bg-card p-3 hover:border-primary">
+        {url ? (
+          <img src={url} alt="" className="h-16 w-16 rounded-xl object-cover" />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-muted">
+            <Upload className="h-6 w-6 text-muted-foreground" />
+          </div>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {url ? "تغيير الصورة" : "اختر صورة (يتم ضغطها تلقائياً)"}
+        </span>
+        <input type="file" accept="image/*" onChange={onPick} className="hidden" />
+      </label>
+    </div>
+  );
+}
+
+function SaveBtn({ onClick, loading, disabled }: { onClick: () => void; loading: boolean; disabled?: boolean }) {
+  return (
+    <button onClick={onClick} disabled={loading || disabled}
+      className="mt-2 w-full rounded-full bg-primary py-3 text-sm font-black text-primary-foreground disabled:opacity-60">
+      {loading ? "جارٍ الحفظ..." : "حفظ"}
+    </button>
+  );
+}
+
