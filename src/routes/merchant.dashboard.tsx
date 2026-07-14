@@ -35,6 +35,9 @@ type StoreRow = {
   status: string;
   logo_url: string | null;
   owner_id: string | null;
+  category: string | null;
+  phone: string | null;
+  description: string | null;
 };
 
 type ProductRow = {
