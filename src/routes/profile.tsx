@@ -67,12 +67,13 @@ function ProfilePage() {
         {/* Store Owners & Drivers sections */}
         <Section title="أصحاب المتاجر">
           <ItemLink
-            to={isMerchant ? "/merchant/dashboard" : "/merchant-login"}
+            to={isMerchant ? "/merchant/dashboard" : "/merchant-auth"}
             icon={<Store />}
-            label={isMerchant ? "لوحة تحكم المتجر" : "دخول أصحاب المتاجر"}
+            label={isMerchant ? "لوحة تحكم المتجر" : "دخول / تسجيل صاحب متجر"}
             trailing={isMerchant ? "مفعّل" : undefined}
           />
         </Section>
+
 
         <Section title="المندوبين">
           <ItemLink
