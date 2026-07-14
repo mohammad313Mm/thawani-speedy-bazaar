@@ -79,11 +79,6 @@ function ProfilePage() {
         </Section>
 
 
-        <Section title="الحساب">
-          <Item icon={<MapPin />} label="عناويني" />
-          <Item icon={<CreditCard />} label="طرق الدفع" />
-          <Item icon={<Bell />} label="الإشعارات" />
-        </Section>
 
         <Section title="التطبيق">
           <div className="p-4">
@@ -94,11 +89,11 @@ function ProfilePage() {
               <ThemeChip current={theme} value="system" icon={<Monitor className="h-4 w-4" />} label="النظام" onClick={() => setTheme("system")} />
             </div>
           </div>
-          <Item icon={<Globe />} label="اللغة" trailing="العربية" />
         </Section>
 
+
+
         <Section title="الدعم">
-          <Item icon={<HelpCircle />} label="مركز المساعدة" />
           <Item icon={<FileText />} label="الشروط والأحكام" />
           <Item icon={<Shield />} label="سياسة الخصوصية" />
         </Section>
