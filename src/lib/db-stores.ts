@@ -1,0 +1,213 @@
+// Realtime hooks + adapters that map DB rows to the customer-app Store/Product shapes.
+import { useEffect, useState } from "react";
+import { supabase } from "../integrations/supabase/client";
+import type { CategoryKey, Store, Product } from "./data";
+
+export type DbStoreRow = {
+  id: string;
+  owner_id: string | null;
+  name: string;
+  category: string | null;
+  phone: string | null;
+  address: string | null;
+  description: string | null;
+  cover_url: string | null;
+  logo_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_open: boolean;
+  status: "active" | "suspended";
+  working_hours: string | null;
+  commission_rate: number;
+  commission_type: string;
+  commission_amount: number;
+  delivery_available: boolean;
+  created_at: string;
+};
+
+export type DbProductRow = {
+  id: string;
+  store_id: string;
+  name_ar: string;
+  description: string | null;
+  price_iqd: number;
+  image_url: string | null;
+  category: string | null;
+  is_available: boolean;
+  sort_order: number;
+};
+
+// Admin form values → customer-app CategoryKey
+export const STORE_CATEGORY_OPTIONS: { value: string; label: string; key: CategoryKey }[] = [
+  { value: "restaurants", label: "مطعم", key: "restaurants" },
+  { value: "cosmetics", label: "كوزمتك", key: "cosmetics" },
+  { value: "grocery", label: "بقالة", key: "grocery" },
+  { value: "sweets", label: "حلويات", key: "desserts" },
+  { value: "drinks", label: "مشروبات", key: "desserts" },
+];
+
+const CATEGORY_KEY_MAP: Record<string, CategoryKey> = {
+  restaurants: "restaurants",
+  cosmetics: "cosmetics",
+  grocery: "grocery",
+  sweets: "desserts",
+  drinks: "desserts",
+  desserts: "desserts",
+};
+
+const FALLBACK_COVER: Record<CategoryKey, string> = {
+  restaurants: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80",
+  grocery: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+  cosmetics: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+  desserts: "https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=800&q=80",
+};
+const FALLBACK_LOGO: Record<CategoryKey, string> = {
+  restaurants: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=200&h=200&q=80",
+  grocery: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=200&h=200&q=80",
+  cosmetics: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&h=200&q=80",
+  desserts: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=200&h=200&q=80",
+};
+
+export function mapDbCategoryToKey(cat: string | null): CategoryKey | null {
+  if (!cat) return null;
+  return CATEGORY_KEY_MAP[cat] ?? null;
+}
+
+export function adaptDbStore(row: DbStoreRow): Store | null {
+  const key = mapDbCategoryToKey(row.category);
+  if (!key) return null;
+  const isOpen = row.is_open && row.status === "active";
+  return {
+    id: row.id,
+    category: key,
+    name: row.name,
+    cover: row.cover_url || FALLBACK_COVER[key],
+    logo: row.logo_url || FALLBACK_LOGO[key],
+    rating: 5.0,
+    reviews: 0,
+    distanceKm: 0,
+    deliveryMin: 30,
+    deliveryFee: 2000,
+    minOrder: 0,
+    isOpen,
+    tags: row.working_hours ? [row.working_hours] : [],
+    description: row.description ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? "",
+  };
+}
+
+export function adaptDbProduct(row: DbProductRow): Product {
+  return {
+    id: row.id,
+    storeId: row.store_id,
+    name: row.name_ar,
+    description: row.description ?? "",
+    price: row.price_iqd,
+    image:
+      row.image_url ||
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+    category: row.category ?? "عام",
+    rating: 5.0,
+    prepMin: 15,
+    available: row.is_available,
+  };
+}
+
+// Subscribe to all stores + realtime; returns adapted Store[] (only rows with mappable category)
+export function useDbStores(): { stores: Store[]; loading: boolean } {
+  const [stores, setStores] = useState<Store[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("stores")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!alive) return;
+      const adapted = ((data ?? []) as DbStoreRow[])
+        .map(adaptDbStore)
+        .filter((s): s is Store => s !== null);
+      setStores(adapted);
+      setLoading(false);
+    };
+    load();
+    const ch = supabase
+      .channel("public_stores")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stores" }, load)
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase.removeChannel(ch);
+    };
+  }, []);
+
+  return { stores, loading };
+}
+
+export function useDbStore(id: string): { store: Store | null; loading: boolean } {
+  const [store, setStore] = useState<Store | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase.from("stores").select("*").eq("id", id).maybeSingle();
+      if (!alive) return;
+      setStore(data ? adaptDbStore(data as DbStoreRow) : null);
+      setLoading(false);
+    };
+    load();
+    const ch = supabase
+      .channel(`store_${id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "stores", filter: `id=eq.${id}` },
+        load,
+      )
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase.removeChannel(ch);
+    };
+  }, [id]);
+
+  return { store, loading };
+}
+
+export function useDbProducts(storeId: string): { products: Product[]; loading: boolean } {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("*")
+        .eq("store_id", storeId)
+        .eq("is_available", true)
+        .order("sort_order");
+      if (!alive) return;
+      setProducts(((data ?? []) as DbProductRow[]).map(adaptDbProduct));
+      setLoading(false);
+    };
+    load();
+    const ch = supabase
+      .channel(`store_products_${storeId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products", filter: `store_id=eq.${storeId}` },
+        load,
+      )
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase.removeChannel(ch);
+    };
+  }, [storeId]);
+
+  return { products, loading };
+}

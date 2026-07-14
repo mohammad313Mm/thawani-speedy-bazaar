@@ -1,10 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Star, Clock, MapPin, Phone, MessageCircle, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productsByStore, storeById } from "../lib/data";
 import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
 import { ProductCard } from "../components/ProductCard";
 import { useCart } from "../lib/cart";
+import { useDbStore, useDbProducts } from "../lib/db-stores";
 
 export const Route = createFileRoute("/store/$id")({
   component: StorePage,
@@ -12,9 +13,15 @@ export const Route = createFileRoute("/store/$id")({
 
 function StorePage() {
   const { id } = Route.useParams();
-  const store = storeById(id);
-  if (!store) throw notFound();
-  const products = useMemo(() => productsByStore(store.id), [store.id]);
+  const staticStore = storeById(id);
+  const { store: dbStore, loading: dbLoading } = useDbStore(staticStore ? "" : id);
+  const { products: dbProducts } = useDbProducts(staticStore ? "" : id);
+  const store = staticStore ?? dbStore;
+
+  const products = useMemo(() => {
+    if (!store) return [];
+    return staticStore ? productsByStore(store.id) : dbProducts;
+  }, [store, staticStore, dbProducts]);
   const categories = useMemo(
     () => Array.from(new Set(products.map((p) => p.category))),
     [products],
@@ -29,7 +36,26 @@ function StorePage() {
   }, [products, activeCat, q]);
 
   const { favStores, toggleFavStore, itemCount, subtotal } = useCart();
+
+  if (!store) {
+    return (
+      <main className="mx-auto max-w-2xl space-y-4 px-4 py-16 text-center">
+        {dbLoading ? (
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        ) : (
+          <>
+            <p className="text-lg font-black">المتجر غير موجود</p>
+            <Link to="/" className="inline-block rounded-full bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground">
+              العودة للرئيسية
+            </Link>
+          </>
+        )}
+      </main>
+    );
+  }
+
   const fav = favStores.includes(store.id);
+
 
   return (
     <>
