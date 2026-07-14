@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-const ADMIN_PASSWORD = "09244443Mm";
+const ADMIN_PASSWORD = "2361996arakf";
 
 const inputSchema = z.object({
   password: z.string(),

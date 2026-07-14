@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+
 import {
   User,
   Moon,
@@ -25,18 +25,8 @@ function ProfilePage() {
   const { user, roles, signOut } = useAuth();
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
-  const [isOwner, setIsOwner] = useState(false);
 
-  useEffect(() => {
-    try {
-      const ok =
-        localStorage.getItem("thawani_admin_pass_ok") === "1" ||
-        sessionStorage.getItem("thawani_admin_pass_ok") === "1";
-      setIsOwner(ok);
-    } catch {
-      setIsOwner(false);
-    }
-  }, []);
+
 
   const phoneDisplay =
     (user?.user_metadata?.phone as string | undefined) ??
@@ -93,11 +83,10 @@ function ProfilePage() {
           />
         </Section>
 
-        {isOwner && (
-          <Section title="الإدارة">
-            <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
-          </Section>
-        )}
+        <Section title="الإدارة">
+          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
+        </Section>
+
 
 
 
