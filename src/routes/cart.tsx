@@ -49,7 +49,7 @@ function CartPage() {
     else setApplied({ code: c, discount: 0 });
   };
 
-  if (items.length === 0 || !store) {
+  if (items.length === 0) {
     return (
       <>
         <header className="mx-auto max-w-2xl px-4 pt-6">
@@ -79,8 +79,9 @@ function CartPage() {
       <header className="mx-auto flex max-w-2xl items-center justify-between px-4 pt-6">
         <div>
           <h1 className="text-2xl font-black text-foreground">السلة</h1>
-          <p className="text-xs text-muted-foreground">من {store.name}</p>
+          {store && <p className="text-xs text-muted-foreground">من {store.name}</p>}
         </div>
+
         <button
           onClick={clear}
           className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-foreground"
