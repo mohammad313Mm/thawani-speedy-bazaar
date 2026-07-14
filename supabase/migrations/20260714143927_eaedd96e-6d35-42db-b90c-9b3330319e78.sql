@@ -1,0 +1,2 @@
+ALTER PUBLICATION supabase_realtime ADD TABLE public.merchant_applications;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.driver_applications;
