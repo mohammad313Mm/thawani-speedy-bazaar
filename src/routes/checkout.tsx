@@ -1,14 +1,22 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check } from "lucide-react";
+import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check, User } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
 import { storeById, productById } from "../lib/data";
-import { formatIQD } from "../lib/format";
+import { formatIQD, formatDistanceKm } from "../lib/format";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
+
+function feeForDistance(km: number): number {
+  if (km < 4) return 1000;
+  if (km < 7) return 2000;
+  if (km < 12) return 3000;
+  return 5000;
+}
 
 function CheckoutPage() {
   const navigate = useNavigate();
