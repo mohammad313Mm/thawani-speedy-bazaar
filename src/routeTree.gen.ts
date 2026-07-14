@@ -28,7 +28,6 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreIdRouteImport } from './routes/store.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
-import { Route as OrderIdRouteImport } from './routes/order.$id'
 import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
 import { Route as DriverDashboardRouteImport } from './routes/driver.dashboard'
 import { Route as CategoryKeyRouteImport } from './routes/category.$key'
@@ -130,11 +129,6 @@ const ProductIdRoute = ProductIdRouteImport.update({
   path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OrderIdRoute = OrderIdRouteImport.update({
-  id: '/order/$id',
-  path: '/order/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
   id: '/merchant/dashboard',
   path: '/merchant/dashboard',
@@ -184,7 +178,6 @@ export interface FileRoutesByFullPath {
   '/category/$key': typeof CategoryKeyRoute
   '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
-  '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
 }
@@ -211,7 +204,6 @@ export interface FileRoutesByTo {
   '/category/$key': typeof CategoryKeyRoute
   '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
-  '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
 }
@@ -239,7 +231,6 @@ export interface FileRoutesById {
   '/category/$key': typeof CategoryKeyRoute
   '/driver/dashboard': typeof DriverDashboardRoute
   '/merchant/dashboard': typeof MerchantDashboardRoute
-  '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
 }
@@ -268,7 +259,6 @@ export interface FileRouteTypes {
     | '/category/$key'
     | '/driver/dashboard'
     | '/merchant/dashboard'
-    | '/order/$id'
     | '/product/$id'
     | '/store/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -295,7 +285,6 @@ export interface FileRouteTypes {
     | '/category/$key'
     | '/driver/dashboard'
     | '/merchant/dashboard'
-    | '/order/$id'
     | '/product/$id'
     | '/store/$id'
   id:
@@ -322,7 +311,6 @@ export interface FileRouteTypes {
     | '/category/$key'
     | '/driver/dashboard'
     | '/merchant/dashboard'
-    | '/order/$id'
     | '/product/$id'
     | '/store/$id'
   fileRoutesById: FileRoutesById
@@ -350,7 +338,6 @@ export interface RootRouteChildren {
   CategoryKeyRoute: typeof CategoryKeyRoute
   DriverDashboardRoute: typeof DriverDashboardRoute
   MerchantDashboardRoute: typeof MerchantDashboardRoute
-  OrderIdRoute: typeof OrderIdRoute
   ProductIdRoute: typeof ProductIdRoute
   StoreIdRoute: typeof StoreIdRoute
 }
@@ -490,13 +477,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/order/$id': {
-      id: '/order/$id'
-      path: '/order/$id'
-      fullPath: '/order/$id'
-      preLoaderRoute: typeof OrderIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/merchant/dashboard': {
       id: '/merchant/dashboard'
       path: '/merchant/dashboard'
@@ -558,20 +538,9 @@ const rootRouteChildren: RootRouteChildren = {
   CategoryKeyRoute: CategoryKeyRoute,
   DriverDashboardRoute: DriverDashboardRoute,
   MerchantDashboardRoute: MerchantDashboardRoute,
-  OrderIdRoute: OrderIdRoute,
   ProductIdRoute: ProductIdRoute,
   StoreIdRoute: StoreIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
