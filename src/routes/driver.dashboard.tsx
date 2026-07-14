@@ -345,7 +345,7 @@ function DriverDashboardPage() {
                 key={o.id}
                 order={o}
                 storeName={stores[o.store_id]?.name}
-                showActions={false}
+                mode="history"
                 muted
               />
             ))
