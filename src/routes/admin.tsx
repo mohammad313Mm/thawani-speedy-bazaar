@@ -355,11 +355,27 @@ function ApplicationsPanel() {
   );
 }
 
+/* ---------------- Helpers ---------------- */
+
+function getAdminPass(): string {
+  try {
+    return (
+      sessionStorage.getItem("thawani_admin_pass") ||
+      localStorage.getItem("thawani_admin_pass") ||
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
+
 /* ---------------- Stores ---------------- */
 
 function StoresPanel() {
-  const [rows, setRows] = useState<StoreRow[]>([]);
+  const [rows, setRows] = useState<(StoreRow & { logo_url?: string | null })[]>([]);
   const [fetching, setFetching] = useState(false);
+  const [editing, setEditing] = useState<StoreRow | null>(null);
+  const [managingProducts, setManagingProducts] = useState<StoreRow | null>(null);
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -372,82 +388,310 @@ function StoresPanel() {
     load();
   }, [load]);
 
+  const password = getAdminPass();
+
   const toggleOpen = async (r: StoreRow) => {
-    await supabase.from("stores").update({ is_open: !r.is_open }).eq("id", r.id);
+    await adminSaveStore({
+      data: {
+        password, id: r.id, name: r.name, category: r.category, phone: r.phone,
+        working_hours: r.working_hours, commission_rate: Number(r.commission_rate),
+        is_open: !r.is_open,
+      },
+    });
     load();
   };
   const toggleStatus = async (r: StoreRow) => {
+    // status stays via supabase direct (needs admin role) — keep existing behavior
     await supabase
       .from("stores")
       .update({ status: r.status === "active" ? "suspended" : "active" })
       .eq("id", r.id);
     load();
   };
-  const setCommission = async (r: StoreRow) => {
-    const v = window.prompt("نسبة العمولة % لهذا المتجر", String(r.commission_rate));
-    if (v == null) return;
-    const num = Number(v);
-    if (Number.isNaN(num) || num < 0 || num > 100) return;
-    await supabase.from("stores").update({ commission_rate: num }).eq("id", r.id);
-    load();
-  };
   const remove = async (r: StoreRow) => {
     if (!window.confirm(`حذف المتجر "${r.name}"؟`)) return;
-    await supabase.from("stores").delete().eq("id", r.id);
-    load();
+    try {
+      await adminDeleteStore({ data: { password, id: r.id } });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
   };
 
-  if (fetching) return <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>;
-  if (rows.length === 0)
-    return (
-      <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
-        لا توجد متاجر مسجّلة بعد.
-      </p>
-    );
+  if (managingProducts) {
+    return <ProductsPanel store={managingProducts} onBack={() => setManagingProducts(null)} />;
+  }
 
   return (
     <div className="space-y-3">
-      {rows.map((r) => (
-        <article key={r.id} className="space-y-2 rounded-2xl bg-card p-4 shadow-soft">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-black">{r.name}</p>
-              {r.category && <p className="text-xs text-muted-foreground">{r.category}</p>}
-              {r.phone && (
-                <p className="text-xs text-muted-foreground" dir="ltr">
-                  {r.phone}
-                </p>
-              )}
-              {r.working_hours && <p className="text-xs text-foreground">الدوام: {r.working_hours}</p>}
-              <p className="mt-1 text-xs font-bold text-primary">العمولة: {r.commission_rate}%</p>
+      {fetching ? (
+        <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>
+      ) : rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد متاجر مسجّلة بعد.
+        </p>
+      ) : (
+        rows.map((r) => (
+          <article key={r.id} className="space-y-2 rounded-2xl bg-card p-4 shadow-soft">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                {r.logo_url ? (
+                  <img src={r.logo_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Store className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-black">{r.name}</p>
+                  {r.category && <p className="text-xs text-muted-foreground">{r.category}</p>}
+                  {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
+                  <p className="mt-1 text-xs font-bold text-primary">العمولة: {r.commission_rate}%</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1 text-[10px] font-black">
+                <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "مفتوح" : "مغلق"}</Badge>
+                <Badge tone={r.status === "active" ? "success" : "danger"}>
+                  {r.status === "active" ? "نشط" : "موقوف"}
+                </Badge>
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-1 text-[10px] font-black">
-              <Badge tone={r.is_open ? "success" : "muted"}>{r.is_open ? "مفتوح" : "مغلق"}</Badge>
-              <Badge tone={r.status === "active" ? "success" : "danger"}>
-                {r.status === "active" ? "نشط" : "موقوف"}
-              </Badge>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2 pt-1">
-            <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
-              <Power className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
-              <ShieldCheck className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => setCommission(r)} label="تعديل العمولة">
-              <Percent className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconBtn>
-          </div>
-        </article>
-      ))}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <IconBtn onClick={() => setManagingProducts(r)} label="المنتجات">
+                <Package className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => setEditing(r)} label="تعديل">
+                <Pencil className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => toggleOpen(r)} label={r.is_open ? "إغلاق" : "فتح"}>
+                <Power className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => toggleStatus(r)} label={r.status === "active" ? "إيقاف" : "تفعيل"}>
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </IconBtn>
+              <IconBtn onClick={() => remove(r)} label="حذف" tone="danger">
+                <Trash2 className="h-3.5 w-3.5" />
+              </IconBtn>
+            </div>
+          </article>
+        ))
+      )}
+      {editing && (
+        <StoreEditor
+          store={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(); }}
+        />
+      )}
     </div>
   );
 }
+
+function StoreEditor({
+  store, onClose, onSaved,
+}: { store: StoreRow & { logo_url?: string | null }; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(store.name);
+  const [category, setCategory] = useState(store.category ?? "");
+  const [phone, setPhone] = useState(store.phone ?? "");
+  const [hours, setHours] = useState(store.working_hours ?? "");
+  const [commission, setCommission] = useState(String(store.commission_rate));
+  const [logoUrl, setLogoUrl] = useState<string>(store.logo_url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = await compressImageToDataUrl(f, { maxWidth: 400, quality: 0.75 });
+    setLogoUrl(url);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await adminSaveStore({
+        data: {
+          password: getAdminPass(),
+          id: store.id,
+          name,
+          category: category || null,
+          phone: phone || null,
+          working_hours: hours || null,
+          logo_url: logoUrl || null,
+          commission_rate: Number(commission) || 0,
+          is_open: store.is_open,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title="تعديل المتجر" onClose={onClose}>
+      <ImagePicker url={logoUrl} onPick={pickImage} label="شعار المتجر" />
+      <Field label="اسم المتجر" value={name} onChange={setName} />
+      <Field label="التصنيف" value={category} onChange={setCategory} />
+      <Field label="الهاتف" value={phone} onChange={setPhone} dir="ltr" />
+      <Field label="أوقات الدوام" value={hours} onChange={setHours} />
+      <Field label="نسبة العمولة %" value={commission} onChange={setCommission} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+/* ---------------- Products ---------------- */
+
+type ProductRow = {
+  id: string;
+  store_id: string;
+  name_ar: string;
+  description: string | null;
+  price_iqd: number;
+  image_url: string | null;
+  category: string | null;
+  is_available: boolean;
+  sort_order: number;
+};
+
+function ProductsPanel({ store, onBack }: { store: StoreRow; onBack: () => void }) {
+  const [rows, setRows] = useState<ProductRow[]>([]);
+  const [editing, setEditing] = useState<ProductRow | null>(null);
+  const [creating, setCreating] = useState(false);
+  const password = getAdminPass();
+
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from("products").select("*").eq("store_id", store.id)
+      .order("sort_order").order("created_at", { ascending: false });
+    setRows((data ?? []) as ProductRow[]);
+  }, [store.id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const del = async (p: ProductRow) => {
+    if (!window.confirm(`حذف "${p.name_ar}"؟`)) return;
+    try {
+      await adminDeleteProduct({ data: { password, id: p.id } });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const toggle = async (p: ProductRow) => {
+    try {
+      await adminSaveProduct({
+        data: {
+          password, id: p.id, store_id: p.store_id, name_ar: p.name_ar,
+          description: p.description, price_iqd: p.price_iqd, image_url: p.image_url,
+          category: p.category, is_available: !p.is_available, sort_order: p.sort_order,
+        },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-black">
+          <ArrowRight className="h-4 w-4" /> رجوع
+        </button>
+        <div className="min-w-0 text-right">
+          <p className="text-xs text-muted-foreground">منتجات</p>
+          <p className="truncate text-sm font-black">{store.name}</p>
+        </div>
+      </div>
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> إضافة منتج جديد
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد منتجات بعد.
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {rows.map((p) => (
+            <article key={p.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+              {p.image_url ? (
+                <img src={p.image_url} alt="" className="h-28 w-full object-cover" />
+              ) : (
+                <div className="flex h-28 w-full items-center justify-center bg-muted">
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="space-y-1 p-3">
+                <p className="truncate text-sm font-black">{p.name_ar}</p>
+                <p className="text-xs font-bold text-primary">{p.price_iqd.toLocaleString("ar-IQ")} د.ع</p>
+                <Badge tone={p.is_available ? "success" : "muted"}>{p.is_available ? "متوفر" : "غير متوفر"}</Badge>
+                <div className="flex gap-1 pt-1">
+                  <IconBtn onClick={() => setEditing(p)} label="تعديل"><Pencil className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => toggle(p)} label={p.is_available ? "إخفاء" : "إظهار"}><Power className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => del(p)} label="حذف" tone="danger"><Trash2 className="h-3 w-3" /></IconBtn>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      {(creating || editing) && (
+        <ProductEditor
+          storeId={store.id}
+          product={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function ProductEditor({
+  storeId, product, onClose, onSaved,
+}: { storeId: string; product: ProductRow | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(product?.name_ar ?? "");
+  const [desc, setDesc] = useState(product?.description ?? "");
+  const [price, setPrice] = useState(String(product?.price_iqd ?? ""));
+  const [category, setCategory] = useState(product?.category ?? "");
+  const [image, setImage] = useState<string>(product?.image_url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = await compressImageToDataUrl(f, { maxWidth: 900, quality: 0.75 });
+    setImage(url);
+  };
+
+  const save = async () => {
+    if (!name.trim() || !price) { window.alert("الاسم والسعر مطلوبان"); return; }
+    setSaving(true);
+    try {
+      await adminSaveProduct({
+        data: {
+          password: getAdminPass(),
+          id: product?.id,
+          store_id: storeId,
+          name_ar: name.trim(),
+          description: desc || null,
+          price_iqd: Math.round(Number(price) || 0),
+          image_url: image || null,
+          category: category || null,
+          is_available: product?.is_available ?? true,
+          sort_order: product?.sort_order ?? 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={product ? "تعديل منتج" : "منتج جديد"} onClose={onClose}>
+      <ImagePicker url={image} onPick={pickImage} label="صورة المنتج" />
+      <Field label="اسم المنتج" value={name} onChange={setName} />
+      <Field label="السعر (د.ع)" value={price} onChange={setPrice} type="number" />
+      <Field label="التصنيف" value={category} onChange={setCategory} />
+      <Field label="الوصف" value={desc} onChange={setDesc} multiline />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
 
 /* ---------------- Drivers ---------------- */
 
