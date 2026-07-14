@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
@@ -22,7 +22,25 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const { items, storeId, subtotal, clear } = useCart();
   const { addOrder } = useOrders();
-  const store = storeId ? storeById(storeId) : null;
+  const staticStore = storeId ? storeById(storeId) : null;
+  const [dbStore, setDbStore] = useState<ReturnType<typeof storeById> | null>(null);
+  useEffect(() => {
+    if (!storeId || staticStore) {
+      setDbStore(null);
+      return;
+    }
+    let alive = true;
+    (async () => {
+      const { supabase } = await import("../integrations/supabase/client");
+      const { adaptDbStore } = await import("../lib/db-stores");
+      const { data } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
+      if (alive) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [storeId, staticStore]);
+  const store = staticStore ?? dbStore;
 
   const [fullName, setFullName] = useState("");
   const [address, setAddress] = useState("");
@@ -33,7 +51,7 @@ function CheckoutPage() {
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
 
-  if (!store || items.length === 0) {
+  if (items.length === 0) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">لا يوجد لديك طلب لإتمامه.</p>
@@ -67,7 +85,7 @@ function CheckoutPage() {
           }
           // Keep the store's declared distance as the source of truth for demo stores.
           // Real stores with coordinates could compute Haversine here.
-          setDistanceKm(store.distanceKm);
+          if (store) setDistanceKm(store.distanceKm);
           toast.success("تم تحديد موقعك");
         } finally {
           setLocating(false);
@@ -90,13 +108,13 @@ function CheckoutPage() {
     setPlacing(true);
     setTimeout(async () => {
       const order = addOrder({
-        storeId: store.id,
+        storeId: storeId ?? "",
         items,
         subtotal,
         deliveryFee,
         discount: 0,
         total,
-        etaMin: store.deliveryMin,
+        etaMin: store?.deliveryMin ?? 30,
         address,
         phone,
         notes: notes || undefined,
@@ -107,7 +125,7 @@ function CheckoutPage() {
         const { data: userRes } = await supabase.auth.getUser();
         await supabase.from("customer_orders").insert({
           local_order_id: order.id,
-          store_id: store.id,
+          store_id: storeId ?? "",
           customer_id: userRes.user?.id ?? null,
           customer_name: fullName,
           customer_phone: phone,
@@ -182,7 +200,7 @@ function CheckoutPage() {
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
           <p className="mt-2 text-[11px] text-muted-foreground">
-            المسافة إلى {store.name}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
+            المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
           </p>
         </section>
 
@@ -243,7 +261,7 @@ function CheckoutPage() {
             </div>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
-            الوصول المتوقع خلال {store.deliveryMin} دقيقة.
+            الوصول المتوقع خلال {store?.deliveryMin ?? 30} دقيقة.
           </p>
         </section>
       </main>

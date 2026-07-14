@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Minus, Plus, Trash2, ShoppingBag, Tag } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../lib/cart";
-import { storeById } from "../lib/data";
+import { storeById, type Store } from "../lib/data";
+import { adaptDbStore, type DbStoreRow } from "../lib/db-stores";
+import { supabase } from "../integrations/supabase/client";
 import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/cart")({
@@ -11,7 +13,27 @@ export const Route = createFileRoute("/cart")({
 
 function CartPage() {
   const { items, storeId, updateQty, removeItem, clear, subtotal } = useCart();
-  const store = storeId ? storeById(storeId) : null;
+  const staticStore = storeId ? storeById(storeId) : null;
+  const [dbStore, setDbStore] = useState<Store | null>(null);
+  useEffect(() => {
+    if (!storeId || staticStore) {
+      setDbStore(null);
+      return;
+    }
+    let alive = true;
+    supabase
+      .from("stores")
+      .select("*")
+      .eq("id", storeId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setDbStore(data ? adaptDbStore(data as unknown as DbStoreRow) : null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [storeId, staticStore]);
+  const store = staticStore ?? dbStore;
   const [coupon, setCoupon] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
 
@@ -27,7 +49,7 @@ function CartPage() {
     else setApplied({ code: c, discount: 0 });
   };
 
-  if (items.length === 0 || !store) {
+  if (items.length === 0) {
     return (
       <>
         <header className="mx-auto max-w-2xl px-4 pt-6">
@@ -57,8 +79,9 @@ function CartPage() {
       <header className="mx-auto flex max-w-2xl items-center justify-between px-4 pt-6">
         <div>
           <h1 className="text-2xl font-black text-foreground">السلة</h1>
-          <p className="text-xs text-muted-foreground">من {store.name}</p>
+          {store && <p className="text-xs text-muted-foreground">من {store.name}</p>}
         </div>
+
         <button
           onClick={clear}
           className="rounded-full border border-border px-3 py-1.5 text-xs font-bold text-foreground"
