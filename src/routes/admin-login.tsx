@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
-const ADMIN_PHONE = "07873049738";
-const ADMIN_PASSWORD = "09244443";
+const ADMIN_PHONE = "07873409638";
+const ADMIN_PASSWORD = "09244443Mm";
 export const ADMIN_PASS_KEY = "thawani_admin_pass_ok";
 
 export const Route = createFileRoute("/admin-login")({
@@ -24,6 +24,9 @@ function AdminLoginPage() {
     const normalizedPhone = phone.trim();
     if (normalizedPhone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
       try {
+        // Persistent login: keep signed in until manual logout
+        localStorage.setItem(ADMIN_PASS_KEY, "1");
+        localStorage.setItem("thawani_admin_pass", password);
         sessionStorage.setItem(ADMIN_PASS_KEY, "1");
         sessionStorage.setItem("thawani_admin_pass", password);
       } catch {
@@ -31,7 +34,7 @@ function AdminLoginPage() {
       }
       navigate({ to: "/admin" });
     } else {
-      setError("بيانات الدخول غير صحيحة");
+      setError("Invalid phone number or password.");
       setLoading(false);
     }
   };
