@@ -199,6 +199,7 @@ export type Database = {
       driver_applications: {
         Row: {
           admin_note: string | null
+          applicant_note: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -211,6 +212,7 @@ export type Database = {
         }
         Insert: {
           admin_note?: string | null
+          applicant_note?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -223,6 +225,7 @@ export type Database = {
         }
         Update: {
           admin_note?: string | null
+          applicant_note?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -358,6 +361,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          is_available: boolean
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
@@ -366,6 +370,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
@@ -374,6 +379,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
