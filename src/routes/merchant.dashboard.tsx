@@ -105,7 +105,7 @@ function MerchantDashboard() {
       setUserId(data.user.id);
       const { data: s } = await supabase
         .from("stores")
-        .select("id, name, is_open, status, logo_url, owner_id")
+        .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
         .eq("owner_id", data.user.id)
         .maybeSingle();
       if (!s) {
