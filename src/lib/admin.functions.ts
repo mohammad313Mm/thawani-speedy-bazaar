@@ -131,14 +131,21 @@ export const adminDeleteArea = createServerFn({ method: "POST" })
 const storeSchema = z.object({
   password: z.string(),
   id: z.string().uuid().optional(),
-  owner_id: z.string().uuid().optional(),
+  owner_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1),
   category: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
   working_hours: z.string().nullable().optional(),
   logo_url: z.string().nullable().optional(),
+  cover_url: z.string().nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
   commission_rate: z.number().min(0).max(100).default(15),
+  commission_type: z.enum(["percent", "fixed"]).default("percent"),
+  commission_amount: z.number().min(0).default(0),
+  delivery_available: z.boolean().default(true),
   is_open: z.boolean().default(true),
 });
 
