@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   User,
   Moon,
@@ -24,6 +25,23 @@ function ProfilePage() {
   const { user, roles, signOut } = useAuth();
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    try {
+      const ok =
+        localStorage.getItem("thawani_admin_pass_ok") === "1" ||
+        sessionStorage.getItem("thawani_admin_pass_ok") === "1";
+      setIsOwner(ok);
+    } catch {
+      setIsOwner(false);
+    }
+  }, []);
+
+  const phoneDisplay =
+    (user?.user_metadata?.phone as string | undefined) ??
+    (user?.email ? user.email.replace(/@thawani\.app$/, "") : null);
+
 
 
   return (
@@ -38,9 +56,10 @@ function ProfilePage() {
             <User className="h-8 w-8" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-black">
-              {user ? user.email : "مرحباً بك"}
+            <p className="text-lg font-black" dir="ltr">
+              {user ? phoneDisplay ?? "مرحباً بك" : "مرحباً بك"}
             </p>
+
             <p className="mt-0.5 text-xs opacity-90">
               {user ? "حسابك مفعّل" : "سجل دخولك لتتبع طلباتك وحفظ عناوينك"}
             </p>
@@ -74,9 +93,12 @@ function ProfilePage() {
           />
         </Section>
 
-        <Section title="الإدارة">
-          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
-        </Section>
+        {isOwner && (
+          <Section title="الإدارة">
+            <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
+          </Section>
+        )}
+
 
 
 

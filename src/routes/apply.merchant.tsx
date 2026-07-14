@@ -23,7 +23,6 @@ function MerchantApplyPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [storeName, setStoreName] = useState("");
   const [app, setApp] = useState<App | null>(null);
   const [fetching, setFetching] = useState(true);
@@ -37,7 +36,6 @@ function MerchantApplyPage() {
 
   useEffect(() => {
     if (!user) return;
-    setEmail(user.email ?? "");
     supabase
       .from("merchant_applications")
       .select("id, full_name, phone, email, store_name, status, admin_note")
@@ -48,7 +46,6 @@ function MerchantApplyPage() {
           setApp(data as App);
           setFullName(data.full_name);
           setPhone(data.phone);
-          setEmail(data.email ?? user.email ?? "");
           setStoreName(data.store_name ?? "");
         }
         setFetching(false);
@@ -67,7 +64,7 @@ function MerchantApplyPage() {
           user_id: user.id,
           full_name: fullName,
           phone,
-          email: email || null,
+          email: null,
           store_name: storeName || null,
           status: "pending",
         },
@@ -124,8 +121,8 @@ function MerchantApplyPage() {
           <form onSubmit={submit} className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
             <TextField label="الاسم الكامل" value={fullName} onChange={setFullName} required />
             <TextField label="رقم الهاتف" value={phone} onChange={setPhone} required inputMode="tel" />
-            <TextField label="البريد الإلكتروني" value={email} onChange={setEmail} required inputMode="text" />
             <TextField label="اسم المتجر" value={storeName} onChange={setStoreName} required />
+
             {error && (
               <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
                 {error}
