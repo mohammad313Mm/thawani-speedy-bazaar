@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { ArrowRight, Bike, LogOut, Check, X, MapPin, Store, Clock, Phone, PackageCheck } from "lucide-react";
+import { ArrowRight, Bike, LogOut, Check, MapPin, Store, Clock, Phone, PackageCheck } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { formatIQD } from "../lib/format";
