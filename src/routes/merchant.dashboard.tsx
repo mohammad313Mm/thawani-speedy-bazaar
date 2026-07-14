@@ -147,6 +147,10 @@ function MerchantDashboard() {
     );
   }
 
+  if (!store.category) {
+    return <StoreSetup store={store} onSaved={(s) => setStore(s)} onSignOut={signOut} />;
+  }
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/90 backdrop-blur-xl">
