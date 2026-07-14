@@ -125,7 +125,7 @@ function CheckoutPage() {
         const { data: userRes } = await supabase.auth.getUser();
         await supabase.from("customer_orders").insert({
           local_order_id: order.id,
-          store_id: store.id,
+          store_id: storeId ?? "",
           customer_id: userRes.user?.id ?? null,
           customer_name: fullName,
           customer_phone: phone,
