@@ -621,7 +621,7 @@ function StatusPanel({
       .from("stores")
       .update({ is_open: next })
       .eq("id", store.id)
-      .select("id, name, is_open, status, logo_url, owner_id")
+      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
       .single();
     setBusy(false);
     if (!error && data) onUpdated(data as StoreRow);
