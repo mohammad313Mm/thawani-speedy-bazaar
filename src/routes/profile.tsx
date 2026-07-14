@@ -106,7 +106,7 @@ function ProfilePage() {
 
 
         <Section title="الدعم">
-          <Item icon={<FileText />} label="الشروط والأحكام" />
+          <ItemLink to="/terms" icon={<FileText />} label="الشروط والأحكام" />
           <ItemLink to="/privacy" icon={<Shield />} label="سياسة الخصوصية" />
         </Section>
 
