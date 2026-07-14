@@ -136,8 +136,7 @@ function AppFrame() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const hideNav =
     pathname === "/welcome" ||
-    pathname.startsWith("/checkout") ||
-    pathname.startsWith("/order/");
+    pathname.startsWith("/checkout");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
