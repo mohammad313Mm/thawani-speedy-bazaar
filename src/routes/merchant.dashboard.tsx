@@ -669,3 +669,184 @@ function StatusPanel({
     </div>
   );
 }
+
+/* ============ STORE SETUP (first-time) ============ */
+
+const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "restaurants", label: "مطعم" },
+  { value: "cosmetics", label: "كوزمتك" },
+  { value: "grocery", label: "بقالة" },
+  { value: "sweets", label: "حلويات" },
+  { value: "drinks", label: "مشروبات" },
+];
+
+function StoreSetup({
+  store,
+  onSaved,
+  onSignOut,
+}: {
+  store: StoreRow;
+  onSaved: (s: StoreRow) => void;
+  onSignOut: () => void;
+}) {
+  const [name, setName] = useState(store.name ?? "");
+  const [phone, setPhone] = useState(store.phone ?? "");
+  const [description, setDescription] = useState(store.description ?? "");
+  const [category, setCategory] = useState<string>("");
+  const [logo, setLogo] = useState<string | null>(store.logo_url ?? null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pickLogo = async (f: File) => {
+    try {
+      const url = await compressImageToDataUrl(f, { maxWidth: 600, quality: 0.8 });
+      setLogo(url);
+    } catch (e) {
+      setErr((e as Error).message);
+    }
+  };
+
+  const save = async () => {
+    setErr(null);
+    if (!name.trim() || !phone.trim() || !description.trim() || !category || !logo) {
+      setErr("يرجى تعبئة كافة الحقول ورفع صورة المتجر");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase
+      .from("stores")
+      .update({
+        name: name.trim(),
+        phone: phone.trim(),
+        description: description.trim(),
+        category,
+        logo_url: logo,
+        is_open: true,
+      })
+      .eq("id", store.id)
+      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+      .single();
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    onSaved(data as StoreRow);
+  };
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-6 pb-24">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-[11px] text-muted-foreground">إعداد المتجر</p>
+          <h1 className="text-xl font-black text-foreground">أكمل معلومات متجرك</h1>
+        </div>
+        <button
+          onClick={onSignOut}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10 text-destructive"
+          title="خروج"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
+      </div>
+
+      <p className="mb-5 rounded-2xl bg-primary/10 p-3 text-xs font-bold text-primary">
+        بعد إكمال البيانات سيتم نشر متجرك مباشرة للزبائن.
+      </p>
+
+      <div className="space-y-4 rounded-3xl bg-card p-5 shadow-soft">
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-muted"
+          >
+            {logo ? (
+              <img src={logo} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlus className="h-8 w-8 text-muted-foreground" />
+            )}
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && pickLogo(e.target.files[0])}
+          />
+          <p className="text-[11px] text-muted-foreground">شعار / صورة المتجر</p>
+        </div>
+
+        <Field label="اسم المتجر">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+          />
+        </Field>
+
+        <Field label="رقم الهاتف">
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            dir="ltr"
+            inputMode="tel"
+            className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+          />
+        </Field>
+
+        <Field label="وصف المتجر">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+            className="w-full rounded-xl border border-border bg-background p-3 text-sm"
+          />
+        </Field>
+
+        <Field label="التصنيف">
+          <div className="grid grid-cols-2 gap-2">
+            {CATEGORY_OPTIONS.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => setCategory(o.value)}
+                className={`h-11 rounded-xl border text-sm font-black transition-colors ${
+                  category === o.value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-foreground"
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        {err && (
+          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
+            {err}
+          </p>
+        )}
+
+        <button
+          onClick={save}
+          disabled={busy}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-soft disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ معلومات المتجر"}
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-bold text-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
