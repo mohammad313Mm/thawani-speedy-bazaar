@@ -101,7 +101,7 @@ function ProfilePage() {
               <ThemeChip current={theme} value="system" icon={<Monitor className="h-4 w-4" />} label="النظام" onClick={() => setTheme("system")} />
             </div>
           </div>
-        </section>
+        </Section>
 
 
 
