@@ -285,33 +285,6 @@ function PrivacyPage() {
           ))}
         </div>
 
-        {/* Contact cards */}
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-          <h3 className="mb-4 text-base font-black text-foreground">
-            {isAr ? "معلومات التواصل" : "Contact Information"}
-          </h3>
-          <div className="space-y-3">
-            <ContactRow
-              icon={<Phone className="h-4 w-4" />}
-              label={isAr ? "خدمة العملاء" : "Customer Support"}
-              value="07800181794"
-              href="tel:07800181794"
-            />
-            <ContactRow
-              icon={<Mail className="h-4 w-4" />}
-              label={isAr ? "البريد الإلكتروني" : "Email Address"}
-              value="support@thawani.app"
-              href="mailto:support@thawani.app"
-            />
-            <ContactRow
-              icon={<Globe className="h-4 w-4" />}
-              label={isAr ? "الموقع الرسمي" : "Official Website"}
-              value="thawani-speedy-bazaar.lovable.app"
-              href="https://thawani-speedy-bazaar.lovable.app"
-            />
-          </div>
-        </section>
-
         <p className="text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} ثواني — Thawani. {isAr ? "جميع الحقوق محفوظة." : "All rights reserved."}
         </p>
@@ -320,33 +293,3 @@ function PrivacyPage() {
   );
 }
 
-function ContactRow({
-  icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  href: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 transition-colors hover:bg-muted"
-    >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        {icon}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-bold text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-black text-foreground" dir="ltr">
-          {value}
-        </p>
-      </div>
-    </a>
-  );
-}
