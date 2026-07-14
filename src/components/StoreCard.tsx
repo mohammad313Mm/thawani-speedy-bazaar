@@ -11,7 +11,7 @@ export function StoreCard({ store }: { store: Store }) {
     <Link
       to="/store/$id"
       params={{ id: store.id }}
-      className="group block overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
+      className="group flex h-full flex-col overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
     >
       <div className="relative h-40 overflow-hidden">
         <img
@@ -53,7 +53,7 @@ export function StoreCard({ store }: { store: Store }) {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="line-clamp-1 flex-1 text-base font-bold text-foreground">{store.name}</h3>
           <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold text-foreground">
@@ -64,7 +64,7 @@ export function StoreCard({ store }: { store: Store }) {
         <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
           {store.tags.join(" • ")}
         </p>
-        <div className="mt-3 flex items-center gap-3 text-[11px] font-semibold text-muted-foreground">
+        <div className="mt-auto pt-3 flex items-center gap-3 text-[11px] font-semibold text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3.5 w-3.5" /> {formatMinutes(store.deliveryMin)}
           </span>
