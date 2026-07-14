@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreIdRouteImport } from './routes/store.$id'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
+import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
 import { Route as CategoryKeyRouteImport } from './routes/category.$key'
 import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
 import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
@@ -103,6 +104,11 @@ const OrderIdRoute = OrderIdRouteImport.update({
   path: '/order/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
+  id: '/merchant/dashboard',
+  path: '/merchant/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategoryKeyRoute = CategoryKeyRouteImport.update({
   id: '/category/$key',
   path: '/category/$key',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
+  '/merchant/dashboard': typeof MerchantDashboardRoute
   '/order/$id': typeof OrderIdRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
+    | '/merchant/dashboard'
     | '/order/$id'
     | '/product/$id'
     | '/store/$id'
@@ -259,6 +271,7 @@ export interface RootRouteChildren {
   ApplyDriverRoute: typeof ApplyDriverRoute
   ApplyMerchantRoute: typeof ApplyMerchantRoute
   CategoryKeyRoute: typeof CategoryKeyRoute
+  MerchantDashboardRoute: typeof MerchantDashboardRoute
   OrderIdRoute: typeof OrderIdRoute
   ProductIdRoute: typeof ProductIdRoute
   StoreIdRoute: typeof StoreIdRoute
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/merchant/dashboard': {
+      id: '/merchant/dashboard'
+      path: '/merchant/dashboard'
+      fullPath: '/merchant/dashboard'
+      preLoaderRoute: typeof MerchantDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$key': {
       id: '/category/$key'
       path: '/category/$key'
@@ -411,6 +431,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApplyDriverRoute: ApplyDriverRoute,
   ApplyMerchantRoute: ApplyMerchantRoute,
   CategoryKeyRoute: CategoryKeyRoute,
+  MerchantDashboardRoute: MerchantDashboardRoute,
   OrderIdRoute: OrderIdRoute,
   ProductIdRoute: ProductIdRoute,
   StoreIdRoute: StoreIdRoute,

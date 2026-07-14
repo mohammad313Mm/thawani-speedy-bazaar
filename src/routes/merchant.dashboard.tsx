@@ -218,7 +218,7 @@ function OrdersPanel({ storeId }: { storeId: string }) {
       .select("*")
       .eq("store_id", storeId)
       .order("created_at", { ascending: false });
-    setOrders((data ?? []) as OrderRow[]);
+    setOrders((data ?? []) as unknown as OrderRow[]);
     setLoading(false);
   };
 
