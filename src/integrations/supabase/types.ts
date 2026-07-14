@@ -313,13 +313,20 @@ export type Database = {
         Row: {
           address: string | null
           category: string | null
+          commission_amount: number
           commission_rate: number
+          commission_type: string
+          cover_url: string | null
           created_at: string
+          delivery_available: boolean
+          description: string | null
           id: string
           is_open: boolean
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           name: string
-          owner_id: string
+          owner_id: string | null
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
           updated_at: string
@@ -328,13 +335,20 @@ export type Database = {
         Insert: {
           address?: string | null
           category?: string | null
+          commission_amount?: number
           commission_rate?: number
+          commission_type?: string
+          cover_url?: string | null
           created_at?: string
+          delivery_available?: boolean
+          description?: string | null
           id?: string
           is_open?: boolean
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name: string
-          owner_id: string
+          owner_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
@@ -343,13 +357,20 @@ export type Database = {
         Update: {
           address?: string | null
           category?: string | null
+          commission_amount?: number
           commission_rate?: number
+          commission_type?: string
+          cover_url?: string | null
           created_at?: string
+          delivery_available?: boolean
+          description?: string | null
           id?: string
           is_open?: boolean
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name?: string
-          owner_id?: string
+          owner_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
