@@ -61,7 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
         <button
           onClick={() => {
-            addItem(product.id);
+            addItem(product);
             toast.success("تمت الإضافة إلى السلة", { description: product.name });
           }}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-110 active:scale-95"
