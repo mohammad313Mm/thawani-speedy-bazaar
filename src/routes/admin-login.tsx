@@ -2,8 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
-const ADMIN_PHONE = "07873409638";
-const ADMIN_PASSWORD = "09244443Mm";
+const ADMIN_PHONE = "07800181794";
+const ADMIN_PASSWORD = "2361996arakf";
 export const ADMIN_PASS_KEY = "thawani_admin_pass_ok";
 
 export const Route = createFileRoute("/admin-login")({
