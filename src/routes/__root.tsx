@@ -145,7 +145,9 @@ function AppFrame() {
         <Outlet />
       </div>
       {!hideNav && <BottomNav />}
+      <Toaster position="top-center" richColors />
     </div>
+
   );
 }
 
