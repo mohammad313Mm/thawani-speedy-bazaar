@@ -56,9 +56,10 @@ function ProfilePage() {
             <User className="h-8 w-8" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-black">
-              {user ? user.email : "مرحباً بك"}
+            <p className="text-lg font-black" dir="ltr">
+              {user ? phoneDisplay ?? "مرحباً بك" : "مرحباً بك"}
             </p>
+
             <p className="mt-0.5 text-xs opacity-90">
               {user ? "حسابك مفعّل" : "سجل دخولك لتتبع طلباتك وحفظ عناوينك"}
             </p>
