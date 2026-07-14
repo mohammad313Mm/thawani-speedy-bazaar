@@ -65,7 +65,10 @@ function CheckoutPage() {
           customer_phone: phone,
           address,
           notes: notes || null,
-          items: items.map((it) => ({ name: it.name, qty: it.qty, price: it.price })),
+          items: items.map((it) => {
+            const p = productById(it.productId);
+            return { name: p?.name ?? it.productId, qty: it.quantity, price: p?.price ?? 0 };
+          }),
           subtotal,
           delivery_fee: deliveryFee,
           total,
