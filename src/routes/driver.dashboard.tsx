@@ -21,6 +21,8 @@ type Order = {
   total: number;
   status: string;
   driver_id: string | null;
+  accepted_at: string | null;
+  delivered_at: string | null;
   created_at: string;
 };
 
