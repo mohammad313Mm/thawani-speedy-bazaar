@@ -47,6 +47,87 @@ export type Database = {
         }
         Relationships: []
       }
+      advertisements: {
+        Row: {
+          category: string | null
+          created_at: string
+          ends_at: string | null
+          id: string
+          image_url: string
+          is_active: boolean
+          link_url: string | null
+          position: string
+          sort_order: number
+          starts_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean
+          link_url?: string | null
+          position?: string
+          sort_order?: number
+          starts_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean
+          link_url?: string | null
+          position?: string
+          sort_order?: number
+          starts_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      delivery_areas: {
+        Row: {
+          city: string | null
+          created_at: string
+          fee_iqd: number
+          id: string
+          is_active: boolean
+          min_order_iqd: number
+          name_ar: string
+          name_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          fee_iqd?: number
+          id?: string
+          is_active?: boolean
+          min_order_iqd?: number
+          name_ar: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          fee_iqd?: number
+          id?: string
+          is_active?: boolean
+          min_order_iqd?: number
+          name_ar?: string
+          name_en?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       driver_applications: {
         Row: {
           admin_note: string | null
@@ -85,6 +166,32 @@ export type Database = {
           vehicle_type?: string | null
         }
         Relationships: []
+      }
+      driver_delivery_areas: {
+        Row: {
+          area_id: string
+          created_at: string
+          driver_id: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          driver_id: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          driver_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_delivery_areas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       merchant_applications: {
         Row: {
@@ -125,6 +232,56 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_available: boolean
+          name_ar: string
+          price_iqd: number
+          sort_order: number
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name_ar: string
+          price_iqd?: number
+          sort_order?: number
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_available?: boolean
+          name_ar?: string
+          price_iqd?: number
+          sort_order?: number
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -160,6 +317,7 @@ export type Database = {
           created_at: string
           id: string
           is_open: boolean
+          logo_url: string | null
           name: string
           owner_id: string
           phone: string | null
@@ -174,6 +332,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_open?: boolean
+          logo_url?: string | null
           name: string
           owner_id: string
           phone?: string | null
@@ -188,6 +347,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_open?: boolean
+          logo_url?: string | null
           name?: string
           owner_id?: string
           phone?: string | null
