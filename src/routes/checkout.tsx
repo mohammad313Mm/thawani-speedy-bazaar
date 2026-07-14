@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
-import { storeById, productById } from "../lib/data";
+import { storeById } from "../lib/data";
 import { formatIQD, formatDistanceKm } from "../lib/format";
 
 export const Route = createFileRoute("/checkout")({
@@ -114,7 +114,7 @@ function CheckoutPage() {
           address,
           notes: notes || null,
           items: items.map((it) => {
-            const p = productById(it.productId);
+            const p = it.product;
             return { name: p?.name ?? it.productId, qty: it.quantity, price: p?.price ?? 0 };
           }),
           subtotal,

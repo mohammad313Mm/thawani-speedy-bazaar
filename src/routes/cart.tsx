@@ -69,7 +69,7 @@ function CartPage() {
 
       <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
         {items.map((it) => {
-          const p = productById(it.productId);
+          const p = it.product;
           if (!p) return null;
           const price = p.discountPrice ?? p.price;
           return (

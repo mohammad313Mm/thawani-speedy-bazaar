@@ -160,7 +160,7 @@ function OrderPage() {
           </div>
           <div className="mt-3 space-y-2 border-t border-border pt-3">
             {order.items.map((it) => {
-              const p = productById(it.productId);
+              const p = it.product;
               if (!p) return null;
               return (
                 <div key={it.productId} className="flex items-center justify-between text-sm">
