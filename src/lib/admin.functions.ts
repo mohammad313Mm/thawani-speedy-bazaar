@@ -154,7 +154,8 @@ export const adminSaveStore = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     } else {
       if (!row.owner_id) throw new Error("owner_id مطلوب لإنشاء متجر جديد");
-      const { error } = await supabaseAdmin.from("stores").insert(row);
+      const insertRow = { ...row, owner_id: row.owner_id };
+      const { error } = await supabaseAdmin.from("stores").insert(insertRow);
       if (error) throw new Error(error.message);
     }
     return { ok: true };
