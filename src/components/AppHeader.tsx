@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Bell, MapPin, User } from "lucide-react";
+import thawaniLogo from "@/assets/thawani-logo.png.asset.json";
 
 interface HeaderProps {
   location?: string;
