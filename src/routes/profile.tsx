@@ -107,7 +107,7 @@ function ProfilePage() {
 
         <Section title="الدعم">
           <Item icon={<FileText />} label="الشروط والأحكام" />
-          <Item icon={<Shield />} label="سياسة الخصوصية" />
+          <ItemLink to="/privacy" icon={<Shield />} label="سياسة الخصوصية" />
         </Section>
 
         {user && (
