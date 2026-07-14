@@ -220,6 +220,7 @@ function AdminPage() {
         </nav>
 
         {section === "apps" && <ApplicationsPanel />}
+        {section === "orders" && <OrdersPanel />}
         {section === "stores" && <StoresPanel />}
         {section === "drivers" && <DriversPanel />}
         {section === "ads" && <AdsPanel />}
