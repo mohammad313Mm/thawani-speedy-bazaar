@@ -3,7 +3,7 @@ import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check } from "
 import { useState } from "react";
 import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
-import { storeById } from "../lib/data";
+import { storeById, productById } from "../lib/data";
 import { formatIQD } from "../lib/format";
 
 export const Route = createFileRoute("/checkout")({
