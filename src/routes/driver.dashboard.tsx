@@ -126,8 +126,41 @@ function DriverDashboardPage() {
     };
   }, [user, loadOrders]);
 
+  const lockoutRemainingMs = unavailableUntil ? Math.max(0, unavailableUntil - now) : 0;
+  const inLockout = lockoutRemainingMs > 0;
+
+  // Auto re-enable availability once the 20-minute lockout ends
+  useEffect(() => {
+    if (!user || !unavailableUntil) return;
+    const remaining = unavailableUntil - Date.now();
+    if (remaining <= 0) {
+      (async () => {
+        await supabase
+          .from("profiles")
+          .update({ is_available: true, unavailable_until: null })
+          .eq("id", user.id);
+        setUnavailableUntil(null);
+        setIsAvailable(true);
+      })();
+      return;
+    }
+    const t = setTimeout(async () => {
+      await supabase
+        .from("profiles")
+        .update({ is_available: true, unavailable_until: null })
+        .eq("id", user.id);
+      setUnavailableUntil(null);
+      setIsAvailable(true);
+    }, remaining + 250);
+    return () => clearTimeout(t);
+  }, [user, unavailableUntil]);
+
   const toggleAvailability = async (next: boolean) => {
     if (!user) return;
+    if (next && inLockout) {
+      alert("لا يمكن تفعيل الحالة قبل انتهاء مهلة الـ20 دقيقة");
+      return;
+    }
     setIsAvailable(next);
     await supabase.from("profiles").update({ is_available: next }).eq("id", user.id);
   };
@@ -136,27 +169,40 @@ function DriverDashboardPage() {
   const acceptOrder = async (id: string) => {
     if (!user) return;
     setBusy(id);
+    const acceptedAt = new Date();
+    const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
     const { data, error } = await supabase
       .from("customer_orders")
-      .update({ driver_id: user.id, status: "driver_assigned" })
+      .update({
+        driver_id: user.id,
+        status: "driver_assigned",
+        accepted_at: acceptedAt.toISOString(),
+      })
       .eq("id", id)
       .is("driver_id", null)
       .select("id")
       .maybeSingle();
     if (error || !data) {
       alert("تم استلام هذا الطلب من قِبل مندوب آخر");
+    } else {
+      // Lock the driver for 20 minutes; hide new orders
+      await supabase
+        .from("profiles")
+        .update({ is_available: false, unavailable_until: until.toISOString() })
+        .eq("id", user.id);
+      setUnavailableUntil(until.getTime());
+      setIsAvailable(false);
     }
     await loadOrders();
     setBusy(null);
   };
 
-  const rejectOrder = async (id: string) => {
+  const deliverOrder = async (id: string) => {
     if (!user) return;
     setBusy(id);
-    // Release only if this driver already claimed it; otherwise it's a "skip".
     await supabase
       .from("customer_orders")
-      .update({ driver_id: null, status: "ready" })
+      .update({ status: "delivered", delivered_at: new Date().toISOString() })
       .eq("id", id)
       .eq("driver_id", user.id);
     await loadOrders();
@@ -171,11 +217,14 @@ function DriverDashboardPage() {
     );
   }
 
-  const pending = isAvailable
+  const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
+  const hasActive = active.length > 0;
+  // Hide the pool while the driver has an active order or is in lockout
+  const pending = isAvailable && !hasActive && !inLockout
     ? orders.filter((o) => o.driver_id === null && ["accepted", "preparing", "ready"].includes(o.status))
     : [];
-  const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
   const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
+
 
   return (
     <>
