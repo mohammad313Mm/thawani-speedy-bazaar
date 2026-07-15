@@ -98,11 +98,16 @@ export type Database = {
           address: string
           created_at: string
           customer_id: string | null
+          customer_lat: number | null
+          customer_lng: number | null
           customer_name: string | null
           customer_phone: string
           delivered_at: string | null
           delivery_fee: number
           driver_id: string | null
+          driver_lat: number | null
+          driver_lng: number | null
+          driver_location_updated_at: string | null
           id: string
           items: Json
           local_order_id: string | null
@@ -119,11 +124,16 @@ export type Database = {
           address: string
           created_at?: string
           customer_id?: string | null
+          customer_lat?: number | null
+          customer_lng?: number | null
           customer_name?: string | null
           customer_phone: string
           delivered_at?: string | null
           delivery_fee?: number
           driver_id?: string | null
+          driver_lat?: number | null
+          driver_lng?: number | null
+          driver_location_updated_at?: string | null
           id?: string
           items?: Json
           local_order_id?: string | null
@@ -140,11 +150,16 @@ export type Database = {
           address?: string
           created_at?: string
           customer_id?: string | null
+          customer_lat?: number | null
+          customer_lng?: number | null
           customer_name?: string | null
           customer_phone?: string
           delivered_at?: string | null
           delivery_fee?: number
           driver_id?: string | null
+          driver_lat?: number | null
+          driver_lng?: number | null
+          driver_location_updated_at?: string | null
           id?: string
           items?: Json
           local_order_id?: string | null

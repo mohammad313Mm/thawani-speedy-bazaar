@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { ArrowRight, Bike, LogOut, Check, MapPin, Store, Clock, Phone, PackageCheck } from "lucide-react";
+import { ArrowRight, Bike, LogOut, Check, MapPin, Store, Clock, Phone } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { formatIQD } from "../lib/format";
+import { ActiveDeliveryDetails, type ActiveOrder } from "../components/ActiveDeliveryDetails";
 
 export const Route = createFileRoute("/driver/dashboard")({
   component: DriverDashboardPage,
@@ -316,19 +317,18 @@ function DriverDashboardPage() {
           </Section>
         )}
 
-        {/* Active */}
+        {/* Active — full customer info + live map */}
         <Section title="طلباتي النشطة">
           {active.length === 0 ? (
             <EmptyState text="لا توجد طلبات نشطة." />
           ) : (
             active.map((o) => (
-              <OrderCard
+              <ActiveDeliveryDetails
                 key={o.id}
-                order={o}
+                order={o as unknown as ActiveOrder}
                 storeName={stores[o.store_id]?.name}
                 onDeliver={() => deliverOrder(o.id)}
                 busy={busy === o.id}
-                mode="active"
               />
             ))
           )}
@@ -377,7 +377,6 @@ function OrderCard({
   order,
   storeName,
   onAccept,
-  onDeliver,
   busy = false,
   muted = false,
   mode = "history",
@@ -385,10 +384,9 @@ function OrderCard({
   order: Order;
   storeName?: string;
   onAccept?: () => void;
-  onDeliver?: () => void;
   busy?: boolean;
   muted?: boolean;
-  mode?: "incoming" | "active" | "history";
+  mode?: "incoming" | "history";
 }) {
   return (
     <article
@@ -443,17 +441,6 @@ function OrderCard({
         </div>
       )}
 
-      {mode === "active" && (
-        <div className="mt-3">
-          <button
-            disabled={busy}
-            onClick={onDeliver}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
-          >
-            <PackageCheck className="h-4 w-4" /> تسليم الطلب
-          </button>
-        </div>
-      )}
     </article>
   );
 }

@@ -50,6 +50,7 @@ function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   if (items.length === 0) {
     return (
@@ -75,6 +76,7 @@ function CheckoutPage() {
       async (pos) => {
         try {
           const { latitude, longitude } = pos.coords;
+          setCoords({ lat: latitude, lng: longitude });
           // Reverse-geocode via Nominatim (best-effort)
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ar`,
@@ -140,6 +142,8 @@ function CheckoutPage() {
           total,
           payment_method: payment,
           status: "pending",
+          customer_lat: coords?.lat ?? null,
+          customer_lng: coords?.lng ?? null,
         });
       } catch {
         /* non-fatal */
