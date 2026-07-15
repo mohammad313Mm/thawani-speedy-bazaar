@@ -142,6 +142,8 @@ function CheckoutPage() {
           total,
           payment_method: payment,
           status: "pending",
+          customer_lat: coords?.lat ?? null,
+          customer_lng: coords?.lng ?? null,
         });
       } catch {
         /* non-fatal */
