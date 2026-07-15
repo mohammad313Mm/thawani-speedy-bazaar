@@ -441,17 +441,6 @@ function OrderCard({
         </div>
       )}
 
-      {mode === "active" && (
-        <div className="mt-3">
-          <button
-            disabled={busy}
-            onClick={onDeliver}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
-          >
-            <PackageCheck className="h-4 w-4" /> تسليم الطلب
-          </button>
-        </div>
-      )}
     </article>
   );
 }
