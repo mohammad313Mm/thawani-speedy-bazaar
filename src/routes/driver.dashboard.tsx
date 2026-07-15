@@ -317,19 +317,18 @@ function DriverDashboardPage() {
           </Section>
         )}
 
-        {/* Active */}
+        {/* Active — full customer info + live map */}
         <Section title="طلباتي النشطة">
           {active.length === 0 ? (
             <EmptyState text="لا توجد طلبات نشطة." />
           ) : (
             active.map((o) => (
-              <OrderCard
+              <ActiveDeliveryDetails
                 key={o.id}
-                order={o}
+                order={o as unknown as ActiveOrder}
                 storeName={stores[o.store_id]?.name}
                 onDeliver={() => deliverOrder(o.id)}
                 busy={busy === o.id}
-                mode="active"
               />
             ))
           )}
