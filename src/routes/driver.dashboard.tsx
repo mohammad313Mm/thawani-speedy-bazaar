@@ -377,7 +377,6 @@ function OrderCard({
   order,
   storeName,
   onAccept,
-  onDeliver,
   busy = false,
   muted = false,
   mode = "history",
@@ -385,10 +384,9 @@ function OrderCard({
   order: Order;
   storeName?: string;
   onAccept?: () => void;
-  onDeliver?: () => void;
   busy?: boolean;
   muted?: boolean;
-  mode?: "incoming" | "active" | "history";
+  mode?: "incoming" | "history";
 }) {
   return (
     <article
