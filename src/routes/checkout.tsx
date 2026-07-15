@@ -76,6 +76,7 @@ function CheckoutPage() {
       async (pos) => {
         try {
           const { latitude, longitude } = pos.coords;
+          setCoords({ lat: latitude, lng: longitude });
           // Reverse-geocode via Nominatim (best-effort)
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=ar`,
