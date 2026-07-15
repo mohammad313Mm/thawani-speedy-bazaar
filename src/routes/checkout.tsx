@@ -50,6 +50,7 @@ function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   if (items.length === 0) {
     return (
