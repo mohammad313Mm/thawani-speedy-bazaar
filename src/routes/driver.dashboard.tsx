@@ -88,7 +88,7 @@ function DriverDashboardPage() {
       .from("customer_orders")
       .select("*")
       .is("driver_id", null)
-      .in("status", ["accepted", "preparing", "ready"])
+      .in("status", ["searching_driver", "accepted", "preparing", "ready"])
       .order("created_at", { ascending: false })
       .limit(50);
     const rows = [...((pool ?? []) as Order[]), ...((mine ?? []) as Order[])];
