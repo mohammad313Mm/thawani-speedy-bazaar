@@ -114,10 +114,16 @@ export function adaptDbProduct(row: DbProductRow): Product {
   };
 }
 
+// Module-level caches: seed hooks synchronously so revisits render instantly
+// while a background refresh runs (stale-while-revalidate).
+const storesCache: { list: Store[] | null } = { list: null };
+const storeCache = new Map<string, Store | null>();
+const productsCache = new Map<string, Product[]>();
+
 // Subscribe to all stores + realtime; returns adapted Store[] (only rows with mappable category)
 export function useDbStores(): { stores: Store[]; loading: boolean } {
-  const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stores, setStores] = useState<Store[]>(storesCache.list ?? []);
+  const [loading, setLoading] = useState(storesCache.list === null);
 
   useEffect(() => {
     let alive = true;
@@ -130,6 +136,7 @@ export function useDbStores(): { stores: Store[]; loading: boolean } {
       const adapted = ((data ?? []) as DbStoreRow[])
         .map(adaptDbStore)
         .filter((s): s is Store => s !== null);
+      storesCache.list = adapted;
       setStores(adapted);
       setLoading(false);
     };
@@ -148,15 +155,19 @@ export function useDbStores(): { stores: Store[]; loading: boolean } {
 }
 
 export function useDbStore(id: string): { store: Store | null; loading: boolean } {
-  const [store, setStore] = useState<Store | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = id ? storeCache.get(id) : undefined;
+  const [store, setStore] = useState<Store | null>(cached ?? null);
+  const [loading, setLoading] = useState(cached === undefined);
 
   useEffect(() => {
+    if (!id) return;
     let alive = true;
     const load = async () => {
       const { data } = await supabase.from("stores").select("*").eq("id", id).maybeSingle();
       if (!alive) return;
-      setStore(data ? adaptDbStore(data as DbStoreRow) : null);
+      const adapted = data ? adaptDbStore(data as DbStoreRow) : null;
+      storeCache.set(id, adapted);
+      setStore(adapted);
       setLoading(false);
     };
     load();
@@ -178,10 +189,12 @@ export function useDbStore(id: string): { store: Store | null; loading: boolean 
 }
 
 export function useDbProducts(storeId: string): { products: Product[]; loading: boolean } {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cached = storeId ? productsCache.get(storeId) : undefined;
+  const [products, setProducts] = useState<Product[]>(cached ?? []);
+  const [loading, setLoading] = useState(cached === undefined);
 
   useEffect(() => {
+    if (!storeId) return;
     let alive = true;
     const load = async () => {
       const { data } = await supabase
@@ -191,7 +204,9 @@ export function useDbProducts(storeId: string): { products: Product[]; loading: 
         .eq("is_available", true)
         .order("sort_order");
       if (!alive) return;
-      setProducts(((data ?? []) as DbProductRow[]).map(adaptDbProduct));
+      const adapted = ((data ?? []) as DbProductRow[]).map(adaptDbProduct);
+      productsCache.set(storeId, adapted);
+      setProducts(adapted);
       setLoading(false);
     };
     load();
@@ -211,3 +226,4 @@ export function useDbProducts(storeId: string): { products: Product[]; loading: 
 
   return { products, loading };
 }
+

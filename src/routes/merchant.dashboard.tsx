@@ -35,11 +35,15 @@ type StoreRow = {
   is_open: boolean;
   status: string;
   logo_url: string | null;
+  cover_url: string | null;
   owner_id: string | null;
   category: string | null;
   phone: string | null;
   description: string | null;
 };
+
+const STORE_SELECT =
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description";
 
 type ProductRow = {
   id: string;
@@ -114,7 +118,7 @@ function MerchantDashboard() {
       setUserId(data.user.id);
       const { data: s } = await supabase
         .from("stores")
-        .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+        .select(STORE_SELECT)
         .eq("owner_id", data.user.id)
         .maybeSingle();
       if (!s) {
@@ -692,7 +696,7 @@ function StatusPanel({
       .from("stores")
       .update({ is_open: next })
       .eq("id", store.id)
-      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+      .select(STORE_SELECT)
       .single();
     setBusy(false);
     if (!error && data) onUpdated(data as StoreRow);
@@ -764,15 +768,23 @@ function StoreSetup({
   const [phone, setPhone] = useState(store.phone ?? "");
   const [description, setDescription] = useState(store.description ?? "");
   const [category, setCategory] = useState<string>("");
-  const [logo, setLogo] = useState<string | null>(store.logo_url ?? null);
+  const [cover, setCover] = useState<string | null>(store.cover_url ?? store.logo_url ?? null);
+  const [logo, setLogo] = useState<string | null>(
+    store.cover_url ? store.logo_url ?? null : null,
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
 
-  const pickLogo = async (f: File) => {
+  const pickImage = async (
+    f: File,
+    setter: (v: string) => void,
+    maxWidth: number,
+  ) => {
     try {
-      const url = await compressImageToDataUrl(f, { maxWidth: 600, quality: 0.8 });
-      setLogo(url);
+      const url = await compressImageToDataUrl(f, { maxWidth, quality: 0.82 });
+      setter(url);
     } catch (e) {
       setErr((e as Error).message);
     }
@@ -780,8 +792,15 @@ function StoreSetup({
 
   const save = async () => {
     setErr(null);
-    if (!name.trim() || !phone.trim() || !description.trim() || !category || !logo) {
-      setErr("يرجى تعبئة كافة الحقول ورفع صورة المتجر");
+    if (
+      !name.trim() ||
+      !phone.trim() ||
+      !description.trim() ||
+      !category ||
+      !cover ||
+      !logo
+    ) {
+      setErr("يرجى تعبئة كافة الحقول ورفع صورة الغلاف وشعار المتجر");
       return;
     }
     setBusy(true);
@@ -792,11 +811,12 @@ function StoreSetup({
         phone: phone.trim(),
         description: description.trim(),
         category,
+        cover_url: cover,
         logo_url: logo,
         is_open: true,
       })
       .eq("id", store.id)
-      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+      .select(STORE_SELECT)
       .single();
     setBusy(false);
     if (error) {
@@ -827,27 +847,56 @@ function StoreSetup({
       </p>
 
       <div className="space-y-4 rounded-3xl bg-card p-5 shadow-soft">
-        <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-muted"
-          >
-            {logo ? (
-              <img src={logo} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImagePlus className="h-8 w-8 text-muted-foreground" />
-            )}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && pickLogo(e.target.files[0])}
-          />
-          <p className="text-[11px] text-muted-foreground">شعار / صورة المتجر</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => coverRef.current?.click()}
+              className="relative flex h-28 w-full items-center justify-center overflow-hidden rounded-2xl bg-muted"
+            >
+              {cover ? (
+                <img src={cover} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              )}
+            </button>
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                e.target.files?.[0] && pickImage(e.target.files[0], setCover, 1200)
+              }
+            />
+            <p className="text-[11px] font-bold text-muted-foreground">صورة الغلاف</p>
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => logoRef.current?.click()}
+              className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-muted"
+            >
+              {logo ? (
+                <img src={logo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              )}
+            </button>
+            <input
+              ref={logoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                e.target.files?.[0] && pickImage(e.target.files[0], setLogo, 500)
+              }
+            />
+            <p className="text-[11px] font-bold text-muted-foreground">شعار المتجر</p>
+          </div>
         </div>
+
 
         <Field label="اسم المتجر">
           <input
