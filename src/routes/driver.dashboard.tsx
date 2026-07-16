@@ -170,8 +170,10 @@ function DriverDashboardPage() {
 
   // Claim: RLS + trigger ensure only one driver wins.
   const acceptOrder = async (id: string) => {
-    if (!user) return;
+    if (!user) return false;
     setBusy(id);
+    // Optimistically dismiss the modal so it closes instantly on tap.
+    setDismissed((prev) => new Set(prev).add(id));
     const acceptedAt = new Date();
     const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
     const { data, error } = await supabase
@@ -185,10 +187,11 @@ function DriverDashboardPage() {
       .is("driver_id", null)
       .select("id")
       .maybeSingle();
+    let ok = false;
     if (error || !data) {
-      alert("تم استلام هذا الطلب من قِبل مندوب آخر");
+      alert(error?.message ? `تعذر قبول الطلب: ${error.message}` : "تم استلام هذا الطلب من قِبل مندوب آخر");
     } else {
-      // Lock the driver for 20 minutes; hide new orders
+      ok = true;
       await supabase
         .from("profiles")
         .update({ is_available: false, unavailable_until: until.toISOString() })
@@ -198,6 +201,12 @@ function DriverDashboardPage() {
     }
     await loadOrders();
     setBusy(null);
+    if (ok) {
+      setTimeout(() => {
+        document.getElementById("active-delivery")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
+    }
+    return ok;
   };
 
   const deliverOrder = async (id: string) => {
@@ -347,21 +356,23 @@ function DriverDashboardPage() {
         )}
 
         {/* Active — full customer info + live map */}
-        <Section title="طلباتي النشطة">
-          {active.length === 0 ? (
-            <EmptyState text="لا توجد طلبات نشطة." />
-          ) : (
-            active.map((o) => (
-              <ActiveDeliveryDetails
-                key={o.id}
-                order={o as unknown as ActiveOrder}
-                storeName={stores[o.store_id]?.name}
-                onDeliver={() => deliverOrder(o.id)}
-                busy={busy === o.id}
-              />
-            ))
-          )}
-        </Section>
+        <div id="active-delivery">
+          <Section title="طلباتي النشطة">
+            {active.length === 0 ? (
+              <EmptyState text="لا توجد طلبات نشطة." />
+            ) : (
+              active.map((o) => (
+                <ActiveDeliveryDetails
+                  key={o.id}
+                  order={o as unknown as ActiveOrder}
+                  storeName={stores[o.store_id]?.name}
+                  onDeliver={() => deliverOrder(o.id)}
+                  busy={busy === o.id}
+                />
+              ))
+            )}
+          </Section>
+        </div>
 
 
         {/* History */}
