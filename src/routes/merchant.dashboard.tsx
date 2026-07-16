@@ -35,11 +35,15 @@ type StoreRow = {
   is_open: boolean;
   status: string;
   logo_url: string | null;
+  cover_url: string | null;
   owner_id: string | null;
   category: string | null;
   phone: string | null;
   description: string | null;
 };
+
+const STORE_SELECT =
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description";
 
 type ProductRow = {
   id: string;
