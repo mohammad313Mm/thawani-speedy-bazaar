@@ -240,13 +240,8 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
     const rows = (data ?? []) as unknown as OrderRow[];
     setOrders(rows);
     setLoading(false);
-    // Trigger modal for the newest fresh pending order we haven't handled yet.
-    const fresh = rows.find(
-      (o) =>
-        o.status === "pending" &&
-        !seenIds.current.has(o.id) &&
-        new Date(o.created_at).getTime() >= mountedAt.current - 30_000,
-    );
+    // Trigger modal for the newest pending order we haven't handled yet.
+    const fresh = rows.find((o) => o.status === "pending" && !seenIds.current.has(o.id));
     if (fresh) {
       seenIds.current.add(fresh.id);
       setIncoming((cur) => cur ?? fresh);
