@@ -118,7 +118,7 @@ function MerchantDashboard() {
       setUserId(data.user.id);
       const { data: s } = await supabase
         .from("stores")
-        .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+        .select(STORE_SELECT)
         .eq("owner_id", data.user.id)
         .maybeSingle();
       if (!s) {
@@ -696,7 +696,7 @@ function StatusPanel({
       .from("stores")
       .update({ is_open: next })
       .eq("id", store.id)
-      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+      .select(STORE_SELECT)
       .single();
     setBusy(false);
     if (!error && data) onUpdated(data as StoreRow);
@@ -800,7 +800,7 @@ function StoreSetup({
         is_open: true,
       })
       .eq("id", store.id)
-      .select("id, name, is_open, status, logo_url, owner_id, category, phone, description")
+      .select(STORE_SELECT)
       .single();
     setBusy(false);
     if (error) {
