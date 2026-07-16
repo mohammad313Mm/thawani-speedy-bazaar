@@ -847,27 +847,56 @@ function StoreSetup({
       </p>
 
       <div className="space-y-4 rounded-3xl bg-card p-5 shadow-soft">
-        <div className="flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-muted"
-          >
-            {logo ? (
-              <img src={logo} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImagePlus className="h-8 w-8 text-muted-foreground" />
-            )}
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && pickLogo(e.target.files[0])}
-          />
-          <p className="text-[11px] text-muted-foreground">شعار / صورة المتجر</p>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => coverRef.current?.click()}
+              className="relative flex h-28 w-full items-center justify-center overflow-hidden rounded-2xl bg-muted"
+            >
+              {cover ? (
+                <img src={cover} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              )}
+            </button>
+            <input
+              ref={coverRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                e.target.files?.[0] && pickImage(e.target.files[0], setCover, 1200)
+              }
+            />
+            <p className="text-[11px] font-bold text-muted-foreground">صورة الغلاف</p>
+          </div>
+
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => logoRef.current?.click()}
+              className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-muted"
+            >
+              {logo ? (
+                <img src={logo} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImagePlus className="h-8 w-8 text-muted-foreground" />
+              )}
+            </button>
+            <input
+              ref={logoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) =>
+                e.target.files?.[0] && pickImage(e.target.files[0], setLogo, 500)
+              }
+            />
+            <p className="text-[11px] font-bold text-muted-foreground">شعار المتجر</p>
+          </div>
         </div>
+
 
         <Field label="اسم المتجر">
           <input
