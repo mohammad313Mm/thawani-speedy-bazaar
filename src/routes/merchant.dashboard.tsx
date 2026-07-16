@@ -60,7 +60,10 @@ type OrderStatus =
   | "picked_up"
   | "delivered"
   | "rejected"
-  | "cancelled";
+  | "cancelled"
+  | "missed"
+  | "searching_driver"
+  | "driver_assigned";
 
 type OrderRow = {
   id: string;
@@ -76,6 +79,8 @@ type OrderRow = {
   total: number;
   status: OrderStatus;
   created_at: string;
+  customer_lat: number | null;
+  customer_lng: number | null;
 };
 
 const ORDER_LABEL: Record<OrderStatus, string> = {
@@ -87,6 +92,9 @@ const ORDER_LABEL: Record<OrderStatus, string> = {
   delivered: "تم التوصيل",
   rejected: "مرفوض",
   cancelled: "ملغي",
+  missed: "فاتك الطلب",
+  searching_driver: "البحث عن مندوب",
+  driver_assigned: "تم تعيين المندوب",
 };
 
 function MerchantDashboard() {
