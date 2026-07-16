@@ -190,7 +190,7 @@ function MerchantDashboard() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
-        {tab === "orders" && <OrdersPanel storeId={store.id} />}
+        {tab === "orders" && <OrdersPanel storeId={store.id} storeName={store.name} />}
         {tab === "products" && <ProductsPanel storeId={store.id} />}
         {tab === "status" && <StatusPanel store={store} onUpdated={setStore} />}
       </main>
