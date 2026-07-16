@@ -21,6 +21,7 @@ import {
 import { supabase } from "../integrations/supabase/client";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
+import { IncomingOrderModal } from "../components/IncomingOrderModal";
 
 export const Route = createFileRoute("/merchant/dashboard")({
   component: MerchantDashboard,
