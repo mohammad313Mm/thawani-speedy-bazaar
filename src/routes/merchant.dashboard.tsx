@@ -768,15 +768,23 @@ function StoreSetup({
   const [phone, setPhone] = useState(store.phone ?? "");
   const [description, setDescription] = useState(store.description ?? "");
   const [category, setCategory] = useState<string>("");
-  const [logo, setLogo] = useState<string | null>(store.logo_url ?? null);
+  const [cover, setCover] = useState<string | null>(store.cover_url ?? store.logo_url ?? null);
+  const [logo, setLogo] = useState<string | null>(
+    store.cover_url ? store.logo_url ?? null : null,
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const logoRef = useRef<HTMLInputElement>(null);
 
-  const pickLogo = async (f: File) => {
+  const pickImage = async (
+    f: File,
+    setter: (v: string) => void,
+    maxWidth: number,
+  ) => {
     try {
-      const url = await compressImageToDataUrl(f, { maxWidth: 600, quality: 0.8 });
-      setLogo(url);
+      const url = await compressImageToDataUrl(f, { maxWidth, quality: 0.82 });
+      setter(url);
     } catch (e) {
       setErr((e as Error).message);
     }
@@ -784,8 +792,15 @@ function StoreSetup({
 
   const save = async () => {
     setErr(null);
-    if (!name.trim() || !phone.trim() || !description.trim() || !category || !logo) {
-      setErr("يرجى تعبئة كافة الحقول ورفع صورة المتجر");
+    if (
+      !name.trim() ||
+      !phone.trim() ||
+      !description.trim() ||
+      !category ||
+      !cover ||
+      !logo
+    ) {
+      setErr("يرجى تعبئة كافة الحقول ورفع صورة الغلاف وشعار المتجر");
       return;
     }
     setBusy(true);
@@ -796,6 +811,7 @@ function StoreSetup({
         phone: phone.trim(),
         description: description.trim(),
         category,
+        cover_url: cover,
         logo_url: logo,
         is_open: true,
       })
