@@ -356,21 +356,23 @@ function DriverDashboardPage() {
         )}
 
         {/* Active — full customer info + live map */}
-        <Section title="طلباتي النشطة">
-          {active.length === 0 ? (
-            <EmptyState text="لا توجد طلبات نشطة." />
-          ) : (
-            active.map((o) => (
-              <ActiveDeliveryDetails
-                key={o.id}
-                order={o as unknown as ActiveOrder}
-                storeName={stores[o.store_id]?.name}
-                onDeliver={() => deliverOrder(o.id)}
-                busy={busy === o.id}
-              />
-            ))
-          )}
-        </Section>
+        <div id="active-delivery">
+          <Section title="طلباتي النشطة">
+            {active.length === 0 ? (
+              <EmptyState text="لا توجد طلبات نشطة." />
+            ) : (
+              active.map((o) => (
+                <ActiveDeliveryDetails
+                  key={o.id}
+                  order={o as unknown as ActiveOrder}
+                  storeName={stores[o.store_id]?.name}
+                  onDeliver={() => deliverOrder(o.id)}
+                  busy={busy === o.id}
+                />
+              ))
+            )}
+          </Section>
+        </div>
 
 
         {/* History */}
