@@ -1,0 +1,1 @@
+UPDATE public.stores SET cover_url = logo_url WHERE cover_url IS NULL AND logo_url IS NOT NULL;
