@@ -248,13 +248,19 @@ export function ActiveDeliveryDetails({
         <section className="space-y-2 rounded-2xl bg-muted/40 p-3 text-xs">
           <Row icon={<User className="h-3.5 w-3.5" />} label={order.customer_name} />
           {order.customer_phone && (
-            <a
-              href={`tel:${order.customer_phone}`}
-              className="flex items-center gap-2 text-primary"
-            >
-              <Phone className="h-3.5 w-3.5" />
-              <span dir="ltr" className="truncate font-black">{order.customer_phone}</span>
-            </a>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2 text-foreground">
+                <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                <span dir="ltr" className="truncate font-black">{order.customer_phone}</span>
+              </div>
+              <a
+                href={`tel:${order.customer_phone}`}
+                className="flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-warm px-3 py-1.5 text-[11px] font-black text-white shadow-soft active:scale-95"
+              >
+                <span aria-hidden>📞</span>
+                اتصال
+              </a>
+            </div>
           )}
           {order.address && <Row icon={<MapPin className="h-3.5 w-3.5" />} label={order.address} />}
           {order.notes && (
