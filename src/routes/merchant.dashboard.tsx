@@ -229,7 +229,6 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
   const [loading, setLoading] = useState(true);
   const [incoming, setIncoming] = useState<OrderRow | null>(null);
   const [busy, setBusy] = useState(false);
-  const mountedAt = useRef(Date.now());
   const seenIds = useRef<Set<string>>(new Set());
 
   const load = async () => {
