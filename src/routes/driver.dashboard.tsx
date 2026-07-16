@@ -39,6 +39,7 @@ function DriverDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Record<string, StoreInfo>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (loading) return;
