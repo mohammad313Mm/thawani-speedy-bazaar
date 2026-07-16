@@ -5,6 +5,7 @@ import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { formatIQD } from "../lib/format";
 import { ActiveDeliveryDetails, type ActiveOrder } from "../components/ActiveDeliveryDetails";
+import { IncomingOrderModal } from "../components/IncomingOrderModal";
 
 export const Route = createFileRoute("/driver/dashboard")({
   component: DriverDashboardPage,
@@ -38,6 +39,7 @@ function DriverDashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Record<string, StoreInfo>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (loading) return;
@@ -88,7 +90,7 @@ function DriverDashboardPage() {
       .from("customer_orders")
       .select("*")
       .is("driver_id", null)
-      .in("status", ["accepted", "preparing", "ready"])
+      .in("status", ["searching_driver", "accepted", "preparing", "ready"])
       .order("created_at", { ascending: false })
       .limit(50);
     const rows = [...((pool ?? []) as Order[]), ...((mine ?? []) as Order[])];
@@ -222,13 +224,40 @@ function DriverDashboardPage() {
   const hasActive = active.length > 0;
   // Hide the pool while the driver has an active order or is in lockout
   const pending = isAvailable && !hasActive && !inLockout
-    ? orders.filter((o) => o.driver_id === null && ["accepted", "preparing", "ready"].includes(o.status))
+    ? orders.filter((o) => o.driver_id === null && ["searching_driver", "accepted", "preparing", "ready"].includes(o.status))
     : [];
   const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
 
+  const incoming = pending.find((o) => !dismissed.has(o.id)) ?? null;
 
   return (
     <>
+      {incoming && (
+        <IncomingOrderModal
+          variant="driver"
+          order={{
+            id: incoming.id,
+            local_order_id: incoming.local_order_id,
+            store_name: stores[incoming.store_id]?.name,
+            customer_name: incoming.customer_name,
+            address: incoming.address,
+            total: incoming.total,
+            subtotal: incoming.subtotal,
+            delivery_fee: incoming.delivery_fee,
+            created_at: incoming.created_at,
+          }}
+          onAccept={async () => {
+            await acceptOrder(incoming.id);
+          }}
+          onReject={() => {
+            setDismissed((prev) => new Set(prev).add(incoming.id));
+          }}
+          onTimeout={() => {
+            setDismissed((prev) => new Set(prev).add(incoming.id));
+          }}
+          busy={busy === incoming.id}
+        />
+      )}
       <header className="sticky top-0 z-30 border-b border-border/40 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <button

@@ -21,6 +21,7 @@ import {
 import { supabase } from "../integrations/supabase/client";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
+import { IncomingOrderModal } from "../components/IncomingOrderModal";
 
 export const Route = createFileRoute("/merchant/dashboard")({
   component: MerchantDashboard,
@@ -59,7 +60,10 @@ type OrderStatus =
   | "picked_up"
   | "delivered"
   | "rejected"
-  | "cancelled";
+  | "cancelled"
+  | "missed"
+  | "searching_driver"
+  | "driver_assigned";
 
 type OrderRow = {
   id: string;
@@ -75,6 +79,8 @@ type OrderRow = {
   total: number;
   status: OrderStatus;
   created_at: string;
+  customer_lat: number | null;
+  customer_lng: number | null;
 };
 
 const ORDER_LABEL: Record<OrderStatus, string> = {
@@ -86,6 +92,9 @@ const ORDER_LABEL: Record<OrderStatus, string> = {
   delivered: "تم التوصيل",
   rejected: "مرفوض",
   cancelled: "ملغي",
+  missed: "فاتك الطلب",
+  searching_driver: "البحث عن مندوب",
+  driver_assigned: "تم تعيين المندوب",
 };
 
 function MerchantDashboard() {
@@ -181,7 +190,7 @@ function MerchantDashboard() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
-        {tab === "orders" && <OrdersPanel storeId={store.id} />}
+        {tab === "orders" && <OrdersPanel storeId={store.id} storeName={store.name} />}
         {tab === "products" && <ProductsPanel storeId={store.id} />}
         {tab === "status" && <StatusPanel store={store} onUpdated={setStore} />}
       </main>
@@ -215,9 +224,12 @@ function TabBtn({
 
 /* ============ ORDERS ============ */
 
-function OrdersPanel({ storeId }: { storeId: string }) {
+function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: string }) {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [incoming, setIncoming] = useState<OrderRow | null>(null);
+  const [busy, setBusy] = useState(false);
+  const seenIds = useRef<Set<string>>(new Set());
 
   const load = async () => {
     const { data } = await supabase
@@ -225,8 +237,15 @@ function OrdersPanel({ storeId }: { storeId: string }) {
       .select("*")
       .eq("store_id", storeId)
       .order("created_at", { ascending: false });
-    setOrders((data ?? []) as unknown as OrderRow[]);
+    const rows = (data ?? []) as unknown as OrderRow[];
+    setOrders(rows);
     setLoading(false);
+    // Trigger modal for the newest pending order we haven't handled yet.
+    const fresh = rows.find((o) => o.status === "pending" && !seenIds.current.has(o.id));
+    if (fresh) {
+      seenIds.current.add(fresh.id);
+      setIncoming((cur) => cur ?? fresh);
+    }
   };
 
   useEffect(() => {
@@ -249,104 +268,156 @@ function OrdersPanel({ storeId }: { storeId: string }) {
     await supabase.from("customer_orders").update({ status }).eq("id", id);
   };
 
+  const handleAccept = async (o: OrderRow) => {
+    setBusy(true);
+    await updateStatus(o.id, "searching_driver");
+    setBusy(false);
+    setIncoming(null);
+  };
+  const handleReject = async (o: OrderRow) => {
+    setBusy(true);
+    await updateStatus(o.id, "rejected");
+    setBusy(false);
+    setIncoming(null);
+  };
+  const handleTimeout = async (o: OrderRow) => {
+    await updateStatus(o.id, "missed");
+    setIncoming(null);
+  };
+
   if (loading) {
     return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>;
   }
-  if (orders.length === 0) {
-    return (
-      <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        لا توجد طلبات حتى الآن. ستصلك الطلبات هنا فورًا.
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-3">
-      {orders.map((o) => (
-        <article key={o.id} className="rounded-2xl bg-card p-4 shadow-soft">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted-foreground">
-                طلب #{(o.local_order_id ?? o.id).slice(-6).toUpperCase()}
-              </p>
-              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {new Date(o.created_at).toLocaleString("ar-IQ")}
-              </p>
-            </div>
-            <span className={`rounded-full px-2 py-1 text-[10px] font-black ${statusChip(o.status)}`}>
-              {ORDER_LABEL[o.status]}
-            </span>
-          </div>
+    <>
+      {incoming && (
+        <IncomingOrderModal
+          variant="store"
+          order={{
+            id: incoming.id,
+            local_order_id: incoming.local_order_id,
+            store_name: storeName,
+            customer_name: incoming.customer_name,
+            customer_phone: incoming.customer_phone,
+            address: incoming.address,
+            notes: incoming.notes,
+            items: incoming.items,
+            subtotal: incoming.subtotal,
+            delivery_fee: incoming.delivery_fee,
+            total: incoming.total,
+            created_at: incoming.created_at,
+            customer_lat: incoming.customer_lat,
+            customer_lng: incoming.customer_lng,
+          }}
+          onAccept={() => handleAccept(incoming)}
+          onReject={() => handleReject(incoming)}
+          onTimeout={() => handleTimeout(incoming)}
+          busy={busy}
+        />
+      )}
 
-          <div className="space-y-1 border-t border-border/60 pt-2 text-sm">
-            <p className="font-bold text-foreground">{o.customer_name ?? "زبون"}</p>
-            <p className="flex items-center gap-1 text-xs text-muted-foreground" dir="ltr">
-              <Phone className="h-3 w-3" /> {o.customer_phone}
-            </p>
-            <p className="flex items-start gap-1 text-xs text-muted-foreground">
-              <MapPin className="mt-0.5 h-3 w-3" /> {o.address}
-            </p>
-          </div>
-
-          <div className="mt-2 space-y-1 border-t border-border/60 pt-2">
-            {(o.items ?? []).map((it, i) => (
-              <div key={i} className="flex justify-between text-xs">
-                <span className="text-foreground">
-                  {it.name} × {it.qty}
+      {orders.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          لا توجد طلبات حتى الآن. ستصلك الطلبات هنا فورًا.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {orders.map((o) => (
+            <article key={o.id} className="rounded-2xl bg-card p-4 shadow-soft">
+              <div className="mb-2 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    طلب #{(o.local_order_id ?? o.id).slice(-6).toUpperCase()}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" /> {new Date(o.created_at).toLocaleString("ar-IQ")}
+                  </p>
+                </div>
+                <span className={`rounded-full px-2 py-1 text-[10px] font-black ${statusChip(o.status)}`}>
+                  {ORDER_LABEL[o.status]}
                 </span>
-                <span className="text-muted-foreground">{formatIQD(it.price * it.qty)}</span>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-2 flex justify-between border-t border-border/60 pt-2 text-sm font-black">
-            <span>الإجمالي</span>
-            <span className="text-primary">{formatIQD(o.total)}</span>
-          </div>
+              <div className="space-y-1 border-t border-border/60 pt-2 text-sm">
+                <p className="font-bold text-foreground">{o.customer_name ?? "زبون"}</p>
+                <p className="flex items-center gap-1 text-xs text-muted-foreground" dir="ltr">
+                  <Phone className="h-3 w-3" /> {o.customer_phone}
+                </p>
+                <p className="flex items-start gap-1 text-xs text-muted-foreground">
+                  <MapPin className="mt-0.5 h-3 w-3" /> {o.address}
+                </p>
+              </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {o.status === "pending" && (
-              <>
-                <button
-                  onClick={() => updateStatus(o.id, "rejected")}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-xs font-black text-destructive"
-                >
-                  <X className="h-4 w-4" /> رفض الطلب
-                </button>
-                <button
-                  onClick={() => updateStatus(o.id, "preparing")}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-black text-primary-foreground"
-                >
-                  <Check className="h-4 w-4" /> قبول الطلب
-                </button>
-              </>
-            )}
-            {o.status === "preparing" && (
-              <button
-                onClick={() => updateStatus(o.id, "ready")}
-                className="col-span-2 flex items-center justify-center gap-1 rounded-xl bg-success py-2.5 text-xs font-black text-white"
-              >
-                <Truck className="h-4 w-4" /> تم تسليم الطلب للمندوب
-              </button>
-            )}
-            {o.status === "ready" && (
-              <p className="col-span-2 rounded-xl bg-success/10 py-2.5 text-center text-xs font-black text-success">
-                جاهز للاستلام من قبل المندوب
-              </p>
-            )}
-          </div>
-        </article>
-      ))}
-    </div>
+              <div className="mt-2 space-y-1 border-t border-border/60 pt-2">
+                {(o.items ?? []).map((it, i) => (
+                  <div key={i} className="flex justify-between text-xs">
+                    <span className="text-foreground">
+                      {it.name} × {it.qty}
+                    </span>
+                    <span className="text-muted-foreground">{formatIQD(it.price * it.qty)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-2 flex justify-between border-t border-border/60 pt-2 text-sm font-black">
+                <span>الإجمالي</span>
+                <span className="text-primary">{formatIQD(o.total)}</span>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {(o.status === "pending" || o.status === "missed") && (
+                  <>
+                    <button
+                      onClick={() => updateStatus(o.id, "rejected")}
+                      className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-xs font-black text-destructive"
+                    >
+                      <X className="h-4 w-4" /> رفض الطلب
+                    </button>
+                    <button
+                      onClick={() => updateStatus(o.id, "searching_driver")}
+                      className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-black text-primary-foreground"
+                    >
+                      <Check className="h-4 w-4" /> قبول الطلب
+                    </button>
+                  </>
+                )}
+                {o.status === "searching_driver" && (
+                  <p className="col-span-2 rounded-xl bg-warning/10 py-2.5 text-center text-xs font-black text-warning">
+                    البحث عن مندوب توصيل...
+                  </p>
+                )}
+                {o.status === "preparing" && (
+                  <button
+                    onClick={() => updateStatus(o.id, "ready")}
+                    className="col-span-2 flex items-center justify-center gap-1 rounded-xl bg-success py-2.5 text-xs font-black text-white"
+                  >
+                    <Truck className="h-4 w-4" /> تم تسليم الطلب للمندوب
+                  </button>
+                )}
+                {o.status === "ready" && (
+                  <p className="col-span-2 rounded-xl bg-success/10 py-2.5 text-center text-xs font-black text-success">
+                    جاهز للاستلام من قبل المندوب
+                  </p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
 function statusChip(s: OrderStatus): string {
   switch (s) {
     case "pending": return "bg-warning/15 text-warning";
-    case "preparing": return "bg-primary/15 text-primary";
-    case "ready": return "bg-success/15 text-success";
+    case "preparing":
+    case "searching_driver": return "bg-primary/15 text-primary";
+    case "ready":
+    case "driver_assigned": return "bg-success/15 text-success";
     case "delivered": return "bg-success/20 text-success";
+    case "missed": return "bg-warning/25 text-warning";
     case "rejected":
     case "cancelled": return "bg-destructive/15 text-destructive";
     default: return "bg-muted text-foreground";
