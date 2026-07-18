@@ -1551,9 +1551,9 @@ function OrdersPanel() {
   const [filter, setFilter] = useState<"all" | "pending" | "active" | "done">("pending");
 
   const load = useCallback(async () => {
-    const password = sessionStorage.getItem("thawani_admin_pass") ?? "";
     try {
-      const res = await adminListOrders({ data: { password } });
+      const res = await adminListOrders();
+
       setOrders(res.orders as unknown as AdminOrderRow[]);
       setStores(res.stores);
     } catch {

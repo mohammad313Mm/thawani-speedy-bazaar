@@ -125,29 +125,29 @@ function CheckoutPage() {
       try {
         const { supabase } = await import("../integrations/supabase/client");
         const { data: userRes } = await supabase.auth.getUser();
-        await supabase.from("customer_orders").insert({
-          local_order_id: order.id,
-          store_id: storeId ?? "",
-          customer_id: userRes.user?.id ?? null,
-          customer_name: fullName,
-          customer_phone: phone,
-          address,
-          notes: notes || null,
-          items: items.map((it) => {
-            const p = it.product;
-            return { name: p?.name ?? it.productId, qty: it.quantity, price: p?.price ?? 0 };
-          }),
-          subtotal,
-          delivery_fee: deliveryFee,
-          total,
-          payment_method: payment,
-          status: "pending",
-          customer_lat: coords?.lat ?? null,
-          customer_lng: coords?.lng ?? null,
+        const { placeOrder } = await import("../lib/orders.functions");
+        await placeOrder({
+          data: {
+            local_order_id: order.id,
+            store_id: storeId ?? "",
+            customer_id: userRes.user?.id ?? null,
+            customer_name: fullName,
+            customer_phone: phone,
+            address,
+            notes: notes || null,
+            items: items
+              .filter((it) => /^[0-9a-f-]{36}$/i.test(it.productId))
+              .map((it) => ({ product_id: it.productId, qty: it.quantity })),
+            distance_km: distanceKm,
+            payment_method: payment,
+            customer_lat: coords?.lat ?? null,
+            customer_lng: coords?.lng ?? null,
+          },
         });
       } catch {
-        /* non-fatal */
+        /* non-fatal — local order still saved */
       }
+
       clear();
       toast.success("تم استلام طلبك بنجاح");
       navigate({ to: "/orders" });

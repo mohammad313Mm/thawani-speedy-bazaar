@@ -1,16 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ADMIN_PASSWORD = "2361996arakf";
-
-function assertAdmin(password: string) {
-  if (password !== ADMIN_PASSWORD) throw new Error("Unauthorized");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertAdminCaller(ctx: { supabase: any; userId: string }) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
+  if (error || !data) throw new Error("Forbidden: admin role required");
 }
 
-/* ============== Application approve/reject (existing) ============== */
+/* ============== Application approve/reject ============== */
 
 const inputSchema = z.object({
-  password: z.string(),
   kind: z.enum(["merchant", "driver"]),
   id: z.string().uuid(),
   decision: z.enum(["approved", "rejected"]),
@@ -21,9 +24,10 @@ const APPROVE_MSG = "تم قبول طلبك من الإدارة، يمكنك ا�
 const REJECT_MSG = "تم رفض طلبك من الإدارة";
 
 export const adminActOnApplication = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => inputSchema.parse(data))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const table = data.kind === "merchant" ? "merchant_applications" : "driver_applications";
     const baseNote = data.decision === "approved" ? APPROVE_MSG : REJECT_MSG;
@@ -42,7 +46,6 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
       await supabaseAdmin.from("user_roles").insert({ user_id: updated.user_id, role }).select();
       await supabaseAdmin.from("profiles").update({ status: "active" }).eq("id", updated.user_id);
 
-      // For merchant approvals, ensure a store exists and is linked to this owner.
       if (data.kind === "merchant") {
         const { data: existing } = await supabaseAdmin
           .from("stores")
@@ -67,7 +70,6 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
 /* ============== Advertisements ============== */
 
 const adSchema = z.object({
-  password: z.string(),
   id: z.string().uuid().optional(),
   title: z.string().min(1),
   image_url: z.string().min(1),
@@ -79,12 +81,12 @@ const adSchema = z.object({
 });
 
 export const adminSaveAd = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => adSchema.parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { password: _p, id, ...row } = data;
-    void _p;
+    const { id, ...row } = data;
     if (id) {
       const { error } = await supabaseAdmin.from("advertisements").update(row).eq("id", id);
       if (error) throw new Error(error.message);
@@ -96,9 +98,10 @@ export const adminSaveAd = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteAd = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ password: z.string(), id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("advertisements").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -108,7 +111,6 @@ export const adminDeleteAd = createServerFn({ method: "POST" })
 /* ============== Delivery areas ============== */
 
 const areaSchema = z.object({
-  password: z.string(),
   id: z.string().uuid().optional(),
   name_ar: z.string().min(1),
   name_en: z.string().nullable().optional(),
@@ -119,12 +121,12 @@ const areaSchema = z.object({
 });
 
 export const adminSaveArea = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => areaSchema.parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { password: _p, id, ...row } = data;
-    void _p;
+    const { id, ...row } = data;
     if (id) {
       const { error } = await supabaseAdmin.from("delivery_areas").update(row).eq("id", id);
       if (error) throw new Error(error.message);
@@ -136,19 +138,19 @@ export const adminSaveArea = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteArea = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ password: z.string(), id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("delivery_areas").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-/* ============== Stores (admin edits) ============== */
+/* ============== Stores ============== */
 
 const storeSchema = z.object({
-  password: z.string(),
   id: z.string().uuid().optional(),
   owner_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1),
@@ -169,12 +171,12 @@ const storeSchema = z.object({
 });
 
 export const adminSaveStore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => storeSchema.parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { password: _p, id, ...row } = data;
-    void _p;
+    const { id, ...row } = data;
     if (id) {
       const { error } = await supabaseAdmin.from("stores").update(row).eq("id", id);
       if (error) throw new Error(error.message);
@@ -186,9 +188,10 @@ export const adminSaveStore = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteStore = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ password: z.string(), id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("stores").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -198,7 +201,6 @@ export const adminDeleteStore = createServerFn({ method: "POST" })
 /* ============== Products ============== */
 
 const productSchema = z.object({
-  password: z.string(),
   id: z.string().uuid().optional(),
   store_id: z.string().uuid(),
   name_ar: z.string().min(1),
@@ -211,12 +213,12 @@ const productSchema = z.object({
 });
 
 export const adminSaveProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => productSchema.parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { password: _p, id, ...row } = data;
-    void _p;
+    const { id, ...row } = data;
     if (id) {
       const { error } = await supabaseAdmin.from("products").update(row).eq("id", id);
       if (error) throw new Error(error.message);
@@ -228,27 +230,28 @@ export const adminSaveProduct = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteProduct = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ password: z.string(), id: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-/* ============== Driver areas assignment ============== */
+/* ============== Driver areas ============== */
 
 export const adminSetDriverAreas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      password: z.string(),
       driver_id: z.string().uuid(),
       area_ids: z.array(z.string().uuid()),
     }).parse(d),
   )
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("driver_delivery_areas").delete().eq("driver_id", data.driver_id);
     if (data.area_ids.length > 0) {
@@ -259,12 +262,12 @@ export const adminSetDriverAreas = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ============== Customer orders (approve / reject / list) ============== */
+/* ============== Customer orders ============== */
 
 export const adminListOrders = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => z.object({ password: z.string() }).parse(d))
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: orders, error } = await supabaseAdmin
       .from("customer_orders")
@@ -285,9 +288,9 @@ export const adminListOrders = createServerFn({ method: "POST" })
   });
 
 export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      password: z.string(),
       id: z.string().uuid(),
       status: z.enum([
         "pending",
@@ -301,8 +304,8 @@ export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
       ]),
     }).parse(d),
   )
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("customer_orders")
