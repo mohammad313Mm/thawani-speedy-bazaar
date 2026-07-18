@@ -153,9 +153,24 @@ function AppFrame() {
 
 function PushBootstrap() {
   const router = useRouter();
-  // Lazy require to avoid circular; useAuth is in ../lib/auth
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { useAuth } = require("../lib/auth") as typeof import("../lib/auth");
+  const { user, roles } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    if (!roles.includes("merchant") && !roles.includes("driver")) return;
+    let cancelled = false;
+    (async () => {
+      const { initPushNotifications } = await import("../lib/push-notifications");
+      if (cancelled) return;
+      await initPushNotifications(roles, (path) => {
+        router.navigate({ to: path });
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, roles, router]);
+  return null;
+}
   const { user, roles } = useAuth();
   useEffect(() => {
     if (!user) return;
