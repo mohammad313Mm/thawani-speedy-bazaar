@@ -203,11 +203,41 @@ function StorePage() {
 
       {/* Products */}
       <main className="mx-auto max-w-2xl px-4 py-4 pb-32">
-        <div className="grid grid-cols-1 gap-3">
-          {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {productsLoading && filtered.length === 0 ? (
+          <div className="grid grid-cols-1 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex gap-3 rounded-2xl bg-card p-3 shadow-card"
+              >
+                <div className="h-24 w-24 shrink-0 animate-pulse rounded-xl bg-muted" />
+                <div className="flex flex-1 flex-col gap-2 py-1">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-full animate-pulse rounded bg-muted" />
+                  <div className="mt-auto h-4 w-1/3 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center gap-3 rounded-3xl bg-card p-8 text-center shadow-card">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-muted text-4xl">
+              🛒
+            </div>
+            <h3 className="text-base font-black text-foreground">
+              لا توجد منتجات متاحة حالياً
+            </h3>
+            <p className="text-xs text-muted-foreground">
+              سيتم عرض المنتجات هنا فور إضافتها من قِبل المتجر.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {filtered.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Cart floating bar */}
