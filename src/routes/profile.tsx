@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   Store,
   Bike,
-  ShieldCheck,
+  
 } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
