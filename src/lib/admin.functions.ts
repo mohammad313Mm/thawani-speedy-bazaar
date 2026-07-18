@@ -2,16 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-async function assertAdminCaller(ctx: {
-  supabase: Awaited<ReturnType<typeof import("@supabase/supabase-js").createClient>>;
-  userId: string;
-}) {
-  // Check admin role using the caller's authenticated Supabase client so RLS
-  // is respected. `has_role` is SECURITY DEFINER, so this returns a boolean
-  // without leaking other users' role rows.
-  const { data, error } = await (ctx.supabase as unknown as {
-    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null; error: unknown }>;
-  }).rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertAdminCaller(ctx: { supabase: any; userId: string }) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error || !data) throw new Error("Forbidden: admin role required");
 }
 
