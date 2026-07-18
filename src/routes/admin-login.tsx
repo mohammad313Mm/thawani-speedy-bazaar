@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
+import { supabase } from "../integrations/supabase/client";
+import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
 
-const ADMIN_PHONE = "07800181794";
-const ADMIN_PASSWORD = "2361996arakf";
-export const ADMIN_PASS_KEY = "thawani_admin_pass_ok";
+export const ADMIN_PASS_KEY = "thawani_admin_pass_ok"; // legacy key, kept for compat
 
 export const Route = createFileRoute("/admin-login")({
   component: AdminLoginPage,
@@ -17,24 +17,39 @@ function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const normalizedPhone = phone.trim();
-    if (normalizedPhone === ADMIN_PHONE && password === ADMIN_PASSWORD) {
+    try {
+      const normalized = normalizePhone(phone);
+      if (!normalized) {
+        setError("رقم الهاتف غير صحيح");
+        return;
+      }
+      const email = phoneToEmail(normalized);
+      const { data, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInErr || !data.user) {
+        setError("رقم الهاتف أو كلمة المرور غير صحيحة");
+        return;
+      }
+      // Verify admin role on the server via RPC (RLS-safe: has_role is SECURITY DEFINER).
+      const { data: isAdmin, error: rpcErr } = await supabase.rpc("has_role", {
+        _user_id: data.user.id,
+        _role: "admin",
+      });
+      if (rpcErr || !isAdmin) {
+        await supabase.auth.signOut();
+        setError("هذا الحساب لا يملك صلاحيات الإدارة");
+        return;
+      }
       try {
-        // Persistent login: keep signed in until manual logout
-        localStorage.setItem(ADMIN_PASS_KEY, "1");
-        localStorage.setItem("thawani_admin_pass", password);
         sessionStorage.setItem(ADMIN_PASS_KEY, "1");
-        sessionStorage.setItem("thawani_admin_pass", password);
       } catch {
-        // ignore
+        /* ignore */
       }
       navigate({ to: "/admin" });
-    } else {
-      setError("Invalid phone number or password.");
+    } finally {
       setLoading(false);
     }
   };
@@ -58,7 +73,7 @@ function AdminLoginPage() {
           <div>
             <h2 className="text-lg font-black">لوحة الإدارة</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              هذه الصفحة خاصة بالإداريين فقط
+              الدخول باستخدام حساب مدير مُعتمد
             </p>
           </div>
         </div>
