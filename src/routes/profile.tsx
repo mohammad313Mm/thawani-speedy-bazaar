@@ -11,7 +11,7 @@ import {
   ChevronLeft,
   Store,
   Bike,
-  ShieldCheck,
+  
 } from "lucide-react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
@@ -84,9 +84,6 @@ function ProfilePage() {
           />
         </Section>
 
-        <Section title="الإدارة">
-          <ItemLink to="/admin-login" icon={<ShieldCheck />} label="لوحة الإدارة" />
-        </Section>
 
 
 

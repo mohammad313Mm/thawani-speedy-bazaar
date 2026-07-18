@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
+import { ensureOwnerAccount } from "../lib/owner-provision.functions";
 
 export const ADMIN_PASS_KEY = "thawani_admin_pass_ok"; // legacy key, kept for compat
 
@@ -28,6 +29,12 @@ function AdminLoginPage() {
         return;
       }
       const email = phoneToEmail(normalized);
+      // Bootstrap the Owner account on first login (no-op if it exists).
+      try {
+        await ensureOwnerAccount({ data: { phone: normalized, password } });
+      } catch {
+        /* provisioning is best-effort; fall through to signIn */
+      }
       const { data, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signInErr || !data.user) {
         setError("رقم الهاتف أو كلمة المرور غير صحيحة");
