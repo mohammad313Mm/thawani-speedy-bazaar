@@ -116,7 +116,20 @@ function CategoryPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-4">
-        {stores.length === 0 ? (
+        {storesLoading && stores.length === 0 ? (
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-3xl bg-card shadow-card">
+                <div className="h-28 w-full animate-pulse bg-muted sm:h-32" />
+                <div className="space-y-2 p-3">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : stores.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-3 text-center">
             <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-4xl">
               🔎
