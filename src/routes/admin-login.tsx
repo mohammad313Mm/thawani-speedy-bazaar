@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
+import { ensureOwnerAccount } from "../lib/owner-provision.functions";
 
 export const ADMIN_PASS_KEY = "thawani_admin_pass_ok"; // legacy key, kept for compat
 
