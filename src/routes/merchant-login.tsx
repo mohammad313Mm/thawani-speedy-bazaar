@@ -57,7 +57,7 @@ function MerchantLoginPage() {
 
       if (app?.status === "rejected") {
         await supabase.auth.signOut();
-        setError("تم رفض طلبك. يرجى التواصل مع الإدارة.");
+        setError("تم رفض طلبك من قبل الإدارة. يمكنك تقديم طلب انضمام جديد.");
         return;
       }
 
@@ -69,7 +69,7 @@ function MerchantLoginPage() {
 
       if (!store || (app && app.status !== "approved")) {
         await supabase.auth.signOut();
-        setError("متجرك بانتظار موافقة الإدارة.");
+        setError("تم استلام طلب التسجيل الخاص بك وهو الآن قيد المراجعة من قبل الإدارة.");
         return;
       }
       navigate({ to: "/merchant/dashboard" });

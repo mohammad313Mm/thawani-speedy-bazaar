@@ -10,11 +10,8 @@ export const Route = createFileRoute("/apply/merchant")({
 
 function MerchantApplyPage() {
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [storeName, setStoreName] = useState("");
-  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -24,32 +21,24 @@ function MerchantApplyPage() {
     setError(null);
 
     const normalized = normalizePhone(phone);
-    if (!fullName.trim() || !normalized || !password || !storeName.trim()) {
-      setError("يرجى تعبئة جميع الحقول المطلوبة");
-      return;
-    }
-    if (password.length < 6) {
-      setError("يجب أن تكون كلمة المرور 6 أحرف على الأقل");
+    if (!normalized || !password) {
+      setError("يرجى إدخال رقم الهاتف وكلمة المرور");
       return;
     }
 
     setBusy(true);
     try {
       const email = phoneToEmail(normalized);
+      const fullName = normalized;
 
-      // 1) Create the auth user (phone + password). Sign-in is blocked at the
-      // merchant-login screen until the admin approves this application.
       let userId: string | null = null;
       const { data: signUp, error: signUpErr } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: { full_name: fullName, phone: normalized },
-        },
+        options: { data: { full_name: fullName, phone: normalized } },
       });
 
       if (signUpErr) {
-        // Account may already exist — try to sign in so we can attach the app.
         const { data: signIn, error: signInErr } =
           await supabase.auth.signInWithPassword({ email, password });
         if (signInErr || !signIn.user) {
@@ -68,7 +57,6 @@ function MerchantApplyPage() {
         return;
       }
 
-      // 2) Upsert the merchant application → visible in Admin Dashboard.
       const { error: appErr } = await supabase
         .from("merchant_applications")
         .upsert(
@@ -76,8 +64,6 @@ function MerchantApplyPage() {
             user_id: userId,
             full_name: fullName,
             phone: normalized,
-            store_name: storeName,
-            applicant_note: note || null,
             status: "pending",
             email: null,
           },
@@ -89,7 +75,6 @@ function MerchantApplyPage() {
         return;
       }
 
-      // 3) Sign out so the applicant cannot access anything before approval.
       await supabase.auth.signOut();
       setSubmitted(true);
     } finally {
@@ -104,11 +89,11 @@ function MerchantApplyPage() {
           <CheckCircle2 className="h-12 w-12" />
         </div>
         <h1 className="mt-5 text-xl font-black text-foreground">
-          تم إرسال طلبك بنجاح
+          تم استلام طلبك
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          تم إرسال طلبك بنجاح وهو الآن بانتظار موافقة الإدارة. ستتمكن من تسجيل
-          الدخول إلى لوحة تحكم المتجر بعد الموافقة على طلبك.
+          تم استلام طلب التسجيل الخاص بك وهو الآن قيد المراجعة من قبل الإدارة.
+          سنقوم بإعلامك عند الموافقة.
         </p>
         <button
           onClick={() => navigate({ to: "/profile" })}
@@ -131,7 +116,7 @@ function MerchantApplyPage() {
           >
             <ArrowRight className="h-5 w-5" />
           </button>
-          <h1 className="text-lg font-black text-foreground">طلب انضمام متجر</h1>
+          <h1 className="text-lg font-black text-foreground">تسجيل صاحب متجر</h1>
         </div>
       </header>
 
@@ -140,39 +125,29 @@ function MerchantApplyPage() {
           <Store className="h-8 w-8 opacity-90" />
           <p className="mt-2 text-lg font-black">انضم كصاحب متجر</p>
           <p className="mt-1 text-xs opacity-90">
-            املأ الاستمارة أدناه وسنقوم بمراجعة طلبك. لن تتمكن من تسجيل الدخول
-            حتى تتم الموافقة على طلبك من قبل الإدارة.
+            أدخل رقم هاتفك وكلمة المرور فقط. سيتم إرسال طلبك للإدارة للموافقة.
           </p>
         </section>
 
         <form onSubmit={submit} className="space-y-3 rounded-3xl bg-card p-5 shadow-soft">
-          <Field label="الاسم الكامل *" value={fullName} onChange={setFullName} />
-          <Field
-            label="رقم الهاتف *"
-            value={phone}
-            onChange={setPhone}
-            dir="ltr"
-            inputMode="tel"
-            placeholder="07XXXXXXXXX"
-          />
-          <Field
-            label="كلمة المرور *"
-            value={password}
-            onChange={setPassword}
-            type="password"
-          />
-          <Field label="اسم المتجر *" value={storeName} onChange={setStoreName} />
-
           <label className="block">
-            <span className="text-xs font-black text-foreground">
-              ملاحظات للإدارة (اختياري)
-            </span>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={4}
-              className="mt-2 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
-              placeholder="أي معلومات إضافية تودّ إبلاغ الإدارة بها..."
+            <span className="text-xs font-black text-foreground">رقم الهاتف</span>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              dir="ltr"
+              inputMode="tel"
+              placeholder="07XXXXXXXXX"
+              className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-black text-foreground">كلمة المرور</span>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
             />
           </label>
 
@@ -187,7 +162,7 @@ function MerchantApplyPage() {
             disabled={busy}
             className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-base font-black text-primary-foreground shadow-elegant disabled:opacity-60"
           >
-            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "إرسال طلب المتجر"}
+            {busy ? <Loader2 className="h-5 w-5 animate-spin" /> : "إنشاء الحساب"}
           </button>
         </form>
 
@@ -201,6 +176,7 @@ function MerchantApplyPage() {
     </>
   );
 }
+
 
 function Field({
   label,
