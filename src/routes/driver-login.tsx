@@ -56,17 +56,17 @@ function DriverLoginPage() {
 
       if (!app) {
         await supabase.auth.signOut();
-        setError("لا يوجد طلب انضمام لهذا الحساب.");
+        setError("لا يوجد طلب انضمام لهذا الحساب. يرجى تقديم طلب جديد.");
         return;
       }
       if (app.status === "rejected") {
         await supabase.auth.signOut();
-        setError("تم رفض طلبك. يرجى التواصل مع الإدارة.");
+        setError("تم رفض طلبك من قبل الإدارة. يمكنك تقديم طلب انضمام جديد.");
         return;
       }
       if (app.status !== "approved") {
         await supabase.auth.signOut();
-        setError("طلبك بانتظار موافقة الإدارة.");
+        setError("تم استلام طلب التسجيل الخاص بك وهو الآن قيد المراجعة من قبل الإدارة.");
         return;
       }
       navigate({ to: "/driver/dashboard" });
