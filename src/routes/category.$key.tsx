@@ -19,7 +19,7 @@ function CategoryPage() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>("recommended");
   const [openOnly, setOpenOnly] = useState(false);
-  const { stores: dbStores } = useDbStores();
+  const { stores: dbStores, loading: storesLoading } = useDbStores();
 
   const stores = useMemo(() => {
     const dbForCat = dbStores.filter((s) => s.category === category.key);
