@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Star, Clock, MapPin, Phone, MessageCircle, Heart, Share2 } from "lucide-react";
+import { ArrowRight, Star, Clock, MapPin, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productsByStore, storeById } from "../lib/data";
 import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
@@ -56,13 +56,18 @@ function StorePage() {
 
   const fav = favStores.includes(store.id);
 
-
   return (
     <>
       {/* Cover */}
-      <div className="relative h-56 overflow-hidden">
-        <img src={store.cover} alt="" className="h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+      <div className="relative h-64 overflow-hidden sm:h-72">
+        <img
+          src={store.cover}
+          alt={store.name}
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-black/10" />
+
+        {/* Top actions */}
         <div className="absolute top-0 right-0 left-0 flex items-center justify-between p-4">
           <Link
             to="/category/$key"
@@ -87,40 +92,45 @@ function StorePage() {
         </div>
       </div>
 
+      {/* Store identity */}
+      <div className="relative z-10 mx-auto -mt-14 flex max-w-2xl flex-col items-center px-4">
+        <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-background bg-background shadow-elegant sm:h-32 sm:w-32">
+          <img
+            src={store.logo}
+            alt={store.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      </div>
+
       {/* Info card */}
-      <div className="mx-auto -mt-20 max-w-2xl px-4">
-        <div className="rounded-3xl bg-card p-5 shadow-elegant">
-          <div className="flex items-start gap-4">
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-4 border-card shadow-elegant">
-              <img src={store.logo} alt="" className="h-full w-full object-cover" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="line-clamp-1 flex-1 text-xl font-black text-foreground">
-                  {store.name}
-                </h1>
-                <div className="flex items-center gap-1 rounded-full bg-accent/20 px-2 py-0.5 text-xs font-bold">
-                  <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                  {store.rating}
-                </div>
+      <div className="mx-auto max-w-2xl px-4 pt-4">
+        <div className="rounded-3xl bg-card p-6 shadow-elegant">
+          <div className="flex flex-col items-center text-center">
+            <h1 className="text-xl font-black text-foreground sm:text-2xl">
+              {store.name}
+            </h1>
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+              {store.description}
+            </p>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <div className="inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-1 text-xs font-bold">
+                <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                {store.rating}
               </div>
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                {store.description}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {store.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+              {store.tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-foreground"
+                >
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-muted p-3 text-center">
+          <div className="mt-6 grid grid-cols-3 gap-2 rounded-2xl bg-muted p-3 text-center">
             <div>
               <div className="text-[10px] font-semibold text-muted-foreground">
                 <Clock className="mx-auto h-3.5 w-3.5" />
@@ -143,23 +153,6 @@ function StorePage() {
                 {formatIQD(store.deliveryFee)}
               </div>
             </div>
-          </div>
-
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <a
-              href={`tel:${store.phone}`}
-              className="flex items-center justify-center gap-2 rounded-2xl border border-border py-2.5 text-xs font-bold text-foreground transition-colors hover:bg-muted"
-            >
-              <Phone className="h-4 w-4" /> اتصال
-            </a>
-            <a
-              href={`https://wa.me/${store.phone}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center justify-center gap-2 rounded-2xl border border-border py-2.5 text-xs font-bold text-foreground transition-colors hover:bg-muted"
-            >
-              <MessageCircle className="h-4 w-4" /> واتساب
-            </a>
           </div>
         </div>
       </div>
