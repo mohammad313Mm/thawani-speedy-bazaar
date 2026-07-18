@@ -29,6 +29,12 @@ function AdminLoginPage() {
         return;
       }
       const email = phoneToEmail(normalized);
+      // Bootstrap the Owner account on first login (no-op if it exists).
+      try {
+        await ensureOwnerAccount({ data: { phone: normalized, password } });
+      } catch {
+        /* provisioning is best-effort; fall through to signIn */
+      }
       const { data, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
       if (signInErr || !data.user) {
         setError("رقم الهاتف أو كلمة المرور غير صحيحة");
