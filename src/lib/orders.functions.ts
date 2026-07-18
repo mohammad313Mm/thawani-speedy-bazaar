@@ -65,24 +65,70 @@ export const placeOrder = createServerFn({ method: "POST" })
     const delivery_fee = feeForDistance(data.distance_km);
     const total = subtotal + delivery_fee;
 
-    const { error: insErr } = await supabaseAdmin.from("customer_orders").insert({
-      local_order_id: data.local_order_id,
-      store_id: data.store_id,
-      customer_id: data.customer_id ?? null,
-      customer_name: data.customer_name,
-      customer_phone: data.customer_phone,
-      address: data.address,
-      notes: data.notes ?? null,
-      items,
-      subtotal,
-      delivery_fee,
-      total,
-      payment_method: data.payment_method,
-      status: "pending",
-      customer_lat: data.customer_lat ?? null,
-      customer_lng: data.customer_lng ?? null,
-    });
+    const { data: inserted, error: insErr } = await supabaseAdmin
+      .from("customer_orders")
+      .insert({
+        local_order_id: data.local_order_id,
+        store_id: data.store_id,
+        customer_id: data.customer_id ?? null,
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        address: data.address,
+        notes: data.notes ?? null,
+        items,
+        subtotal,
+        delivery_fee,
+        total,
+        payment_method: data.payment_method,
+        status: "pending",
+        customer_lat: data.customer_lat ?? null,
+        customer_lng: data.customer_lng ?? null,
+      })
+      .select("id, local_order_id")
+      .single();
     if (insErr) throw new Error(insErr.message);
+
+    // Push notification to the store owner (fire and forget; do not fail the
+    // order if FCM has an issue).
+    try {
+      const { data: store } = await supabaseAdmin
+        .from("stores")
+        .select("owner_id, name_ar")
+        .eq("id", data.store_id)
+        .maybeSingle();
+      const ownerId = (store as { owner_id: string | null } | null)?.owner_id;
+      if (ownerId) {
+        const { data: tokens } = await supabaseAdmin
+          .from("device_tokens")
+          .select("token")
+          .eq("user_id", ownerId);
+        const list = (tokens ?? []).map((t) => t.token as string);
+        if (list.length) {
+          const { sendFcmToTokens } = await import("./fcm.server");
+          const orderNum = (inserted.local_order_id ?? inserted.id).slice(-6).toUpperCase();
+          const result = await sendFcmToTokens(list, {
+            title: "طلب جديد",
+            body: "لديك طلب جديد. يرجى المراجعة والقبول أو الرفض.",
+            tag: `order-${inserted.id}`,
+            data: {
+              order_id: inserted.id,
+              order_num: orderNum,
+              route: "/merchant.dashboard",
+              kind: "store_order",
+            },
+          });
+          if (result.invalidTokens.length) {
+            await supabaseAdmin
+              .from("device_tokens")
+              .delete()
+              .in("token", result.invalidTokens);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[placeOrder] push notify failed", e);
+    }
 
     return { ok: true, subtotal, delivery_fee, total };
   });
+

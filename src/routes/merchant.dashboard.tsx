@@ -22,6 +22,7 @@ import { supabase } from "../integrations/supabase/client";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
+import { notifyDriversForOrder } from "../lib/notify.functions";
 
 export const Route = createFileRoute("/merchant/dashboard")({
   component: MerchantDashboard,
@@ -275,6 +276,12 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
   const handleAccept = async (o: OrderRow) => {
     setBusy(true);
     await updateStatus(o.id, "searching_driver");
+    // Fan out push notifications to all available drivers.
+    try {
+      await notifyDriversForOrder({ data: { order_id: o.id } });
+    } catch (e) {
+      console.error("[merchant] notify drivers failed", e);
+    }
     setBusy(false);
     setIncoming(null);
   };

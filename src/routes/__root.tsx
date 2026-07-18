@@ -16,7 +16,7 @@ import { BottomNav } from "../components/BottomNav";
 import { ThemeProvider } from "../lib/theme";
 import { CartProvider } from "../lib/cart";
 import { OrdersProvider } from "../lib/orders";
-import { AuthProvider } from "../lib/auth";
+import { AuthProvider, useAuth } from "../lib/auth";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
@@ -145,9 +145,31 @@ function AppFrame() {
       </div>
       {!hideNav && <BottomNav />}
       <Toaster position="top-center" richColors />
+      <PushBootstrap />
     </div>
 
   );
+}
+
+function PushBootstrap() {
+  const router = useRouter();
+  const { user, roles } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    if (!roles.includes("merchant") && !roles.includes("driver")) return;
+    let cancelled = false;
+    (async () => {
+      const { initPushNotifications } = await import("../lib/push-notifications");
+      if (cancelled) return;
+      await initPushNotifications(roles, (path) => {
+        router.navigate({ to: path });
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, roles, router]);
+  return null;
 }
 
 function RootComponent() {
