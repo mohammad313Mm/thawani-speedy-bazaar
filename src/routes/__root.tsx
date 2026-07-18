@@ -16,7 +16,7 @@ import { BottomNav } from "../components/BottomNav";
 import { ThemeProvider } from "../lib/theme";
 import { CartProvider } from "../lib/cart";
 import { OrdersProvider } from "../lib/orders";
-import { AuthProvider } from "../lib/auth";
+import { AuthProvider, useAuth } from "../lib/auth";
 import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
