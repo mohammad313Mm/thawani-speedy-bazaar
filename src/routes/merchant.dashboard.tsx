@@ -276,6 +276,12 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
   const handleAccept = async (o: OrderRow) => {
     setBusy(true);
     await updateStatus(o.id, "searching_driver");
+    // Fan out push notifications to all available drivers.
+    try {
+      await notifyDriversForOrder({ data: { order_id: o.id } });
+    } catch (e) {
+      console.error("[merchant] notify drivers failed", e);
+    }
     setBusy(false);
     setIncoming(null);
   };
