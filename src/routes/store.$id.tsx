@@ -15,7 +15,7 @@ function StorePage() {
   const { id } = Route.useParams();
   const staticStore = storeById(id);
   const { store: dbStore, loading: dbLoading } = useDbStore(staticStore ? "" : id);
-  const { products: dbProducts } = useDbProducts(staticStore ? "" : id);
+  const { products: dbProducts, loading: productsLoading } = useDbProducts(staticStore ? "" : id);
   const store = staticStore ?? dbStore;
 
   const products = useMemo(() => {
