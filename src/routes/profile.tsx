@@ -31,14 +31,51 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { user, roles, signOut } = useAuth();
+  const router = useRouter();
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+  const needsPush = !!user && (isMerchant || isDriver);
 
+  const [pushState, setPushState] = useState<PushPermState | null>(null);
+  const [requesting, setRequesting] = useState(false);
 
+  useEffect(() => {
+    if (!needsPush) return;
+    let cancelled = false;
+    (async () => {
+      const s = await getPushPermissionStatus();
+      if (cancelled) return;
+      setPushState(s);
+      // Auto-prompt native dialog once if we can still ask.
+      if (s === "prompt") {
+        setRequesting(true);
+        const next = await requestPushPermission(roles, (path) =>
+          router.navigate({ to: path }),
+        );
+        if (!cancelled) {
+          setPushState(next);
+          setRequesting(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [needsPush, roles, router]);
+
+  const onEnablePush = async () => {
+    setRequesting(true);
+    const next = await requestPushPermission(roles, (path) =>
+      router.navigate({ to: path }),
+    );
+    setPushState(next);
+    setRequesting(false);
+  };
 
   const phoneDisplay =
     (user?.user_metadata?.phone as string | undefined) ??
     (user?.email ? user.email.replace(/@thawani\.app$/, "") : null);
+
 
 
 
