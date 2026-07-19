@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 
 import {
   User,
@@ -11,10 +11,18 @@ import {
   ChevronLeft,
   Store,
   Bike,
+  Bell,
+  BellOff,
   
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
+import {
+  getPushPermissionStatus,
+  requestPushPermission,
+  type PushPermState,
+} from "../lib/push-notifications";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
