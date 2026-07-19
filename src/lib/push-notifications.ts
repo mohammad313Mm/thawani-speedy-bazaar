@@ -92,3 +92,36 @@ export async function initPushNotifications(
 export function updatePushRole(roles: AppRole[]) {
   currentUserRole = pickRole(roles);
 }
+
+export type PushPermState = "unsupported" | "granted" | "denied" | "prompt";
+
+export async function getPushPermissionStatus(): Promise<PushPermState> {
+  const PushNotifications = await loadPlugin();
+  if (!PushNotifications) return "unsupported";
+  try {
+    const perm = await PushNotifications.checkPermissions();
+    if (perm.receive === "granted") return "granted";
+    if (perm.receive === "denied") return "denied";
+    return "prompt";
+  } catch {
+    return "unsupported";
+  }
+}
+
+export async function requestPushPermission(
+  roles: AppRole[],
+  navigate: (path: string) => void,
+): Promise<PushPermState> {
+  const PushNotifications = await loadPlugin();
+  if (!PushNotifications) return "unsupported";
+  try {
+    const req = await PushNotifications.requestPermissions();
+    if (req.receive !== "granted") {
+      return req.receive === "denied" ? "denied" : "prompt";
+    }
+    await initPushNotifications(roles, navigate);
+    return "granted";
+  } catch {
+    return "unsupported";
+  }
+}

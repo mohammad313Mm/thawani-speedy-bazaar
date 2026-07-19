@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 
 import {
   User,
@@ -11,10 +11,18 @@ import {
   ChevronLeft,
   Store,
   Bike,
+  Bell,
+  BellOff,
   
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
+import {
+  getPushPermissionStatus,
+  requestPushPermission,
+  type PushPermState,
+} from "../lib/push-notifications";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -23,14 +31,51 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { theme, setTheme } = useTheme();
   const { user, roles, signOut } = useAuth();
+  const router = useRouter();
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+  const needsPush = !!user && (isMerchant || isDriver);
 
+  const [pushState, setPushState] = useState<PushPermState | null>(null);
+  const [requesting, setRequesting] = useState(false);
 
+  useEffect(() => {
+    if (!needsPush) return;
+    let cancelled = false;
+    (async () => {
+      const s = await getPushPermissionStatus();
+      if (cancelled) return;
+      setPushState(s);
+      // Auto-prompt native dialog once if we can still ask.
+      if (s === "prompt") {
+        setRequesting(true);
+        const next = await requestPushPermission(roles, (path) =>
+          router.navigate({ to: path }),
+        );
+        if (!cancelled) {
+          setPushState(next);
+          setRequesting(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [needsPush, roles, router]);
+
+  const onEnablePush = async () => {
+    setRequesting(true);
+    const next = await requestPushPermission(roles, (path) =>
+      router.navigate({ to: path }),
+    );
+    setPushState(next);
+    setRequesting(false);
+  };
 
   const phoneDisplay =
     (user?.user_metadata?.phone as string | undefined) ??
     (user?.email ? user.email.replace(/@thawani\.app$/, "") : null);
+
 
 
 
@@ -63,6 +108,48 @@ function ProfilePage() {
             </Link>
           )}
         </section>
+
+        {needsPush && pushState && pushState !== "granted" && (
+          <section
+            className={`flex items-start gap-3 rounded-2xl p-4 shadow-soft ${
+              pushState === "denied"
+                ? "bg-destructive/5 border border-destructive/30"
+                : "bg-warning/10 border border-warning/30"
+            }`}
+          >
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                pushState === "denied"
+                  ? "bg-destructive/15 text-destructive"
+                  : "bg-warning/20 text-warning-foreground"
+              }`}
+            >
+              {pushState === "denied" ? <BellOff className="h-5 w-5" /> : <Bell className="h-5 w-5" />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black text-foreground">
+                {pushState === "denied" ? "الإشعارات معطّلة" : "فعّل الإشعارات"}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                {pushState === "denied"
+                  ? "الإشعارات مطلوبة لاستلام الطلبات الجديدة فوراً. يرجى تفعيلها لاحقاً من إعدادات الجهاز → التطبيقات → ثواني → الإشعارات."
+                  : pushState === "unsupported"
+                  ? "الإشعارات الفورية متاحة عند تثبيت التطبيق على الهاتف."
+                  : "اسمح باستلام إشعارات الطلبات الجديدة حتى وأنت خارج التطبيق."}
+              </p>
+              {pushState === "prompt" && (
+                <button
+                  onClick={onEnablePush}
+                  disabled={requesting}
+                  className="mt-2 rounded-full bg-primary px-4 py-1.5 text-xs font-black text-primary-foreground shadow-soft disabled:opacity-60"
+                >
+                  {requesting ? "جارٍ..." : "تفعيل الإشعارات"}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
 
         {/* Store Owners & Drivers sections */}
         <Section title="أصحاب المتاجر">
