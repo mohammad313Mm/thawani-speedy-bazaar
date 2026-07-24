@@ -20,12 +20,12 @@ export const notifyDriversForOrder = createServerFn({ method: "POST" })
     // Only the store owner of this order (or an admin) may fan out to drivers.
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("customer_orders")
-      .select("id, store_id, local_order_id, address, total, stores(owner_id, name_ar, name)")
+      .select("id, store_id, local_order_id, address, total, stores(owner_id, name)")
       .eq("id", data.order_id)
       .maybeSingle();
     if (orderErr || !order) throw new Error("Order not found");
 
-    const storeRel = (order as { stores: { owner_id: string; name_ar: string | null; name: string | null } | null }).stores;
+    const storeRel = (order as { stores: { owner_id: string; name: string | null } | null }).stores;
     const ownerId = storeRel?.owner_id;
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
@@ -45,7 +45,7 @@ export const notifyDriversForOrder = createServerFn({ method: "POST" })
       total: number;
     };
     const orderNum = (orderRow.local_order_id ?? data.order_id).slice(-6).toUpperCase();
-    const storeName = storeRel?.name_ar || storeRel?.name || "متجر";
+    const storeName = storeRel?.name || "متجر";
     const totalFmt = `${Math.round(orderRow.total).toLocaleString("ar-IQ")} د.ع`;
     const address = orderRow.address?.trim() || "بدون عنوان";
     const bodyLines = [
