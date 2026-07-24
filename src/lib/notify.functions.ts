@@ -20,12 +20,13 @@ export const notifyDriversForOrder = createServerFn({ method: "POST" })
     // Only the store owner of this order (or an admin) may fan out to drivers.
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("customer_orders")
-      .select("id, store_id, local_order_id, stores(owner_id)")
+      .select("id, store_id, local_order_id, address, total, stores(owner_id, name_ar, name)")
       .eq("id", data.order_id)
       .maybeSingle();
     if (orderErr || !order) throw new Error("Order not found");
 
-    const ownerId = (order as { stores: { owner_id: string } | null }).stores?.owner_id;
+    const storeRel = (order as { stores: { owner_id: string; name_ar: string | null; name: string | null } | null }).stores;
+    const ownerId = storeRel?.owner_id;
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
@@ -38,17 +39,31 @@ export const notifyDriversForOrder = createServerFn({ method: "POST" })
       .eq("role", "driver");
 
     const list = (tokens ?? []).map((t) => t.token as string);
-    const orderNum = ((order as { local_order_id: string | null }).local_order_id ?? data.order_id)
-      .slice(-6)
-      .toUpperCase();
+    const orderRow = order as {
+      local_order_id: string | null;
+      address: string | null;
+      total: number;
+    };
+    const orderNum = (orderRow.local_order_id ?? data.order_id).slice(-6).toUpperCase();
+    const storeName = storeRel?.name_ar || storeRel?.name || "متجر";
+    const totalFmt = `${Math.round(orderRow.total).toLocaleString("ar-IQ")} د.ع`;
+    const address = orderRow.address?.trim() || "بدون عنوان";
+    const bodyLines = [
+      `المتجر: ${storeName}`,
+      `العنوان: ${address}`,
+      `الإجمالي: ${totalFmt}`,
+    ].join("\n");
 
     const result = await sendFcmToTokens(list, {
       title: "طلب توصيل جديد",
-      body: "لديك طلب توصيل جديد. اضغط للمراجعة والقبول.",
+      body: bodyLines,
       tag: `order-${data.order_id}`,
       data: {
         order_id: data.order_id,
         order_num: orderNum,
+        store_name: storeName,
+        address,
+        total: String(orderRow.total),
         route: "/driver.dashboard",
         kind: "driver_order",
       },
