@@ -21,7 +21,7 @@ export type IncomingOrderData = {
   customer_lng?: number | null;
 };
 
-const RING_SECONDS = 20;
+const RING_SECONDS = 15;
 
 /** Loop a simple two-tone beep via WebAudio. Requires a prior user gesture,
  *  which drivers/merchants have (they're logged into the dashboard). */
