@@ -18,6 +18,8 @@ import { CartProvider } from "../lib/cart";
 import { OrdersProvider } from "../lib/orders";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { Toaster } from "../components/ui/sonner";
+import { GlobalOrderListener } from "../components/GlobalOrderListener";
+
 
 function NotFoundComponent() {
   return (
@@ -146,7 +148,9 @@ function AppFrame() {
       {!hideNav && <BottomNav />}
       <Toaster position="top-center" richColors />
       <PushBootstrap />
+      <GlobalOrderListener />
     </div>
+
 
   );
 }
