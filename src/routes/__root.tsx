@@ -148,7 +148,9 @@ function AppFrame() {
       {!hideNav && <BottomNav />}
       <Toaster position="top-center" richColors />
       <PushBootstrap />
+      <GlobalOrderListener />
     </div>
+
 
   );
 }
