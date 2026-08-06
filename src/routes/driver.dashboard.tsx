@@ -51,25 +51,18 @@ function DriverDashboardPage() {
     }
   }, [user, roles, loading, navigate]);
 
-  // Tick every second while a lockout is pending
-  useEffect(() => {
-    if (!unavailableUntil) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [unavailableUntil]);
-
-  // Load availability + lockout
+  // Load availability
   const loadProfile = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("is_available, unavailable_until")
+      .select("is_available")
       .eq("id", user.id)
       .maybeSingle();
-    const row = data as { is_available?: boolean; unavailable_until?: string | null } | null;
+    const row = data as { is_available?: boolean } | null;
     setIsAvailable(Boolean(row?.is_available));
-    setUnavailableUntil(row?.unavailable_until ? new Date(row.unavailable_until).getTime() : null);
   }, [user]);
+
 
   useEffect(() => {
     loadProfile();
