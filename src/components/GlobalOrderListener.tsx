@@ -102,26 +102,16 @@ export function GlobalOrderListener() {
       if (!DRIVER_POOL_STATUSES.includes(row.status)) return;
       if (seen.current.has(row.id)) return;
 
-      // Only notify if the driver is currently available and has no active order.
+      // Only notify if the driver is currently marked available.
       if (!user) return;
       const { data: prof } = await supabase
         .from("profiles")
-        .select("is_available, unavailable_until")
+        .select("is_available")
         .eq("id", user.id)
         .maybeSingle();
-      const p = prof as { is_available?: boolean; unavailable_until?: string | null } | null;
-      const inLockout = p?.unavailable_until
-        ? new Date(p.unavailable_until).getTime() > Date.now()
-        : false;
-      if (!p?.is_available || inLockout) return;
+      const p = prof as { is_available?: boolean } | null;
+      if (!p?.is_available) return;
 
-      const { data: activeRows } = await supabase
-        .from("customer_orders")
-        .select("id")
-        .eq("driver_id", user.id)
-        .not("status", "in", "(delivered,cancelled)")
-        .limit(1);
-      if ((activeRows ?? []).length > 0) return;
 
       let sName = "";
       const { data: s } = await supabase
