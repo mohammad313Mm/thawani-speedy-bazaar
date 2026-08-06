@@ -218,7 +218,6 @@ export function GlobalOrderListener() {
         router.navigate({ to: "/merchant/dashboard" });
       } else {
         const acceptedAt = new Date();
-        const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
         const { data: claim, error } = await supabase
           .from("customer_orders")
           .update({
@@ -233,12 +232,9 @@ export function GlobalOrderListener() {
         if (error || !claim) {
           alert(error?.message ? `تعذر قبول الطلب: ${error.message}` : "تم استلام هذا الطلب من قِبل مندوب آخر");
         } else {
-          await supabase
-            .from("profiles")
-            .update({ is_available: false, unavailable_until: until.toISOString() })
-            .eq("id", user.id);
           router.navigate({ to: "/driver/dashboard" });
         }
+
       }
     } finally {
       setBusy(false);
