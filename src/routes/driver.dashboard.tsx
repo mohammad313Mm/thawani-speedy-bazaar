@@ -121,41 +121,8 @@ function DriverDashboardPage() {
     };
   }, [user, loadOrders]);
 
-  const lockoutRemainingMs = unavailableUntil ? Math.max(0, unavailableUntil - now) : 0;
-  const inLockout = lockoutRemainingMs > 0;
-
-  // Auto re-enable availability once the 20-minute lockout ends
-  useEffect(() => {
-    if (!user || !unavailableUntil) return;
-    const remaining = unavailableUntil - Date.now();
-    if (remaining <= 0) {
-      (async () => {
-        await supabase
-          .from("profiles")
-          .update({ is_available: true, unavailable_until: null })
-          .eq("id", user.id);
-        setUnavailableUntil(null);
-        setIsAvailable(true);
-      })();
-      return;
-    }
-    const t = setTimeout(async () => {
-      await supabase
-        .from("profiles")
-        .update({ is_available: true, unavailable_until: null })
-        .eq("id", user.id);
-      setUnavailableUntil(null);
-      setIsAvailable(true);
-    }, remaining + 250);
-    return () => clearTimeout(t);
-  }, [user, unavailableUntil]);
-
   const toggleAvailability = async (next: boolean) => {
     if (!user) return;
-    if (next && inLockout) {
-      alert("لا يمكن تفعيل الحالة قبل انتهاء مهلة الـ20 دقيقة");
-      return;
-    }
     setIsAvailable(next);
     await supabase.from("profiles").update({ is_available: next }).eq("id", user.id);
   };
@@ -167,7 +134,6 @@ function DriverDashboardPage() {
     // Optimistically dismiss the modal so it closes instantly on tap.
     setDismissed((prev) => new Set(prev).add(id));
     const acceptedAt = new Date();
-    const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
     const { data, error } = await supabase
       .from("customer_orders")
       .update({
@@ -184,13 +150,8 @@ function DriverDashboardPage() {
       alert(error?.message ? `تعذر قبول الطلب: ${error.message}` : "تم استلام هذا الطلب من قِبل مندوب آخر");
     } else {
       ok = true;
-      await supabase
-        .from("profiles")
-        .update({ is_available: false, unavailable_until: until.toISOString() })
-        .eq("id", user.id);
-      setUnavailableUntil(until.getTime());
-      setIsAvailable(false);
     }
+
     await loadOrders();
     setBusy(null);
     if (ok) {
