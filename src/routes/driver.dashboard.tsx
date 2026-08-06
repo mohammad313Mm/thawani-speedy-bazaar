@@ -257,23 +257,16 @@ function DriverDashboardPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-lg font-black">
-                {inLockout
-                  ? "غير متوفر — بانتظار انتهاء المهلة"
-                  : isAvailable
-                    ? "متوفر لاستلام الطلبات"
-                    : "غير متوفر"}
+                {isAvailable ? "متوفر لاستلام الطلبات" : "غير متوفر"}
               </p>
               <p className="mt-0.5 text-xs opacity-90">
-                {inLockout
-                  ? `سيتم تفعيل الحالة تلقائياً بعد ${formatMs(lockoutRemainingMs)}`
-                  : isAvailable
-                    ? "سيتم إشعارك بالطلبات الجديدة فوراً"
-                    : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
+                {isAvailable
+                  ? "سيتم إشعارك بالطلبات الجديدة فوراً"
+                  : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
               </p>
             </div>
             <button
               onClick={() => toggleAvailability(!isAvailable)}
-              disabled={inLockout}
               className={`relative h-8 w-14 rounded-full transition-colors disabled:opacity-60 ${
                 isAvailable ? "bg-white/30" : "bg-black/30"
               }`}
@@ -288,8 +281,9 @@ function DriverDashboardPage() {
           </div>
         </section>
 
-        {/* Pending (incoming) — hidden while an active order exists or lockout is running */}
-        {isAvailable && !hasActive && !inLockout && (
+        {/* Pending (incoming) */}
+        {isAvailable && (
+
           <Section title="طلبات جديدة">
             {pending.length === 0 ? (
               <EmptyState text="لا توجد طلبات حالياً — سنُعلمك فور وصول طلب جديد." />
