@@ -6,6 +6,9 @@ import { useAuth } from "../lib/auth";
 import { phoneToEmail, normalizePhone } from "../lib/phone-auth";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   component: AuthPage,
 });
 
@@ -18,10 +21,15 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/profile" });
-  }, [user, loading, navigate]);
+    if (!loading && user) {
+      if (next) window.location.href = next;
+      else navigate({ to: "/profile" });
+    }
+  }, [user, loading, navigate, next]);
+
 
   const [info, setInfo] = useState<string | null>(null);
 
