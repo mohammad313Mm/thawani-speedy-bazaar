@@ -34,12 +34,11 @@ function DriverDashboardPage() {
   const { user, roles, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAvailable, setIsAvailable] = useState(false);
-  const [unavailableUntil, setUnavailableUntil] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Record<string, StoreInfo>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+
 
   useEffect(() => {
     if (loading) return;
