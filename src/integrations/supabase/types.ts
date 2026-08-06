@@ -415,7 +415,6 @@ export type Database = {
           is_available: boolean
           phone: string | null
           status: Database["public"]["Enums"]["account_status"]
-          unavailable_until: string | null
           updated_at: string
         }
         Insert: {
@@ -425,7 +424,6 @@ export type Database = {
           is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
-          unavailable_until?: string | null
           updated_at?: string
         }
         Update: {
@@ -435,7 +433,6 @@ export type Database = {
           is_available?: boolean
           phone?: string | null
           status?: Database["public"]["Enums"]["account_status"]
-          unavailable_until?: string | null
           updated_at?: string
         }
         Relationships: []

@@ -102,26 +102,16 @@ export function GlobalOrderListener() {
       if (!DRIVER_POOL_STATUSES.includes(row.status)) return;
       if (seen.current.has(row.id)) return;
 
-      // Only notify if the driver is currently available and has no active order.
+      // Only notify if the driver is currently marked available.
       if (!user) return;
       const { data: prof } = await supabase
         .from("profiles")
-        .select("is_available, unavailable_until")
+        .select("is_available")
         .eq("id", user.id)
         .maybeSingle();
-      const p = prof as { is_available?: boolean; unavailable_until?: string | null } | null;
-      const inLockout = p?.unavailable_until
-        ? new Date(p.unavailable_until).getTime() > Date.now()
-        : false;
-      if (!p?.is_available || inLockout) return;
+      const p = prof as { is_available?: boolean } | null;
+      if (!p?.is_available) return;
 
-      const { data: activeRows } = await supabase
-        .from("customer_orders")
-        .select("id")
-        .eq("driver_id", user.id)
-        .not("status", "in", "(delivered,cancelled)")
-        .limit(1);
-      if ((activeRows ?? []).length > 0) return;
 
       let sName = "";
       const { data: s } = await supabase
@@ -228,7 +218,6 @@ export function GlobalOrderListener() {
         router.navigate({ to: "/merchant/dashboard" });
       } else {
         const acceptedAt = new Date();
-        const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
         const { data: claim, error } = await supabase
           .from("customer_orders")
           .update({
@@ -243,12 +232,9 @@ export function GlobalOrderListener() {
         if (error || !claim) {
           alert(error?.message ? `تعذر قبول الطلب: ${error.message}` : "تم استلام هذا الطلب من قِبل مندوب آخر");
         } else {
-          await supabase
-            .from("profiles")
-            .update({ is_available: false, unavailable_until: until.toISOString() })
-            .eq("id", user.id);
           router.navigate({ to: "/driver/dashboard" });
         }
+
       }
     } finally {
       setBusy(false);

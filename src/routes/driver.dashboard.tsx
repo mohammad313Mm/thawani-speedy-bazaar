@@ -34,12 +34,11 @@ function DriverDashboardPage() {
   const { user, roles, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAvailable, setIsAvailable] = useState(false);
-  const [unavailableUntil, setUnavailableUntil] = useState<number | null>(null);
-  const [now, setNow] = useState(() => Date.now());
   const [orders, setOrders] = useState<Order[]>([]);
   const [stores, setStores] = useState<Record<string, StoreInfo>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
+
 
   useEffect(() => {
     if (loading) return;
@@ -52,25 +51,18 @@ function DriverDashboardPage() {
     }
   }, [user, roles, loading, navigate]);
 
-  // Tick every second while a lockout is pending
-  useEffect(() => {
-    if (!unavailableUntil) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [unavailableUntil]);
-
-  // Load availability + lockout
+  // Load availability
   const loadProfile = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("is_available, unavailable_until")
+      .select("is_available")
       .eq("id", user.id)
       .maybeSingle();
-    const row = data as { is_available?: boolean; unavailable_until?: string | null } | null;
+    const row = data as { is_available?: boolean } | null;
     setIsAvailable(Boolean(row?.is_available));
-    setUnavailableUntil(row?.unavailable_until ? new Date(row.unavailable_until).getTime() : null);
   }, [user]);
+
 
   useEffect(() => {
     loadProfile();
@@ -129,41 +121,8 @@ function DriverDashboardPage() {
     };
   }, [user, loadOrders]);
 
-  const lockoutRemainingMs = unavailableUntil ? Math.max(0, unavailableUntil - now) : 0;
-  const inLockout = lockoutRemainingMs > 0;
-
-  // Auto re-enable availability once the 20-minute lockout ends
-  useEffect(() => {
-    if (!user || !unavailableUntil) return;
-    const remaining = unavailableUntil - Date.now();
-    if (remaining <= 0) {
-      (async () => {
-        await supabase
-          .from("profiles")
-          .update({ is_available: true, unavailable_until: null })
-          .eq("id", user.id);
-        setUnavailableUntil(null);
-        setIsAvailable(true);
-      })();
-      return;
-    }
-    const t = setTimeout(async () => {
-      await supabase
-        .from("profiles")
-        .update({ is_available: true, unavailable_until: null })
-        .eq("id", user.id);
-      setUnavailableUntil(null);
-      setIsAvailable(true);
-    }, remaining + 250);
-    return () => clearTimeout(t);
-  }, [user, unavailableUntil]);
-
   const toggleAvailability = async (next: boolean) => {
     if (!user) return;
-    if (next && inLockout) {
-      alert("لا يمكن تفعيل الحالة قبل انتهاء مهلة الـ20 دقيقة");
-      return;
-    }
     setIsAvailable(next);
     await supabase.from("profiles").update({ is_available: next }).eq("id", user.id);
   };
@@ -175,7 +134,6 @@ function DriverDashboardPage() {
     // Optimistically dismiss the modal so it closes instantly on tap.
     setDismissed((prev) => new Set(prev).add(id));
     const acceptedAt = new Date();
-    const until = new Date(acceptedAt.getTime() + 20 * 60 * 1000);
     const { data, error } = await supabase
       .from("customer_orders")
       .update({
@@ -192,13 +150,8 @@ function DriverDashboardPage() {
       alert(error?.message ? `تعذر قبول الطلب: ${error.message}` : "تم استلام هذا الطلب من قِبل مندوب آخر");
     } else {
       ok = true;
-      await supabase
-        .from("profiles")
-        .update({ is_available: false, unavailable_until: until.toISOString() })
-        .eq("id", user.id);
-      setUnavailableUntil(until.getTime());
-      setIsAvailable(false);
     }
+
     await loadOrders();
     setBusy(null);
     if (ok) {
@@ -230,11 +183,11 @@ function DriverDashboardPage() {
   }
 
   const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
-  const hasActive = active.length > 0;
-  // Hide the pool while the driver has an active order or is in lockout
-  const pending = isAvailable && !hasActive && !inLockout
+  // Drivers can always claim from the pool while available — no waiting period.
+  const pending = isAvailable
     ? orders.filter((o) => o.driver_id === null && ["searching_driver", "accepted", "preparing", "ready"].includes(o.status))
     : [];
+
   const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
 
   const incoming = pending.find((o) => !dismissed.has(o.id)) ?? null;
@@ -304,23 +257,16 @@ function DriverDashboardPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-lg font-black">
-                {inLockout
-                  ? "غير متوفر — بانتظار انتهاء المهلة"
-                  : isAvailable
-                    ? "متوفر لاستلام الطلبات"
-                    : "غير متوفر"}
+                {isAvailable ? "متوفر لاستلام الطلبات" : "غير متوفر"}
               </p>
               <p className="mt-0.5 text-xs opacity-90">
-                {inLockout
-                  ? `سيتم تفعيل الحالة تلقائياً بعد ${formatMs(lockoutRemainingMs)}`
-                  : isAvailable
-                    ? "سيتم إشعارك بالطلبات الجديدة فوراً"
-                    : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
+                {isAvailable
+                  ? "سيتم إشعارك بالطلبات الجديدة فوراً"
+                  : "لن تصلك طلبات جديدة حتى تفعّل الحالة"}
               </p>
             </div>
             <button
               onClick={() => toggleAvailability(!isAvailable)}
-              disabled={inLockout}
               className={`relative h-8 w-14 rounded-full transition-colors disabled:opacity-60 ${
                 isAvailable ? "bg-white/30" : "bg-black/30"
               }`}
@@ -335,8 +281,9 @@ function DriverDashboardPage() {
           </div>
         </section>
 
-        {/* Pending (incoming) — hidden while an active order exists or lockout is running */}
-        {isAvailable && !hasActive && !inLockout && (
+        {/* Pending (incoming) */}
+        {isAvailable && (
+
           <Section title="طلبات جديدة">
             {pending.length === 0 ? (
               <EmptyState text="لا توجد طلبات حالياً — سنُعلمك فور وصول طلب جديد." />
@@ -485,12 +432,6 @@ function OrderCard({
   );
 }
 
-function formatMs(ms: number) {
-  const s = Math.ceil(ms / 1000);
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${r.toString().padStart(2, "0")}`;
-}
 
 
 function Row({
