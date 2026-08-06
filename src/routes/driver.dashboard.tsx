@@ -183,11 +183,11 @@ function DriverDashboardPage() {
   }
 
   const active = orders.filter((o) => o.driver_id === user.id && !["delivered", "cancelled"].includes(o.status));
-  const hasActive = active.length > 0;
-  // Hide the pool while the driver has an active order or is in lockout
-  const pending = isAvailable && !hasActive && !inLockout
+  // Drivers can always claim from the pool while available — no waiting period.
+  const pending = isAvailable
     ? orders.filter((o) => o.driver_id === null && ["searching_driver", "accepted", "preparing", "ready"].includes(o.status))
     : [];
+
   const history = orders.filter((o) => o.driver_id === user.id && ["delivered", "cancelled"].includes(o.status));
 
   const incoming = pending.find((o) => !dismissed.has(o.id)) ?? null;
