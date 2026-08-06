@@ -17,6 +17,7 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
 import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as DriverLoginRouteImport } from './routes/driver-login'
 import { Route as DriverAuthRouteImport } from './routes/driver-auth'
@@ -33,6 +34,10 @@ import { Route as DriverDashboardRouteImport } from './routes/driver.dashboard'
 import { Route as CategoryKeyRouteImport } from './routes/category.$key'
 import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
 import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -72,6 +77,11 @@ const MerchantLoginRoute = MerchantLoginRouteImport.update({
 const MerchantAuthRoute = MerchantAuthRouteImport.update({
   id: '/merchant-auth',
   path: '/merchant-auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -154,6 +164,29 @@ const ApplyDriverRoute = ApplyDriverRouteImport.update({
   path: '/apply/driver',
   getParentRoute: () => rootRouteImport,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -165,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
@@ -173,6 +207,8 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
@@ -180,6 +216,8 @@ export interface FileRoutesByFullPath {
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -191,6 +229,7 @@ export interface FileRoutesByTo {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
@@ -199,6 +238,8 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
@@ -206,6 +247,8 @@ export interface FileRoutesByTo {
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -218,6 +261,7 @@ export interface FileRoutesById {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
@@ -226,6 +270,8 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/apply/driver': typeof ApplyDriverRoute
   '/apply/merchant': typeof ApplyMerchantRoute
   '/category/$key': typeof CategoryKeyRoute
@@ -233,6 +279,8 @@ export interface FileRoutesById {
   '/merchant/dashboard': typeof MerchantDashboardRoute
   '/product/$id': typeof ProductIdRoute
   '/store/$id': typeof StoreIdRoute
+  '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -246,6 +294,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
@@ -254,6 +303,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sitemap.xml'
     | '/terms'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
@@ -261,6 +312,8 @@ export interface FileRouteTypes {
     | '/merchant/dashboard'
     | '/product/$id'
     | '/store/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -272,6 +325,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
@@ -280,6 +334,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sitemap.xml'
     | '/terms'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
@@ -287,6 +343,8 @@ export interface FileRouteTypes {
     | '/merchant/dashboard'
     | '/product/$id'
     | '/store/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   id:
     | '__root__'
     | '/'
@@ -298,6 +356,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
@@ -306,6 +365,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/sitemap.xml'
     | '/terms'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/apply/driver'
     | '/apply/merchant'
     | '/category/$key'
@@ -313,6 +374,8 @@ export interface FileRouteTypes {
     | '/merchant/dashboard'
     | '/product/$id'
     | '/store/$id'
+    | '/.lovable/oauth/consent'
+    | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -325,6 +388,7 @@ export interface RootRouteChildren {
   DriverAuthRoute: typeof DriverAuthRoute
   DriverLoginRoute: typeof DriverLoginRoute
   FavoritesRoute: typeof FavoritesRoute
+  McpRoute: typeof McpRoute
   MerchantAuthRoute: typeof MerchantAuthRoute
   MerchantLoginRoute: typeof MerchantLoginRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -333,6 +397,8 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   ApplyDriverRoute: typeof ApplyDriverRoute
   ApplyMerchantRoute: typeof ApplyMerchantRoute
   CategoryKeyRoute: typeof CategoryKeyRoute
@@ -340,6 +406,8 @@ export interface RootRouteChildren {
   MerchantDashboardRoute: typeof MerchantDashboardRoute
   ProductIdRoute: typeof ProductIdRoute
   StoreIdRoute: typeof StoreIdRoute
+  DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -398,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/merchant-auth'
       fullPath: '/merchant-auth'
       preLoaderRoute: typeof MerchantAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favorites': {
@@ -512,6 +587,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplyDriverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -525,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   DriverAuthRoute: DriverAuthRoute,
   DriverLoginRoute: DriverLoginRoute,
   FavoritesRoute: FavoritesRoute,
+  McpRoute: McpRoute,
   MerchantAuthRoute: MerchantAuthRoute,
   MerchantLoginRoute: MerchantLoginRoute,
   NotificationsRoute: NotificationsRoute,
@@ -533,6 +637,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   ApplyDriverRoute: ApplyDriverRoute,
   ApplyMerchantRoute: ApplyMerchantRoute,
   CategoryKeyRoute: CategoryKeyRoute,
@@ -540,7 +647,19 @@ const rootRouteChildren: RootRouteChildren = {
   MerchantDashboardRoute: MerchantDashboardRoute,
   ProductIdRoute: ProductIdRoute,
   StoreIdRoute: StoreIdRoute,
+  DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
