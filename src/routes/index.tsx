@@ -297,6 +297,8 @@ function HomePage() {
     if (typeof sessionStorage === "undefined") return;
     const seen = sessionStorage.getItem("thawani-splash");
     if (seen) setShowSplash(false);
+    const saved = loadSavedLocation();
+    if (saved) setLocation(saved.label);
   }, []);
 
   const finishSplash = () => {
@@ -304,28 +306,29 @@ function HomePage() {
     try {
       sessionStorage.setItem("thawani-splash", "1");
     } catch {}
-    // request location after splash
-    if ("geolocation" in navigator) {
+    // request fresh location after splash
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        () => setLocation("بابل — الهاشمية"),
-        () => setLocation(null),
-        { timeout: 6000 },
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const label = await reverseGeocode(lat, lng);
+          saveLocation({ label, lat, lng, savedAt: new Date().toISOString() });
+          setLocation(label);
+        },
+        () => {
+          const saved = loadSavedLocation();
+          if (saved) setLocation(saved.label);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       );
-    } else {
-      setLocation("بابل — الهاشمية");
     }
   };
 
   useEffect(() => {
     if (!showSplash && location === null) {
-      // best-effort ask on subsequent visits
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          () => setLocation("بابل — الهاشمية"),
-          () => {},
-          { timeout: 4000 },
-        );
-      }
+      const saved = loadSavedLocation();
+      if (saved) setLocation(saved.label);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSplash]);
