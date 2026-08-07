@@ -135,9 +135,17 @@ function LocationCard({
         onLocation(label);
         setStatus("granted");
       },
-      () => {
-        alert("يرجى تفعيل خدمة الموقع (GPS) في هاتفك ليتم تحديده فوراً.");
-        setStatus("denied");
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          alert("يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح/التطبيق.");
+          setStatus("denied");
+        } else if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
+          alert("تعذر الحصول على موقع دقيق. تأكد من تفعيل GPS ومن وجود إشارة واضحة.");
+          setStatus("error");
+        } else {
+          alert("حدث خطأ أثناء تحديد الموقع. حاول مرة أخرى.");
+          setStatus("error");
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
