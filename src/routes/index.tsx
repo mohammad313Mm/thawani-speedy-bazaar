@@ -84,6 +84,31 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
 
 type LocStatus = "idle" | "requesting" | "granted" | "denied" | "unsupported" | "error";
 
+type SavedLocation = {
+  label: string;
+  lat: number;
+  lng: number;
+  savedAt: string;
+};
+
+const LOC_STORAGE_KEY = "thawani-location";
+
+function loadSavedLocation(): SavedLocation | null {
+  try {
+    const raw = localStorage.getItem(LOC_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SavedLocation;
+  } catch {
+    return null;
+  }
+}
+
+function saveLocation(loc: SavedLocation) {
+  try {
+    localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(loc));
+  } catch {}
+}
+
 function LocationCard({
   location,
   onLocation,
@@ -93,33 +118,38 @@ function LocationCard({
 }) {
   const [status, setStatus] = useState<LocStatus>("idle");
 
-  const request = useCallback(() => {
+  const handleGetLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      alert("هاتفك لا يدعم تحديد الموقع");
       setStatus("unsupported");
       return;
     }
     setStatus("requesting");
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const label = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        console.log("تم جلب الموقع بنجاح:", lat, lng);
+        const label = await reverseGeocode(lat, lng);
+        saveLocation({ label, lat, lng, savedAt: new Date().toISOString() });
         onLocation(label);
         setStatus("granted");
       },
-      (err) => {
-        if (err.code === err.PERMISSION_DENIED) setStatus("denied");
-        else setStatus("error");
+      () => {
+        alert("يرجى تفعيل خدمة الموقع (GPS) في هاتفك ليتم تحديده فوراً.");
+        setStatus("denied");
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }, [onLocation]);
 
   const message =
     status === "denied"
-      ? "تم رفض إذن الموقع. يرجى تفعيل خدمات الموقع من إعدادات المتصفح أو اختيار الموقع يدوياً."
+      ? "تم رفض إذن الموقع. يرجى تفعيل خدمة الموقع (GPS) في هاتفك ليتم تحديده فوراً."
       : status === "unsupported"
-      ? "المتصفح لا يدعم تحديد الموقع. يرجى اختيار الموقع يدوياً."
+      ? "هاتفك لا يدعم تحديد الموقع."
       : status === "error"
-      ? "تعذر تحديد الموقع. حاول مرة أخرى أو اختر الموقع يدوياً."
+      ? "تعذر تحديد الموقع. حاول مرة أخرى أو تأكد من تفعيل GPS."
       : null;
 
   return (
@@ -137,7 +167,7 @@ function LocationCard({
           </div>
         </div>
         <button
-          onClick={request}
+          onClick={handleGetLocation}
           disabled={status === "requesting"}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
