@@ -7,6 +7,8 @@
       "dependencies": {
         "@capacitor/android": "^8.4.2",
         "@capacitor/core": "^8.4.2",
+        "@capacitor/geolocation": "^8.2.1",
+        "@capacitor/local-notifications": "^8.2.1",
         "@capacitor/push-notifications": "^8.1.2",
         "@hookform/resolvers": "^5.2.2",
         "@lovable.dev/mcp-js": "^0.26.1",
@@ -134,7 +136,13 @@
 
     "@capacitor/core": ["@capacitor/core@8.4.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/core/-/core-8.4.2.tgz", { "dependencies": { "tslib": "^2.1.0" } }, "sha512-fQPRb3JXRaU2pnufDUvqOjhsrYxDQeFRZyaj/sHydIUxD2NxOGHKMpmKUdI+U4OOmKuGZyvRpi7TSJU+7Bjbmg=="],
 
+    "@capacitor/geolocation": ["@capacitor/geolocation@8.2.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/geolocation/-/geolocation-8.2.1.tgz", { "dependencies": { "@capacitor/synapse": "^1.0.4" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-1QprZ0KXKKuCkwrv0Ot8ao63QZQ0wIQC/vYbB54eSHmyNjSQ/o7rTbzRtW4VsGMhcx4EmY9RxlyzcnM7Da+lqw=="],
+
+    "@capacitor/local-notifications": ["@capacitor/local-notifications@8.2.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/local-notifications/-/local-notifications-8.2.1.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-Bkim+MGl7UrDTjDferV4ECq0aWciTsa0k15+MX2jnx2PeWgEPvlBy5yrqzBlwEZPrtHFUvPVxPi5V66MPGHkAw=="],
+
     "@capacitor/push-notifications": ["@capacitor/push-notifications@8.1.2", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/push-notifications/-/push-notifications-8.1.2.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-TQl4XxqJfNF+KbSYBFMXYYT5WXUaleVKXlByhh/8+KySMVNjp+l5OqAUoGe/sY1IAnGXEuUeCjA/WLZEVvGwrA=="],
+
+    "@capacitor/synapse": ["@capacitor/synapse@1.0.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/synapse/-/synapse-1.0.4.tgz", {}, "sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw=="],
 
     "@date-fns/tz": ["@date-fns/tz@1.4.1", "", {}, "sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA=="],
 
