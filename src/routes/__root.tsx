@@ -155,6 +155,11 @@ function AppFrame() {
   );
 }
 
+function NativeServicesBootstrap() {
+  useNativeServices();
+  return null;
+}
+
 function PushBootstrap() {
   const router = useRouter();
   const { user, roles } = useAuth();
