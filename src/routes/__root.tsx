@@ -19,6 +19,7 @@ import { OrdersProvider } from "../lib/orders";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { Toaster } from "../components/ui/sonner";
 import { GlobalOrderListener } from "../components/GlobalOrderListener";
+import { useNativeServices } from "../hooks/useNativeServices";
 
 
 function NotFoundComponent() {
@@ -148,11 +149,17 @@ function AppFrame() {
       {!hideNav && <BottomNav />}
       <Toaster position="top-center" richColors />
       <PushBootstrap />
+      <NativeServicesBootstrap />
       <GlobalOrderListener />
     </div>
 
 
   );
+}
+
+function NativeServicesBootstrap() {
+  useNativeServices();
+  return null;
 }
 
 function PushBootstrap() {
