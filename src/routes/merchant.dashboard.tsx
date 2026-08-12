@@ -819,6 +819,10 @@ function StoreSetup({
       setErr("يرجى تعبئة كافة الحقول ورفع صورة الغلاف وشعار المتجر");
       return;
     }
+    if (!coords) {
+      setErr("يرجى تحديد موقع المطعم قبل الحفظ");
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase
       .from("stores")
@@ -829,8 +833,11 @@ function StoreSetup({
         category,
         cover_url: cover,
         logo_url: logo,
+        latitude: coords.lat,
+        longitude: coords.lng,
         is_open: true,
       })
+
       .eq("id", store.id)
       .select(STORE_SELECT)
       .single();
