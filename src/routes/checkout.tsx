@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check, User } from "lucide-react";
+import { ArrowRight, MapPin, Phone, StickyNote, Wallet, Banknote, Check, User, Truck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "../lib/cart";
@@ -12,11 +12,25 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function feeForDistance(km: number): number {
-  if (km < 4) return 1000;
-  if (km < 7) return 2000;
-  if (km < 12) return 3000;
-  return 5000;
+  if (km < 3) return 1000;
+  if (km < 5) return 2000;
+  if (km < 8) return 3000;
+  if (km < 11) return 4000;
+  if (km < 15) return 5000;
+  return 6000;
 }
+
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 
 function CheckoutPage() {
   const navigate = useNavigate();
@@ -24,9 +38,11 @@ function CheckoutPage() {
   const { addOrder } = useOrders();
   const staticStore = storeId ? storeById(storeId) : null;
   const [dbStore, setDbStore] = useState<ReturnType<typeof storeById> | null>(null);
+  const [storeCoords, setStoreCoords] = useState<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    if (!storeId || staticStore) {
+    if (!storeId) {
       setDbStore(null);
+      setStoreCoords(null);
       return;
     }
     let alive = true;
@@ -34,7 +50,11 @@ function CheckoutPage() {
       const { supabase } = await import("../integrations/supabase/client");
       const { adaptDbStore } = await import("../lib/db-stores");
       const { data } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
-      if (alive) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+      if (!alive) return;
+      if (!staticStore) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+      const lat = (data as { latitude?: number | null } | null)?.latitude;
+      const lng = (data as { longitude?: number | null } | null)?.longitude;
+      setStoreCoords(typeof lat === "number" && typeof lng === "number" ? { lat, lng } : null);
     })();
     return () => {
       alive = false;
@@ -51,6 +71,12 @@ function CheckoutPage() {
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Recompute distance whenever both the customer and store coordinates are known.
+  useEffect(() => {
+    if (coords && storeCoords) setDistanceKm(haversineKm(coords, storeCoords));
+  }, [coords, storeCoords]);
+
 
   if (items.length === 0) {
     return (
@@ -85,9 +111,10 @@ function CheckoutPage() {
             const j = await res.json();
             if (j.display_name) setAddress(j.display_name);
           }
-          // Keep the store's declared distance as the source of truth for demo stores.
-          // Real stores with coordinates could compute Haversine here.
-          if (store) setDistanceKm(store.distanceKm);
+          // Distance is computed from the store coordinates (effect above);
+          // fall back to the store's declared distance for demo stores.
+          if (!storeCoords && store) setDistanceKm(store.distanceKm);
+
           toast.success("تم تحديد موقعك");
         } finally {
           setLocating(false);
@@ -208,6 +235,22 @@ function CheckoutPage() {
           </p>
         </section>
 
+        <section className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-black text-foreground">
+              <Truck className="mb-1 inline h-3.5 w-3.5 text-primary" /> سعر التوصيل
+            </label>
+            <span className="text-sm font-black text-primary">{formatIQD(deliveryFee)}</span>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {coords && storeCoords
+              ? `محتسب تلقائياً حسب المسافة (${formatDistanceKm(distanceKm)}) بين موقعك وموقع المتجر.`
+              : "حدّد موقعك بالضغط على «استخدم موقعي» لاحتساب سعر التوصيل حسب المسافة."}
+          </p>
+        </section>
+
+
+
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
@@ -257,11 +300,13 @@ function CheckoutPage() {
           <h3 className="mb-3 text-xs font-black text-foreground">ملخص الطلب</h3>
           <div className="space-y-1.5 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
+            <Row label="سعر التوصيل" value={formatIQD(deliveryFee)} />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
-              <span className="text-primary">{formatIQD(subtotal)}</span>
+              <span className="text-primary">{formatIQD(total)}</span>
             </div>
+
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
             الوصول المتوقع خلال {store?.deliveryMin ?? 30} دقيقة.
@@ -276,7 +321,7 @@ function CheckoutPage() {
             onClick={place}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-70"
           >
-            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(subtotal)}`}
+            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(total)}`}
           </button>
         </div>
       </div>
