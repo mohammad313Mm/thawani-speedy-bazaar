@@ -177,6 +177,63 @@ export function GlobalOrderListener() {
     };
   }, [user, isDriver, onDriverDash, handleDriverRow]);
 
+  // Status-update alerts — merchant's own store orders and the driver's
+  // assigned orders. Plays a chime + toast on ANY screen so the user notices
+  // updates without opening the dashboard.
+  useEffect(() => {
+    if (!user || (!isMerchant && !isDriver)) return;
+    const chans: ReturnType<typeof supabase.channel>[] = [];
+
+    const alert = (row: OrderRow, prev?: OrderRow) => {
+      if (prev && prev.status === row.status) return;
+      const label = STATUS_AR[row.status] ?? row.status;
+      const num = (row.local_order_id ?? row.id).slice(-6).toUpperCase();
+      playAlertTone(1);
+      toast(`تحديث الطلب #${num}`, { description: label, duration: 8000 });
+    };
+
+    if (isMerchant && storeId) {
+      chans.push(
+        supabase
+          .channel(`global_merchant_status_${storeId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "customer_orders",
+              filter: `store_id=eq.${storeId}`,
+            },
+            (payload) => alert(payload.new as OrderRow, payload.old as OrderRow),
+          )
+          .subscribe(),
+      );
+    }
+
+    if (isDriver) {
+      chans.push(
+        supabase
+          .channel(`global_driver_status_${user.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "customer_orders",
+              filter: `driver_id=eq.${user.id}`,
+            },
+            (payload) => alert(payload.new as OrderRow, payload.old as OrderRow),
+          )
+          .subscribe(),
+      );
+    }
+
+    return () => {
+      chans.forEach((c) => supabase.removeChannel(c));
+    };
+  }, [user, isMerchant, isDriver, storeId]);
+
+
   if (loading || !user || !incoming) return null;
   if (incoming.variant === "store" && onMerchantDash) return null;
   if (incoming.variant === "driver" && onDriverDash) return null;
