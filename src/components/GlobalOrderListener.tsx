@@ -14,6 +14,23 @@ import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { IncomingOrderModal, type IncomingOrderData } from "./IncomingOrderModal";
 import { notifyDriversForOrder } from "../lib/notify.functions";
+import { playAlertTone } from "../lib/alert-sound";
+import { toast } from "sonner";
+
+const STATUS_AR: Record<string, string> = {
+  pending: "بانتظار موافقة المتجر",
+  accepted: "تم قبول الطلب من المتجر",
+  searching_driver: "جاري البحث عن مندوب",
+  preparing: "قيد التحضير",
+  ready: "الطلب جاهز",
+  driver_assigned: "تم تعيين مندوب",
+  picked_up: "المندوب استلم الطلب",
+  on_the_way: "الطلب في الطريق",
+  delivered: "تم التسليم",
+  rejected: "تم رفض الطلب",
+  missed: "لم يتم الرد على الطلب",
+  cancelled: "تم إلغاء الطلب",
+};
 
 type OrderRow = {
   id: string;
