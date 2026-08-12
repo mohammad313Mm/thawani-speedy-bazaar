@@ -167,8 +167,15 @@
   textarea,
   select {
     max-width: 100%;
-    /* منع تكبير الصفحة تلقائياً على iOS */
-    font-size: max(16px, 1em);
+  }
+
+  /* منع تكبير الصفحة تلقائياً على iOS عند الكتابة */
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: max(16px, 1em);
+    }
   }
 
   /* Arabic-Indic numerals for currency displays that opt in */
