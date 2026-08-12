@@ -111,9 +111,10 @@ function CheckoutPage() {
             const j = await res.json();
             if (j.display_name) setAddress(j.display_name);
           }
-          // Keep the store's declared distance as the source of truth for demo stores.
-          // Real stores with coordinates could compute Haversine here.
-          if (store) setDistanceKm(store.distanceKm);
+          // Distance is computed from the store coordinates (effect above);
+          // fall back to the store's declared distance for demo stores.
+          if (!storeCoords && store) setDistanceKm(store.distanceKm);
+
           toast.success("تم تحديد موقعك");
         } finally {
           setLocating(false);
