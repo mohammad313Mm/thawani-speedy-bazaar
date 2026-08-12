@@ -14,6 +14,23 @@ import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { IncomingOrderModal, type IncomingOrderData } from "./IncomingOrderModal";
 import { notifyDriversForOrder } from "../lib/notify.functions";
+import { playAlertTone } from "../lib/alert-sound";
+import { toast } from "sonner";
+
+const STATUS_AR: Record<string, string> = {
+  pending: "بانتظار موافقة المتجر",
+  accepted: "تم قبول الطلب من المتجر",
+  searching_driver: "جاري البحث عن مندوب",
+  preparing: "قيد التحضير",
+  ready: "الطلب جاهز",
+  driver_assigned: "تم تعيين مندوب",
+  picked_up: "المندوب استلم الطلب",
+  on_the_way: "الطلب في الطريق",
+  delivered: "تم التسليم",
+  rejected: "تم رفض الطلب",
+  missed: "لم يتم الرد على الطلب",
+  cancelled: "تم إلغاء الطلب",
+};
 
 type OrderRow = {
   id: string;
@@ -176,6 +193,63 @@ export function GlobalOrderListener() {
       supabase.removeChannel(ch);
     };
   }, [user, isDriver, onDriverDash, handleDriverRow]);
+
+  // Status-update alerts — merchant's own store orders and the driver's
+  // assigned orders. Plays a chime + toast on ANY screen so the user notices
+  // updates without opening the dashboard.
+  useEffect(() => {
+    if (!user || (!isMerchant && !isDriver)) return;
+    const chans: ReturnType<typeof supabase.channel>[] = [];
+
+    const alert = (row: OrderRow, prev?: OrderRow) => {
+      if (prev && prev.status === row.status) return;
+      const label = STATUS_AR[row.status] ?? row.status;
+      const num = (row.local_order_id ?? row.id).slice(-6).toUpperCase();
+      playAlertTone(1);
+      toast(`تحديث الطلب #${num}`, { description: label, duration: 8000 });
+    };
+
+    if (isMerchant && storeId) {
+      chans.push(
+        supabase
+          .channel(`global_merchant_status_${storeId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "customer_orders",
+              filter: `store_id=eq.${storeId}`,
+            },
+            (payload) => alert(payload.new as OrderRow, payload.old as OrderRow),
+          )
+          .subscribe(),
+      );
+    }
+
+    if (isDriver) {
+      chans.push(
+        supabase
+          .channel(`global_driver_status_${user.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "customer_orders",
+              filter: `driver_id=eq.${user.id}`,
+            },
+            (payload) => alert(payload.new as OrderRow, payload.old as OrderRow),
+          )
+          .subscribe(),
+      );
+    }
+
+    return () => {
+      chans.forEach((c) => supabase.removeChannel(c));
+    };
+  }, [user, isMerchant, isDriver, storeId]);
+
 
   if (loading || !user || !incoming) return null;
   if (incoming.variant === "store" && onMerchantDash) return null;

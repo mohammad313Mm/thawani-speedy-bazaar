@@ -13,6 +13,8 @@ let currentUserRole: "merchant" | "driver" | null = null;
 
 async function loadPlugin() {
   try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return null; // web: plugin unavailable
     const mod = await import("@capacitor/push-notifications");
     return mod.PushNotifications;
   } catch {
