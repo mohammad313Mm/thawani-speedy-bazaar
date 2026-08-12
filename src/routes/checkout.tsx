@@ -235,6 +235,22 @@ function CheckoutPage() {
           </p>
         </section>
 
+        <section className="rounded-2xl bg-card p-4 shadow-soft">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-black text-foreground">
+              <Truck className="mb-1 inline h-3.5 w-3.5 text-primary" /> سعر التوصيل
+            </label>
+            <span className="text-sm font-black text-primary">{formatIQD(deliveryFee)}</span>
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {coords && storeCoords
+              ? `محتسب تلقائياً حسب المسافة (${formatDistanceKm(distanceKm)}) بين موقعك وموقع المتجر.`
+              : "حدّد موقعك بالضغط على «استخدم موقعي» لاحتساب سعر التوصيل حسب المسافة."}
+          </p>
+        </section>
+
+
+
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">
           <label className="text-xs font-black text-foreground">
