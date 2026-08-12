@@ -204,7 +204,7 @@ function CheckoutPage() {
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
           <p className="mt-2 text-[11px] text-muted-foreground">
-            المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)} • رسوم التوصيل {formatIQD(deliveryFee)}
+            المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)}
           </p>
         </section>
 
@@ -257,11 +257,10 @@ function CheckoutPage() {
           <h3 className="mb-3 text-xs font-black text-foreground">ملخص الطلب</h3>
           <div className="space-y-1.5 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
-            <Row label="رسوم التوصيل" value={formatIQD(deliveryFee)} />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
-              <span className="text-primary">{formatIQD(total)}</span>
+              <span className="text-primary">{formatIQD(subtotal)}</span>
             </div>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
@@ -277,7 +276,7 @@ function CheckoutPage() {
             onClick={place}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-70"
           >
-            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(total)}`}
+            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(subtotal)}`}
           </button>
         </div>
       </div>
