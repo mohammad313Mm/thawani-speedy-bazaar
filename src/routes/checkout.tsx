@@ -300,11 +300,13 @@ function CheckoutPage() {
           <h3 className="mb-3 text-xs font-black text-foreground">ملخص الطلب</h3>
           <div className="space-y-1.5 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
+            <Row label="سعر التوصيل" value={formatIQD(deliveryFee)} />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
-              <span className="text-primary">{formatIQD(subtotal)}</span>
+              <span className="text-primary">{formatIQD(total)}</span>
             </div>
+
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
             الوصول المتوقع خلال {store?.deliveryMin ?? 30} دقيقة.
