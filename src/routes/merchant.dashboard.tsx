@@ -200,7 +200,12 @@ function MerchantDashboard() {
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         {tab === "orders" && <OrdersPanel storeId={store.id} storeName={store.name} />}
         {tab === "products" && <ProductsPanel storeId={store.id} />}
-        {tab === "status" && <StatusPanel store={store} onUpdated={setStore} />}
+        {tab === "status" && (
+          <>
+            <StatusPanel store={store} onUpdated={setStore} />
+            <StoreLocationSection store={store} onUpdated={setStore} />
+          </>
+        )}
       </main>
     </>
   );
