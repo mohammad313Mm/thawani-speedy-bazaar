@@ -70,19 +70,15 @@ export function StoreCard({ store }: { store: Store }) {
         <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground sm:text-xs">
           {store.tags.join(" • ")}
         </p>
-        <div className="mt-auto pt-2 flex flex-col gap-1 text-[10px] font-semibold text-muted-foreground sm:flex-row sm:items-center sm:gap-2 sm:text-[11px]">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-3 w-3" /> {formatMinutes(store.deliveryMin)}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> {formatDistanceKm(store.distanceKm)}
-            </span>
-          </div>
-          <span className="inline-flex items-center self-start rounded-full bg-muted px-2 py-0.5 text-[9px] text-foreground sm:self-auto">
-            توصيل {formatIQD(store.deliveryFee)}
+        <div className="mt-auto pt-2 flex items-center gap-2 text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
+          <span className="inline-flex items-center gap-1">
+            <Clock className="h-3 w-3" /> {formatMinutes(store.deliveryMin)}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-3 w-3" /> {formatDistanceKm(store.distanceKm)}
           </span>
         </div>
+
       </div>
     </Link>
   );

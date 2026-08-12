@@ -39,7 +39,7 @@ function CartPage() {
 
   const deliveryFee = store?.deliveryFee ?? 0;
   const discount = applied?.discount ?? 0;
-  const total = Math.max(0, subtotal + deliveryFee - discount);
+  const total = Math.max(0, subtotal - discount);
 
   const apply = () => {
     const c = coupon.trim().toUpperCase();
@@ -173,7 +173,7 @@ function CartPage() {
         <div className="rounded-2xl bg-card p-4 shadow-soft">
           <div className="space-y-2 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
-            <Row label="رسوم التوصيل" value={formatIQD(deliveryFee)} />
+
             {discount > 0 && (
               <Row label="الخصم" value={`- ${formatIQD(discount)}`} accent />
             )}

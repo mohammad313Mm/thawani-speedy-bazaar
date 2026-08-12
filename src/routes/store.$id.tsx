@@ -147,12 +147,6 @@ function StorePage() {
                 {formatDistanceKm(store.distanceKm)}
               </div>
             </div>
-            <div>
-              <div className="text-[10px] font-semibold text-muted-foreground">توصيل</div>
-              <div className="mt-1 text-xs font-bold text-foreground">
-                {formatIQD(store.deliveryFee)}
-              </div>
-            </div>
           </div>
         </div>
       </div>
