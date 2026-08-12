@@ -967,6 +967,10 @@ function StoreSetup({
           </div>
         </Field>
 
+        <StoreLocationPicker coords={coords} onChange={setCoords} />
+
+
+
         {err && (
           <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
             {err}
