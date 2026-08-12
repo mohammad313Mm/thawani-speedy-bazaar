@@ -41,10 +41,13 @@ type StoreRow = {
   category: string | null;
   phone: string | null;
   description: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const STORE_SELECT =
-  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description";
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude";
+
 
 type ProductRow = {
   id: string;
