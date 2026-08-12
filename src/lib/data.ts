@@ -1,4 +1,4 @@
-export type CategoryKey = "restaurants" | "grocery" | "cosmetics" | "desserts";
+export type CategoryKey = "restaurants" | "grocery" | "cosmetics" | "desserts" | "freelance";
 
 export interface Category {
   key: CategoryKey;
