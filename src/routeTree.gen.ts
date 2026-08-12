@@ -18,6 +18,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
 import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
 import { Route as McpRouteImport } from './routes/mcp'
+import { Route as FreelanceAgentRouteImport } from './routes/freelance-agent'
 import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as DriverLoginRouteImport } from './routes/driver-login'
 import { Route as DriverAuthRouteImport } from './routes/driver-auth'
@@ -82,6 +83,11 @@ const MerchantAuthRoute = MerchantAuthRouteImport.update({
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreelanceAgentRoute = FreelanceAgentRouteImport.update({
+  id: '/freelance-agent',
+  path: '/freelance-agent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritesRoute = FavoritesRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/freelance-agent': typeof FreelanceAgentRoute
   '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/freelance-agent': typeof FreelanceAgentRoute
   '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/driver-auth': typeof DriverAuthRoute
   '/driver-login': typeof DriverLoginRoute
   '/favorites': typeof FavoritesRoute
+  '/freelance-agent': typeof FreelanceAgentRoute
   '/mcp': typeof McpRoute
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/freelance-agent'
     | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/freelance-agent'
     | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/driver-auth'
     | '/driver-login'
     | '/favorites'
+    | '/freelance-agent'
     | '/mcp'
     | '/merchant-auth'
     | '/merchant-login'
@@ -388,6 +400,7 @@ export interface RootRouteChildren {
   DriverAuthRoute: typeof DriverAuthRoute
   DriverLoginRoute: typeof DriverLoginRoute
   FavoritesRoute: typeof FavoritesRoute
+  FreelanceAgentRoute: typeof FreelanceAgentRoute
   McpRoute: typeof McpRoute
   MerchantAuthRoute: typeof MerchantAuthRoute
   MerchantLoginRoute: typeof MerchantLoginRoute
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/mcp'
       fullPath: '/mcp'
       preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/freelance-agent': {
+      id: '/freelance-agent'
+      path: '/freelance-agent'
+      fullPath: '/freelance-agent'
+      preLoaderRoute: typeof FreelanceAgentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favorites': {
@@ -628,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   DriverAuthRoute: DriverAuthRoute,
   DriverLoginRoute: DriverLoginRoute,
   FavoritesRoute: FavoritesRoute,
+  FreelanceAgentRoute: FreelanceAgentRoute,
   McpRoute: McpRoute,
   MerchantAuthRoute: MerchantAuthRoute,
   MerchantLoginRoute: MerchantLoginRoute,

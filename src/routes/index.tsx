@@ -224,17 +224,28 @@ function SearchResults({ query }: { query: string }) {
         <div className="border-b border-border/60 p-3">
           <p className="mb-2 text-[11px] font-bold text-muted-foreground">الأقسام</p>
           <div className="flex flex-wrap gap-2">
-            {cats.map((c) => (
-              <Link
-                key={c.key}
-                to="/category/$key"
-                params={{ key: c.key }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
-              >
-                <span>{c.icon}</span>
-                {c.name}
-              </Link>
-            ))}
+            {cats.map((c) =>
+              c.key === "freelance" ? (
+                <Link
+                  key={c.key}
+                  to="/freelance-agent"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
+                >
+                  <span>{c.icon}</span>
+                  {c.name}
+                </Link>
+              ) : (
+                <Link
+                  key={c.key}
+                  to="/category/$key"
+                  params={{ key: c.key }}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
+                >
+                  <span>{c.icon}</span>
+                  {c.name}
+                </Link>
+              ),
+            )}
           </div>
         </div>
       )}
