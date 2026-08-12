@@ -38,9 +38,11 @@ function CheckoutPage() {
   const { addOrder } = useOrders();
   const staticStore = storeId ? storeById(storeId) : null;
   const [dbStore, setDbStore] = useState<ReturnType<typeof storeById> | null>(null);
+  const [storeCoords, setStoreCoords] = useState<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    if (!storeId || staticStore) {
+    if (!storeId) {
       setDbStore(null);
+      setStoreCoords(null);
       return;
     }
     let alive = true;
@@ -48,7 +50,11 @@ function CheckoutPage() {
       const { supabase } = await import("../integrations/supabase/client");
       const { adaptDbStore } = await import("../lib/db-stores");
       const { data } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
-      if (alive) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+      if (!alive) return;
+      if (!staticStore) setDbStore(data ? (adaptDbStore(data as never) ?? null) : null);
+      const lat = (data as { latitude?: number | null } | null)?.latitude;
+      const lng = (data as { longitude?: number | null } | null)?.longitude;
+      setStoreCoords(typeof lat === "number" && typeof lng === "number" ? { lat, lng } : null);
     })();
     return () => {
       alive = false;
@@ -65,6 +71,12 @@ function CheckoutPage() {
   const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
   const [locating, setLocating] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // Recompute distance whenever both the customer and store coordinates are known.
+  useEffect(() => {
+    if (coords && storeCoords) setDistanceKm(haversineKm(coords, storeCoords));
+  }, [coords, storeCoords]);
+
 
   if (items.length === 0) {
     return (
