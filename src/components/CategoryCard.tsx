@@ -2,10 +2,15 @@ import { Link } from "@tanstack/react-router";
 import type { Category } from "../lib/data";
 
 export function CategoryCard({ category }: { category: Category }) {
+  const isFreelance = category.key === "freelance";
+  const to = isFreelance ? "/freelance-agent" : "/category/$key";
+  const params = isFreelance ? undefined : { key: category.key };
+  const cta = isFreelance ? "اطلب توصيل" : "تصفح المتاجر";
+
   return (
     <Link
-      to="/category/$key"
-      params={{ key: category.key }}
+      to={to as "/category/$key"}
+      params={params as { key: string } | undefined}
       className="group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
     >
       <div
@@ -24,7 +29,7 @@ export function CategoryCard({ category }: { category: Category }) {
       </div>
       <div className="relative mt-3">
         <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold backdrop-blur">
-          تصفح المتاجر
+          {cta}
         </span>
       </div>
     </Link>
