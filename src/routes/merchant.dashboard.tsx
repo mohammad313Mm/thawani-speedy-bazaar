@@ -782,8 +782,14 @@ function StoreSetup({
   const [logo, setLogo] = useState<string | null>(
     store.cover_url ? store.logo_url ?? null : null,
   );
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    store.latitude != null && store.longitude != null
+      ? { lat: store.latitude, lng: store.longitude }
+      : null,
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
   const coverRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
