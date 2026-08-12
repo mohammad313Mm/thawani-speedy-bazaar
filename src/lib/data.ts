@@ -71,6 +71,13 @@ export const CATEGORIES: Category[] = [
     icon: "🍰",
     color: "from-[oklch(0.72_0.18_15)] to-[oklch(0.78_0.16_320)]",
   },
+  {
+    key: "freelance",
+    name: "مندوب حر",
+    description: "اطلب أي شيء من السوق ونوصله لك",
+    icon: "🛵",
+    color: "from-[oklch(0.72_0.18_55)] to-[oklch(0.62_0.22_35)]",
+  },
 ];
 
 export function categoryByKey(key: string): Category | undefined {
