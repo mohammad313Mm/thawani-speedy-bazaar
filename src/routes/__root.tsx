@@ -159,6 +159,17 @@ function AppFrame() {
 
 function NativeServicesBootstrap() {
   useNativeServices();
+  useEffect(() => {
+    const unlock = () => {
+      void import("../lib/alert-sound").then((m) => m.unlockAlertAudio());
+    };
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("touchstart", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("touchstart", unlock);
+    };
+  }, []);
   return null;
 }
 
