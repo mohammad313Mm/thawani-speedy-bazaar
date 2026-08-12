@@ -134,9 +134,20 @@ function LocationSelector({
 }
 
 function FreelanceAgentPage() {
+  const { user } = useAuth();
   const [location, setLocation] = useState<string | null>(null);
   const [request, setRequest] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const meta = (user.user_metadata ?? {}) as { full_name?: string; phone?: string };
+    if (meta.full_name) setName((v) => v || meta.full_name!);
+    const p = meta.phone || user.phone || "";
+    if (p) setPhone((v) => v || p);
+  }, [user]);
 
   const handleSubmit = async () => {
     if (!location) {
@@ -147,12 +158,31 @@ function FreelanceAgentPage() {
       toast.error("يرجى كتابة تفاصيل طلبك");
       return;
     }
+    if (phone.trim().length < 6) {
+      toast.error("يرجى إدخال رقم هاتف صحيح للتواصل");
+      return;
+    }
     setSubmitting(true);
-    // Simulate async submission; replace with server call when backend flow is ready.
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    setSubmitting(false);
-    toast.success("تم استلام طلبك بنجاح، سنتواصل معك قريباً");
-    setRequest("");
+    try {
+      const saved = loadSavedLocation();
+      const res = await placeFreelanceOrder({
+        data: {
+          customer_id: user?.id ?? null,
+          customer_name: name.trim() || null,
+          customer_phone: phone.trim(),
+          address: location,
+          details: request.trim(),
+          customer_lat: saved?.lat ?? null,
+          customer_lng: saved?.lng ?? null,
+        },
+      });
+      toast.success(`تم إرسال طلبك إلى المندوبين (${res.local_order_id})`);
+      setRequest("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "تعذر إرسال الطلب، حاول مرة أخرى");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -191,6 +221,37 @@ function FreelanceAgentPage() {
             className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:shadow-elegant"
           />
         </div>
+
+        <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft sm:grid-cols-2">
+          <div>
+            <label htmlFor="freelance-name" className="mb-2 block text-sm font-bold text-foreground">
+              الاسم (اختياري)
+            </label>
+            <input
+              id="freelance-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={200}
+              placeholder="اسمك"
+              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+          <div>
+            <label htmlFor="freelance-phone" className="mb-2 block text-sm font-bold text-foreground">
+              رقم الهاتف
+            </label>
+            <input
+              id="freelance-phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              maxLength={30}
+              placeholder="07xxxxxxxxx"
+              className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary"
+            />
+          </div>
+        </div>
+
 
         <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-900/40 dark:bg-orange-950/20">
           <div className="flex items-start gap-3">
