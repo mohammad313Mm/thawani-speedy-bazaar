@@ -15,8 +15,8 @@ export function BottomNav() {
   const { itemCount } = useCart();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-2xl items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] pt-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-border bg-card/95 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-2xl items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)] pt-2 sm:px-2">
         {tabs.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
@@ -25,10 +25,10 @@ export function BottomNav() {
             <Link
               key={t.to}
               to={t.to}
-              className="group relative flex flex-1 flex-col items-center gap-1 py-1.5"
+              className="group relative flex min-w-0 flex-1 flex-col items-center gap-1 py-1.5"
             >
               <div
-                className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-300 ${
+                className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 sm:h-11 sm:w-11 ${
                   active
                     ? "bg-primary text-primary-foreground shadow-elegant scale-105"
                     : "text-muted-foreground group-hover:text-foreground"
@@ -42,7 +42,7 @@ export function BottomNav() {
                 )}
               </div>
               <span
-                className={`text-[11px] font-semibold transition-colors ${
+                className={`max-w-full truncate text-[10px] font-semibold transition-colors xs:text-[11px] ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
@@ -51,6 +51,7 @@ export function BottomNav() {
             </Link>
           );
         })}
+
       </div>
     </nav>
   );
