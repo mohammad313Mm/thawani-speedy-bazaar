@@ -41,10 +41,13 @@ type StoreRow = {
   category: string | null;
   phone: string | null;
   description: string | null;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 const STORE_SELECT =
-  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description";
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude";
+
 
 type ProductRow = {
   id: string;
@@ -197,7 +200,12 @@ function MerchantDashboard() {
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         {tab === "orders" && <OrdersPanel storeId={store.id} storeName={store.name} />}
         {tab === "products" && <ProductsPanel storeId={store.id} />}
-        {tab === "status" && <StatusPanel store={store} onUpdated={setStore} />}
+        {tab === "status" && (
+          <>
+            <StatusPanel store={store} onUpdated={setStore} />
+            <StoreLocationSection store={store} onUpdated={setStore} />
+          </>
+        )}
       </main>
     </>
   );
@@ -779,8 +787,14 @@ function StoreSetup({
   const [logo, setLogo] = useState<string | null>(
     store.cover_url ? store.logo_url ?? null : null,
   );
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    store.latitude != null && store.longitude != null
+      ? { lat: store.latitude, lng: store.longitude }
+      : null,
+  );
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
   const coverRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
@@ -810,6 +824,10 @@ function StoreSetup({
       setErr("يرجى تعبئة كافة الحقول ورفع صورة الغلاف وشعار المتجر");
       return;
     }
+    if (!coords) {
+      setErr("يرجى تحديد موقع المطعم قبل الحفظ");
+      return;
+    }
     setBusy(true);
     const { data, error } = await supabase
       .from("stores")
@@ -820,8 +838,11 @@ function StoreSetup({
         category,
         cover_url: cover,
         logo_url: logo,
+        latitude: coords.lat,
+        longitude: coords.lng,
         is_open: true,
       })
+
       .eq("id", store.id)
       .select(STORE_SELECT)
       .single();
@@ -951,6 +972,10 @@ function StoreSetup({
           </div>
         </Field>
 
+        <StoreLocationPicker coords={coords} onChange={setCoords} />
+
+
+
         {err && (
           <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
             {err}
@@ -975,5 +1000,132 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-xs font-bold text-foreground">{label}</span>
       {children}
     </label>
+  );
+}
+
+/* ============ STORE LOCATION ============ */
+
+function StoreLocationPicker({
+  coords,
+  onChange,
+  saving,
+}: {
+  coords: { lat: number; lng: number } | null;
+  onChange: (c: { lat: number; lng: number }) => void;
+  saving?: boolean;
+}) {
+  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const detect = () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setStatus("error");
+      setMsg("جهازك لا يدعم تحديد الموقع");
+      return;
+    }
+    setStatus("loading");
+    setMsg(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onChange({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setStatus("done");
+        setMsg("تم تثبيت موقع المطعم بنجاح");
+      },
+      (error) => {
+        setStatus("error");
+        setMsg(
+          error.code === error.PERMISSION_DENIED
+            ? "يرجى السماح بالوصول إلى الموقع من إعدادات الهاتف"
+            : "تعذر تحديد الموقع، تأكد من تفعيل GPS وحاول مرة أخرى",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-border bg-background p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MapPin className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-black text-foreground">تحديد موقع المطعم</p>
+            <p className="truncate text-[11px] text-muted-foreground" dir="ltr">
+              {coords
+                ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`
+                : "لم يتم تحديد الموقع بعد"}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={detect}
+          disabled={status === "loading" || saving}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-[11px] font-black text-primary-foreground shadow-soft disabled:opacity-60"
+        >
+          {status === "loading" || saving ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <MapPin className="h-3.5 w-3.5" />
+          )}
+          {coords ? "تحديث الموقع" : "تحديد موقعي"}
+        </button>
+      </div>
+
+      {coords && (
+        <iframe
+          title="موقع المطعم"
+          className="h-36 w-full rounded-xl border border-border"
+          loading="lazy"
+          src={`https://www.openstreetmap.org/export/embed.html?bbox=${coords.lng - 0.004}%2C${coords.lat - 0.003}%2C${coords.lng + 0.004}%2C${coords.lat + 0.003}&layer=mapnik&marker=${coords.lat}%2C${coords.lng}`}
+        />
+      )}
+
+      {msg && (
+        <p
+          className={`rounded-xl px-3 py-2 text-[11px] font-bold ${
+            status === "error"
+              ? "bg-destructive/10 text-destructive"
+              : "bg-success/10 text-success"
+          }`}
+        >
+          {msg}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function StoreLocationSection({
+  store,
+  onUpdated,
+}: {
+  store: StoreRow;
+  onUpdated: (s: StoreRow) => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const coords =
+    store.latitude != null && store.longitude != null
+      ? { lat: store.latitude, lng: store.longitude }
+      : null;
+
+  const persist = async (c: { lat: number; lng: number }) => {
+    setSaving(true);
+    const { data } = await supabase
+      .from("stores")
+      .update({ latitude: c.lat, longitude: c.lng })
+      .eq("id", store.id)
+      .select(STORE_SELECT)
+      .single();
+    setSaving(false);
+    if (data) onUpdated(data as StoreRow);
+  };
+
+  return (
+    <div className="mt-4 rounded-3xl bg-card p-4 text-right shadow-soft">
+      <StoreLocationPicker coords={coords} onChange={persist} saving={saving} />
+    </div>
   );
 }
