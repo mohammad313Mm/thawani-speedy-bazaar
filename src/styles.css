@@ -122,10 +122,14 @@
 @layer base {
   * {
     border-color: var(--color-border);
+    min-width: 0;
   }
 
   html {
     direction: rtl;
+    /* منع التمرير الأفقي على كل الأجهزة */
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
@@ -135,6 +139,36 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
+  img,
+  video,
+  canvas,
+  svg,
+  iframe {
+    max-width: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  span,
+  a,
+  button,
+  label {
+    overflow-wrap: anywhere;
+  }
+
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+    /* منع تكبير الصفحة تلقائياً على iOS */
+    font-size: max(16px, 1em);
   }
 
   /* Arabic-Indic numerals for currency displays that opt in */
@@ -143,6 +177,7 @@
     font-variant-numeric: lining-nums;
   }
 }
+
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
