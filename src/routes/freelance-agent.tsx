@@ -144,13 +144,6 @@ function FreelanceAgentPage() {
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    const meta = (user.user_metadata ?? {}) as { full_name?: string; phone?: string };
-    if (meta.full_name) setName((v) => v || meta.full_name!);
-    const p = meta.phone || user.phone || "";
-    if (p) setPhone((v) => v || p);
-  }, [user]);
 
   const handleSubmit = async () => {
     if (!location) {
@@ -249,7 +242,7 @@ function FreelanceAgentPage() {
               onChange={(e) => setPhone(e.target.value)}
               inputMode="tel"
               maxLength={30}
-              placeholder="07xxxxxxxxx"
+              placeholder="رقم الهاتف"
               className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary"
             />
           </div>
