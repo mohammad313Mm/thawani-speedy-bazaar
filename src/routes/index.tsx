@@ -344,12 +344,15 @@ function HomePage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    // Warm the stores cache immediately so category pages open instantly.
+    void prefetchDbStores();
     if (typeof sessionStorage === "undefined") return;
     const seen = sessionStorage.getItem("thawani-splash");
     if (seen) setShowSplash(false);
     const saved = loadSavedLocation();
     if (saved) setLocation(saved.label);
   }, []);
+
 
   const finishSplash = () => {
     setShowSplash(false);
