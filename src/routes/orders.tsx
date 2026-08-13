@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useOrders, STATUS_LABEL, type OrderStatus, type Order } from "../lib/orders";
+import { useOrders, type Order } from "../lib/orders";
 import { storeById } from "../lib/data";
 import { formatIQD } from "../lib/format";
 import { ClipboardList, ChevronDown, MapPin, Phone, StickyNote, CreditCard } from "lucide-react";
