@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Star, Clock, MapPin, Heart } from "lucide-react";
+import { Star, Heart } from "lucide-react";
 import { toast } from "sonner";
 import type { Store } from "../lib/data";
-import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
+
 import { useCart } from "../lib/cart";
 
 export function StoreCard({ store }: { store: Store }) {
@@ -70,16 +70,8 @@ export function StoreCard({ store }: { store: Store }) {
         <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground sm:text-xs">
           {store.tags.join(" • ")}
         </p>
-        <div className="mt-auto pt-2 flex items-center gap-2 text-[10px] font-semibold text-muted-foreground sm:text-[11px]">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3 w-3" /> {formatMinutes(store.deliveryMin)}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> {formatDistanceKm(store.distanceKm)}
-          </span>
-        </div>
-
       </div>
+
     </Link>
   );
 }

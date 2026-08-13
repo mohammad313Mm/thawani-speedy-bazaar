@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Star, Clock, MapPin, Heart, Share2 } from "lucide-react";
+import { ArrowRight, Star, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productsByStore, storeById } from "../lib/data";
-import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
+import { formatIQD } from "../lib/format";
+
 import { ProductCard } from "../components/ProductCard";
 import { useCart } from "../lib/cart";
 import { useDbStore, useDbProducts } from "../lib/db-stores";
@@ -130,24 +131,8 @@ function StorePage() {
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-2 rounded-2xl bg-muted p-3 text-center">
-            <div>
-              <div className="text-[10px] font-semibold text-muted-foreground">
-                <Clock className="mx-auto h-3.5 w-3.5" />
-              </div>
-              <div className="mt-1 text-xs font-bold text-foreground">
-                {formatMinutes(store.deliveryMin)}
-              </div>
-            </div>
-            <div className="border-x border-border">
-              <div className="text-[10px] font-semibold text-muted-foreground">
-                <MapPin className="mx-auto h-3.5 w-3.5" />
-              </div>
-              <div className="mt-1 text-xs font-bold text-foreground">
-                {formatDistanceKm(store.distanceKm)}
-              </div>
-            </div>
-          </div>
+
+
         </div>
       </div>
 
