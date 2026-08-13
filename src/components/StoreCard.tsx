@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { Star, Clock, MapPin, Heart } from "lucide-react";
+import { Star, Heart } from "lucide-react";
 import { toast } from "sonner";
 import type { Store } from "../lib/data";
-import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
+
 import { useCart } from "../lib/cart";
 
 export function StoreCard({ store }: { store: Store }) {

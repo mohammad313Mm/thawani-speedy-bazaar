@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Star, Clock, MapPin, Heart, Share2 } from "lucide-react";
+import { ArrowRight, Star, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productsByStore, storeById } from "../lib/data";
-import { formatDistanceKm, formatIQD, formatMinutes } from "../lib/format";
+import { formatIQD } from "../lib/format";
+
 import { ProductCard } from "../components/ProductCard";
 import { useCart } from "../lib/cart";
 import { useDbStore, useDbProducts } from "../lib/db-stores";
