@@ -124,7 +124,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 const BOOT_STYLE = `html,body{background-color:#D62828}
 #boot-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#D62828;color:#fff;font-family:Tajawal,Cairo,system-ui,sans-serif;transition:opacity .35s ease}
-#boot-splash .bs-logo{width:112px;height:112px;border-radius:28px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;letter-spacing:-1px;animation:bs-pop .5s ease}
+#boot-splash .bs-logo{width:128px;height:128px;border-radius:28px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:bs-pop .5s ease}
+#boot-splash .bs-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
 #boot-splash .bs-title{font-size:30px;font-weight:900}
 @keyframes bs-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}`;
 
