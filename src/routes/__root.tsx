@@ -142,11 +142,11 @@ function RootShell({ children }: { children: ReactNode }) {
         <div
           id="boot-splash"
           dangerouslySetInnerHTML={{
-            __html: `<div class="bs-logo">ث</div><div class="bs-title">ثواني</div>`,
+            __html: `<div class="bs-logo"><img src="${splashLogo.url}" alt="شعار ثواني" /></div><div class="bs-title">ثواني</div>`,
           }}
           suppressHydrationWarning
         />
-        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
+        <script data-boot-splash="1" dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
         {children}
         <Scripts />
       </body>
