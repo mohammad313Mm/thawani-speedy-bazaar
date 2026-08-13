@@ -6,7 +6,7 @@ import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
 import { formatIQD } from "../lib/format";
-import { prefetchDbStores } from "../lib/db-stores";
+import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
