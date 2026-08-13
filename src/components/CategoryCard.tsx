@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Category } from "../lib/data";
+import { prefetchDbStores } from "../lib/db-stores";
+
 
 function CardBody({ category, cta }: { category: Category; cta: string }) {
   return (
@@ -42,8 +44,15 @@ export function CategoryCard({ category }: { category: Category }) {
   }
 
   return (
-    <Link to="/category/$key" params={{ key: category.key }} className={className}>
+    <Link
+      to="/category/$key"
+      params={{ key: category.key }}
+      className={className}
+      onMouseEnter={() => void prefetchDbStores()}
+      onTouchStart={() => void prefetchDbStores()}
+    >
       <CardBody category={category} cta={cta} />
     </Link>
+
   );
 }

@@ -6,6 +6,8 @@ import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
 import { formatIQD } from "../lib/format";
+import { prefetchDbStores } from "../lib/db-stores";
+
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
@@ -344,12 +346,15 @@ function HomePage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    // Warm the stores cache immediately so category pages open instantly.
+    void prefetchDbStores();
     if (typeof sessionStorage === "undefined") return;
     const seen = sessionStorage.getItem("thawani-splash");
     if (seen) setShowSplash(false);
     const saved = loadSavedLocation();
     if (saved) setLocation(saved.label);
   }, []);
+
 
   const finishSplash = () => {
     setShowSplash(false);
