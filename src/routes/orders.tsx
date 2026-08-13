@@ -225,16 +225,3 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   );
 }
 
-function StatusPill({ status }: { status: OrderStatus }) {
-  const tone =
-    status === "delivered"
-      ? "bg-success/15 text-success"
-      : status === "cancelled"
-      ? "bg-destructive/10 text-destructive"
-      : "bg-accent/20 text-foreground";
-  return (
-    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${tone}`}>
-      {STATUS_LABEL[status]}
-    </span>
-  );
-}
