@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { Category } from "../lib/data";
+import { prefetchDbStores } from "../lib/db-stores";
+
 
 function CardBody({ category, cta }: { category: Category; cta: string }) {
   return (
