@@ -323,17 +323,23 @@ function SearchResults({ query }: { query: string }) {
         <div className="p-3">
           <p className="mb-2 text-[11px] font-bold text-muted-foreground">المنتجات</p>
           <ul className="space-y-2">
-            {products.map((p) => (
+            {products.map((p) => {
+              const isDb = dbProducts.some((d) => d.id === p.id);
+              const storeLabel = (p as { storeName?: string }).storeName;
+              return (
               <li key={p.id}>
                 <Link
-                  to="/product/$id"
-                  params={{ id: p.id }}
+                  {...(isDb
+                    ? { to: "/store/$id" as const, params: { id: p.storeId } }
+                    : { to: "/product/$id" as const, params: { id: p.id } })}
                   className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
                 >
                   <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-foreground">{p.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{p.description}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {storeLabel || p.description}
+                    </p>
                   </div>
                   <span className="shrink-0 text-xs font-black text-primary">
                     {formatIQD(p.discountPrice ?? p.price)}
