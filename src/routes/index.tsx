@@ -326,23 +326,6 @@ function HomePage() {
     try {
       sessionStorage.setItem("thawani-splash", "1");
     } catch {}
-    // request fresh location after splash
-    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const label = await reverseGeocode(lat, lng);
-          saveLocation({ label, lat, lng, savedAt: new Date().toISOString() });
-          setLocation(label);
-        },
-        () => {
-          const saved = loadSavedLocation();
-          if (saved) setLocation(saved.label);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-      );
-    }
   };
 
   useEffect(() => {
