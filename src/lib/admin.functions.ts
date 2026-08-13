@@ -314,3 +314,37 @@ export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ============== Broadcast notifications ============== */
+
+export const adminSendBroadcast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        title: z.string().trim().max(120).optional(),
+        body: z.string().trim().min(1).max(1000),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("broadcast_notifications").insert({
+      title: data.title && data.title.length > 0 ? data.title : "إشعار",
+      body: data.body,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteBroadcast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("broadcast_notifications").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
