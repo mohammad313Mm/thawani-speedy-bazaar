@@ -121,19 +121,37 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const BOOT_STYLE = `html,body{background-color:#D62828}
+#boot-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#D62828;color:#fff;font-family:Tajawal,Cairo,system-ui,sans-serif;transition:opacity .35s ease}
+#boot-splash .bs-logo{width:112px;height:112px;border-radius:28px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;letter-spacing:-1px;animation:bs-pop .5s ease}
+#boot-splash .bs-title{font-size:30px;font-weight:900}
+@keyframes bs-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}`;
+
+const BOOT_SCRIPT = `(function(){function h(){var e=document.getElementById('boot-splash');if(!e)return;e.style.opacity='0';setTimeout(function(){e&&e.remove()},350)}window.__hideBootSplash=h;setTimeout(h,4000);})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="ar" dir="rtl">
       <head>
         <HeadContent />
+        <style dangerouslySetInnerHTML={{ __html: BOOT_STYLE }} />
       </head>
       <body>
+        <div
+          id="boot-splash"
+          dangerouslySetInnerHTML={{
+            __html: `<div class="bs-logo">ث</div><div class="bs-title">ثواني</div>`,
+          }}
+          suppressHydrationWarning
+        />
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
         {children}
         <Scripts />
       </body>
     </html>
   );
 }
+
 
 function AppFrame() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
