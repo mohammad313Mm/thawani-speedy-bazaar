@@ -1,13 +1,19 @@
-// Requests only the native permissions we need on first app launch:
-// - Local Notifications (show allow/deny dialog)
-// - Geolocation (show allow/deny dialog)
-// No notification scheduling/sending logic lives here.
+// Requests only the native LOCAL NOTIFICATIONS permission, and only on a real
+// native (Capacitor) device, deferred until the app is idle.
+// Geolocation is NEVER requested automatically — it is requested only when the
+// user taps "تحديد موقعي".
 
 import { useEffect } from "react";
 
 const ASKED_KEY = "thawani-native-perms-asked";
 
-async function requestLocalNotificationsPermission() {
+function isNative(): boolean {
+  const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
+  return Boolean(w.Capacitor?.isNativePlatform?.());
+}
+
+export async function requestNativePermissions() {
+  if (typeof window === "undefined" || !isNative()) return;
   try {
     const { LocalNotifications } = await import("@capacitor/local-notifications");
     const current = await LocalNotifications.checkPermissions();
@@ -15,39 +21,24 @@ async function requestLocalNotificationsPermission() {
       await LocalNotifications.requestPermissions();
     }
   } catch {
-    // web / plugin unavailable — no-op
+    // plugin unavailable — no-op
   }
-}
-
-async function requestGeolocationPermission() {
-  try {
-    const { Geolocation } = await import("@capacitor/geolocation");
-    const current = await Geolocation.checkPermissions();
-    if (current.location === "prompt" || current.location === "prompt-with-rationale") {
-      await Geolocation.requestPermissions();
-    }
-  } catch {
-    // Web fallback: triggers the browser's allow/deny dialog
-    if (typeof navigator !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        () => {},
-        () => {},
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-      );
-    }
-  }
-}
-
-export async function requestNativePermissions() {
-  await requestLocalNotificationsPermission();
-  await requestGeolocationPermission();
 }
 
 export function useNativeServices() {
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!isNative()) return;
     if (localStorage.getItem(ASKED_KEY)) return;
-    localStorage.setItem(ASKED_KEY, "1");
-    void requestNativePermissions();
+
+    const run = () => {
+      localStorage.setItem(ASKED_KEY, "1");
+      void requestNativePermissions();
+    };
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void) => number };
+    const id = w.requestIdleCallback ? w.requestIdleCallback(run) : window.setTimeout(run, 2000);
+    return () => {
+      if (!w.requestIdleCallback) clearTimeout(id);
+    };
   }, []);
 }
