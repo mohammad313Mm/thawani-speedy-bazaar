@@ -159,6 +159,13 @@ function AppFrame() {
     pathname === "/welcome" ||
     pathname.startsWith("/checkout");
 
+  useEffect(() => {
+    const w = window as unknown as { __hideBootSplash?: () => void };
+    w.__hideBootSplash?.();
+  }, []);
+
+
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className={hideNav ? "" : "pb-24"}>
