@@ -346,7 +346,8 @@ function SearchResults({ query }: { query: string }) {
                   </span>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       )}
