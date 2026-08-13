@@ -277,3 +277,45 @@ export function useDbProducts(storeId: string): { products: Product[]; loading: 
   return { products, loading };
 }
 
+
+// Search available products across ALL stores (live from the database).
+export function useDbProductSearch(query: string): {
+  products: (Product & { storeName?: string })[];
+  loading: boolean;
+} {
+  const [products, setProducts] = useState<(Product & { storeName?: string })[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 1) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    const t = setTimeout(async () => {
+      const safe = q.replace(/[%,()]/g, " ");
+      const { data } = await supabase
+        .from("products")
+        .select("*, stores!inner(id,name,status)")
+        .eq("is_available", true)
+        .eq("stores.status", "active")
+        .or(`name_ar.ilike.%${safe}%,description.ilike.%${safe}%,category.ilike.%${safe}%`)
+        .limit(20);
+      if (!alive) return;
+      const rows = (data ?? []) as unknown as (DbProductRow & { stores?: { name?: string } })[];
+      setProducts(
+        rows.map((r) => ({ ...adaptDbProduct(r), storeName: r.stores?.name ?? undefined })),
+      );
+      setLoading(false);
+    }, 250);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+  }, [query]);
+
+  return { products, loading };
+}
