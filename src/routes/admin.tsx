@@ -35,6 +35,9 @@ import {
   adminSetDriverAreas,
   adminListOrders,
   adminUpdateOrderStatus,
+  adminSendBroadcast,
+  adminDeleteBroadcast,
+
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
 
@@ -966,6 +969,107 @@ function DriversPanel() {
 
 /* ---------------- Notifications ---------------- */
 
+function BroadcastComposer() {
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [sent, setSent] = useState<
+    { id: string; title: string; body: string; created_at: string }[]
+  >([]);
+
+  const loadSent = useCallback(async () => {
+    const { data } = await supabase
+      .from("broadcast_notifications")
+      .select("id, title, body, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setSent((data ?? []) as typeof sent);
+  }, []);
+
+  useEffect(() => {
+    loadSent();
+  }, [loadSent]);
+
+  const send = async () => {
+    if (!body.trim()) return;
+    setSending(true);
+    setMsg(null);
+    try {
+      await adminSendBroadcast({ data: { title: title.trim() || undefined, body: body.trim() } });
+      setTitle("");
+      setBody("");
+      setMsg("تم إرسال الإشعار للمستخدمين");
+      loadSent();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "تعذر الإرسال");
+    }
+    setSending(false);
+  };
+
+  const remove = async (id: string) => {
+    try {
+      await adminDeleteBroadcast({ data: { id } });
+      loadSent();
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <div className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
+      <p className="text-sm font-black">إرسال إشعار جديد</p>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="عنوان الإشعار (اختياري)"
+        className="w-full rounded-xl bg-muted px-3 py-2.5 text-sm outline-none"
+      />
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="اكتب نص الإشعار هنا..."
+        rows={4}
+        className="w-full resize-none rounded-xl bg-muted px-3 py-2.5 text-sm outline-none"
+      />
+      <button
+        onClick={send}
+        disabled={sending || !body.trim()}
+        className="w-full rounded-full bg-primary py-2.5 text-sm font-black text-primary-foreground disabled:opacity-50"
+      >
+        {sending ? "جارٍ الإرسال..." : "إرسال الإشعار"}
+      </button>
+      {msg && <p className="text-center text-xs font-bold text-muted-foreground">{msg}</p>}
+
+      {sent.length > 0 && (
+        <div className="space-y-2 border-t border-border/40 pt-3">
+          <p className="text-[11px] font-black text-muted-foreground">الإشعارات المرسلة</p>
+          {sent.map((n) => (
+            <div key={n.id} className="flex items-start gap-2 rounded-xl bg-muted/60 p-2.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black">{n.title}</p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {new Date(n.created_at).toLocaleString("ar-IQ")}
+                </p>
+              </div>
+              <button
+                onClick={() => remove(n.id)}
+                className="rounded-lg p-1.5 text-destructive"
+                aria-label="حذف"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 function NotificationsPanel() {
   const [rows, setRows] = useState<AdminNotif[]>([]);
   const [fetching, setFetching] = useState(false);
@@ -1002,7 +1106,9 @@ function NotificationsPanel() {
   };
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
+      <BroadcastComposer />
+
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">إشعارات إدارية فورية</p>
         <button onClick={markAllRead} className="rounded-full bg-muted px-3 py-1.5 text-[11px] font-black">
