@@ -23,26 +23,43 @@ const WELCOME_MESSAGES = [
 function WelcomeSplash({ onDone }: { onDone: () => void }) {
   const [message, setMessage] = useState(WELCOME_MESSAGES[0]);
   const [fading, setFading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     setMessage(WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]);
-    const t1 = setTimeout(() => setFading(true), 900);
-    const t2 = setTimeout(onDone, 1400);
+
+    const duration = 3500; // 3.5s
+    const start = performance.now();
+    let raf = 0;
+    let fadeTimer = 0;
+    let doneTimer = 0;
+
+    const tick = (now: number) => {
+      const pct = Math.min(100, ((now - start) / duration) * 100);
+      setProgress(pct);
+      if (pct < 100) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        fadeTimer = window.setTimeout(() => setFading(true), 80);
+        doneTimer = window.setTimeout(onDone, 380);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      cancelAnimationFrame(raf);
+      clearTimeout(fadeTimer);
+      clearTimeout(doneTimer);
     };
   }, [onDone]);
 
-
-
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-300 ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      <div className="animate-scale-in flex flex-col items-center gap-6">
+      <div className="animate-scale-in flex w-full max-w-xs flex-col items-center gap-6 px-8">
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
           <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow sm:h-40 sm:w-40">
@@ -58,6 +75,19 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
           <p className="mt-3 max-w-xs text-sm font-medium opacity-90 animate-fade-in-slow">
             {message}
           </p>
+        </div>
+        <div
+          className="mt-1 h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-white/25"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress)}
+          aria-label="جاري التحميل"
+        >
+          <div
+            className="h-full rounded-full bg-[hsl(212_95%_58%)] shadow-[0_0_12px_hsl(212_95%_58%/0.7)]"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       </div>
     </div>
