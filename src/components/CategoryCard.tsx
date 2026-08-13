@@ -42,8 +42,15 @@ export function CategoryCard({ category }: { category: Category }) {
   }
 
   return (
-    <Link to="/category/$key" params={{ key: category.key }} className={className}>
+    <Link
+      to="/category/$key"
+      params={{ key: category.key }}
+      className={className}
+      onMouseEnter={() => void prefetchDbStores()}
+      onTouchStart={() => void prefetchDbStores()}
+    >
       <CardBody category={category} cta={cta} />
     </Link>
+
   );
 }
