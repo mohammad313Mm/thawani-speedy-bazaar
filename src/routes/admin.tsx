@@ -1002,7 +1002,9 @@ function NotificationsPanel() {
   };
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-4">
+      <BroadcastComposer />
+
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">إشعارات إدارية فورية</p>
         <button onClick={markAllRead} className="rounded-full bg-muted px-3 py-1.5 text-[11px] font-black">
