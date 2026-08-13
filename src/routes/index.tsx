@@ -26,8 +26,8 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     setMessage(WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]);
-    const t1 = setTimeout(() => setFading(true), 2800);
-    const t2 = setTimeout(onDone, 3500);
+    const t1 = setTimeout(() => setFading(true), 900);
+    const t2 = setTimeout(onDone, 1400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -35,9 +35,10 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
   }, [onDone]);
 
 
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-700 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-500 ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
