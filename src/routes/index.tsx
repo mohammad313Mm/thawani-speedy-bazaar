@@ -6,7 +6,7 @@ import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
 import { formatIQD } from "../lib/format";
-import { prefetchDbStores } from "../lib/db-stores";
+import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
@@ -231,20 +231,30 @@ function LocationCard({
 
 function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
-  const stores = STORES.filter(
-    (s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.tags.some((t) => t.toLowerCase().includes(q)) ||
-      s.description.toLowerCase().includes(q),
-  ).slice(0, 6);
-  const products = PRODUCTS.filter(
+  const { stores: dbStores } = useDbStores();
+  const { products: dbProducts, loading: productsLoading } = useDbProductSearch(query);
+
+  const allStores = [...dbStores, ...STORES.filter((s) => !dbStores.some((d) => d.id === s.id))];
+  const stores = allStores
+    .filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.tags.some((t) => t.toLowerCase().includes(q)) ||
+        s.description.toLowerCase().includes(q),
+    )
+    .slice(0, 6);
+  const staticProducts = PRODUCTS.filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
       p.description.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q),
-  ).slice(0, 8);
+  );
+  const products = [
+    ...dbProducts,
+    ...staticProducts.filter((p) => !dbProducts.some((d) => d.id === p.id)),
+  ].slice(0, 12);
   const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
-  const empty = stores.length + products.length + cats.length === 0;
+  const empty = !productsLoading && stores.length + products.length + cats.length === 0;
 
   return (
     <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-fade-in">
@@ -313,24 +323,31 @@ function SearchResults({ query }: { query: string }) {
         <div className="p-3">
           <p className="mb-2 text-[11px] font-bold text-muted-foreground">المنتجات</p>
           <ul className="space-y-2">
-            {products.map((p) => (
+            {products.map((p) => {
+              const isDb = dbProducts.some((d) => d.id === p.id);
+              const storeLabel = (p as { storeName?: string }).storeName;
+              return (
               <li key={p.id}>
                 <Link
-                  to="/product/$id"
-                  params={{ id: p.id }}
+                  {...(isDb
+                    ? { to: "/store/$id" as const, params: { id: p.storeId } }
+                    : { to: "/product/$id" as const, params: { id: p.id } })}
                   className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-muted/60"
                 >
                   <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-foreground">{p.name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">{p.description}</p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {storeLabel || p.description}
+                    </p>
                   </div>
                   <span className="shrink-0 text-xs font-black text-primary">
                     {formatIQD(p.discountPrice ?? p.price)}
                   </span>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       )}
