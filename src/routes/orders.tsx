@@ -130,13 +130,13 @@ function OrderCard({
           <div className="h-14 w-14 rounded-xl bg-muted" />
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="line-clamp-1 text-sm font-black text-foreground">
-              {store?.name ?? "متجر"}
-            </h3>
-            <StatusPill status={order.status} />
-          </div>
+          <h3 className="line-clamp-1 text-sm font-black text-foreground">
+            {store?.name ?? "متجر"}
+          </h3>
           <p className="mt-0.5 text-[11px] text-muted-foreground">رقم الطلب {order.id}</p>
+          <p className="mt-1 text-xs font-bold text-primary">
+            طلبك قيد الانتظار، سيتم الاتصال بك قريباً من أحد المندوبين.
+          </p>
           <p className="text-[11px] text-muted-foreground">{dateStr}</p>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground">
