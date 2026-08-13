@@ -122,24 +122,71 @@ const storesCache: { list: Store[] | null } = { list: null };
 const storeCache = new Map<string, Store | null>();
 const productsCache = new Map<string, Product[]>();
 
+const STORES_LS_KEY = "thawani-stores-cache-v1";
+const STORE_COLUMNS =
+  "id,owner_id,name,category,phone,address,description,cover_url,logo_url,is_open,status,working_hours,created_at";
+
+function readPersistedStores(): Store[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORES_LS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Store[];
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistStores(list: Store[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORES_LS_KEY, JSON.stringify(list));
+  } catch {}
+}
+
+function seedStoresCache(): Store[] | null {
+  if (storesCache.list) return storesCache.list;
+  const persisted = readPersistedStores();
+  if (persisted) storesCache.list = persisted;
+  return storesCache.list;
+}
+
+let storesInFlight: Promise<Store[]> | null = null;
+
+// Fetch (and cache) the store list. Safe to call repeatedly — concurrent calls share one request.
+export function prefetchDbStores(): Promise<Store[]> {
+  if (storesInFlight) return storesInFlight;
+  storesInFlight = (async () => {
+    const { data } = await supabase
+      .from("stores")
+      .select(STORE_COLUMNS)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+    const adapted = ((data ?? []) as unknown as DbStoreRow[])
+      .map(adaptDbStore)
+      .filter((s): s is Store => s !== null);
+    storesCache.list = adapted;
+    persistStores(adapted);
+    return adapted;
+  })().finally(() => {
+    storesInFlight = null;
+  });
+  return storesInFlight;
+}
+
 // Subscribe to all stores + realtime; returns adapted Store[] (only rows with mappable category)
 export function useDbStores(): { stores: Store[]; loading: boolean } {
-  const [stores, setStores] = useState<Store[]>(storesCache.list ?? []);
-  const [loading, setLoading] = useState(storesCache.list === null);
+  const seed = seedStoresCache();
+  const [stores, setStores] = useState<Store[]>(seed ?? []);
+  const [loading, setLoading] = useState(seed === null);
 
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("stores")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const list = await prefetchDbStores();
       if (!alive) return;
-      const adapted = ((data ?? []) as DbStoreRow[])
-        .map(adaptDbStore)
-        .filter((s): s is Store => s !== null);
-      storesCache.list = adapted;
-      setStores(adapted);
+      setStores(list);
       setLoading(false);
     };
     load();
@@ -155,6 +202,7 @@ export function useDbStores(): { stores: Store[]; loading: boolean } {
 
   return { stores, loading };
 }
+
 
 export function useDbStore(id: string): { store: Store | null; loading: boolean } {
   const cached = id ? storeCache.get(id) : undefined;
