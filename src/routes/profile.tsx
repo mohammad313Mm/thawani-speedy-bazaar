@@ -190,6 +190,7 @@ function ProfilePage() {
 
 
         <Section title="الدعم">
+          <ItemLink to="/support" icon={<LifeBuoy />} label="التواصل مع الدعم" />
           <ItemLink to="/terms" icon={<FileText />} label="الشروط والأحكام" />
           <ItemLink to="/privacy" icon={<Shield />} label="سياسة الخصوصية" />
         </Section>
