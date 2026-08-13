@@ -26,13 +26,14 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     setMessage(WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]);
-    const t1 = setTimeout(() => setFading(true), 2800);
-    const t2 = setTimeout(onDone, 3500);
+    const t1 = setTimeout(() => setFading(true), 900);
+    const t2 = setTimeout(onDone, 1400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
   }, [onDone]);
+
 
 
   return (
