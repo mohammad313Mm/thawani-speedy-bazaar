@@ -506,6 +506,42 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          message: string
+          phone: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          message: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          message?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
