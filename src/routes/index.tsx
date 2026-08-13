@@ -231,20 +231,30 @@ function LocationCard({
 
 function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
-  const stores = STORES.filter(
-    (s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.tags.some((t) => t.toLowerCase().includes(q)) ||
-      s.description.toLowerCase().includes(q),
-  ).slice(0, 6);
-  const products = PRODUCTS.filter(
+  const { stores: dbStores } = useDbStores();
+  const { products: dbProducts, loading: productsLoading } = useDbProductSearch(query);
+
+  const allStores = [...dbStores, ...STORES.filter((s) => !dbStores.some((d) => d.id === s.id))];
+  const stores = allStores
+    .filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.tags.some((t) => t.toLowerCase().includes(q)) ||
+        s.description.toLowerCase().includes(q),
+    )
+    .slice(0, 6);
+  const staticProducts = PRODUCTS.filter(
     (p) =>
       p.name.toLowerCase().includes(q) ||
       p.description.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q),
-  ).slice(0, 8);
+  );
+  const products = [
+    ...dbProducts,
+    ...staticProducts.filter((p) => !dbProducts.some((d) => d.id === p.id)),
+  ].slice(0, 12);
   const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
-  const empty = stores.length + products.length + cats.length === 0;
+  const empty = !productsLoading && stores.length + products.length + cats.length === 0;
 
   return (
     <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-fade-in">
