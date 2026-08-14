@@ -6,7 +6,7 @@ export type LocationUiStatus = "idle" | "requesting" | "granted" | "denied" | "u
 export function useLocationPicker(onResolved?: (label: string) => void) {
   const [label, setLabel] = useState<string | null>(null);
   const [status, setStatus] = useState<LocationUiStatus>("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Restore the last known location so the UI never starts empty.
   useEffect(() => {
@@ -19,11 +19,19 @@ export function useLocationPicker(onResolved?: (label: string) => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const request = useCallback(async () => {
-    setStatus("requesting");
-    setMessage(null);
+  const openDialog = useCallback(() => {
+    setDialogOpen(true);
+  }, []);
 
-    // Trigger the native browser/device permission prompt directly.
+  const cancel = useCallback(() => {
+    setDialogOpen(false);
+    // Keep status as-is so a later tap can reopen the dialog.
+  }, []);
+
+  const confirm = useCallback(async () => {
+    setDialogOpen(false);
+    setStatus("requesting");
+
     const res = await requestCurrentPosition();
 
     if (res.ok) {
@@ -31,14 +39,13 @@ export function useLocationPicker(onResolved?: (label: string) => void) {
       saveLocation({ label: text, lat: res.lat, lng: res.lng, savedAt: new Date().toISOString() });
       setLabel(text);
       setStatus("granted");
-      setMessage(null);
       onResolved?.(text);
       return;
     }
 
     setStatus(res.reason === "denied" ? "denied" : res.reason === "unsupported" ? "unsupported" : "error");
-    setMessage(res.message);
+    // No persistent denial UI message; the user can tap again to reopen the explanatory dialog.
   }, [onResolved]);
 
-  return { label, status, message, request };
+  return { label, status, dialogOpen, openDialog, confirm, cancel };
 }
