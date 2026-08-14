@@ -298,3 +298,22 @@
 .animate-pulse-ring {
   animation: pulse-ring 2s cubic-bezier(0.66, 0, 0, 1) infinite;
 }
+
+.caret {
+  margin-inline-start: 3px;
+  opacity: 0.9;
+}
+
+.animate-blink-caret {
+  animation: blink-caret 0.75s step-end infinite;
+}
+
+@keyframes blink-caret {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}

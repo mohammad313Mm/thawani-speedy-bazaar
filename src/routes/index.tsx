@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
@@ -14,82 +14,73 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const WELCOME_MESSAGES = [
-  "كل ما تحتاجه... مع ثواني.",
-  "مرحباً بك في ثواني.",
-  "كل احتياجات عائلتك... في مكان واحد.",
-  "ابدأ تجربة تسوق أسرع.",
-  "اكتشف أفضل المتاجر القريبة منك.",
-];
+const TYPING_TEXT = "كل ما تحتاجه.. مع ثواني";
+const SPLASH_DURATION = 3000; // 3 seconds total
+const TYPING_DURATION = 1800; // typing completes in 1.8s
+const FADE_START = 2500; // start fading at 2.5s
 
 function WelcomeSplash({ onDone }: { onDone: () => void }) {
-  const [message, setMessage] = useState(WELCOME_MESSAGES[0]);
+  const [typed, setTyped] = useState("");
   const [fading, setFading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const fadedRef = useRef(false);
 
   useEffect(() => {
-    setMessage(WELCOME_MESSAGES[Math.floor(Math.random() * WELCOME_MESSAGES.length)]);
-
-    const duration = 3500; // 3.5s
+    const full = TYPING_TEXT;
+    const charCount = full.length;
     const start = performance.now();
     let raf = 0;
-    let fadeTimer = 0;
     let doneTimer = 0;
 
     const tick = (now: number) => {
-      const pct = Math.min(100, ((now - start) / duration) * 100);
-      setProgress(pct);
-      if (pct < 100) {
+      const elapsed = now - start;
+
+      if (elapsed < TYPING_DURATION) {
+        const idx = Math.min(charCount, Math.floor((elapsed / TYPING_DURATION) * charCount));
+        setTyped(full.slice(0, idx));
+      } else {
+        setTyped(full);
+      }
+
+      if (elapsed >= FADE_START && !fadedRef.current) {
+        fadedRef.current = true;
+        setFading(true);
+      }
+
+      if (elapsed < SPLASH_DURATION) {
         raf = requestAnimationFrame(tick);
       } else {
-        fadeTimer = window.setTimeout(() => setFading(true), 80);
-        doneTimer = window.setTimeout(onDone, 380);
+        doneTimer = window.setTimeout(onDone, 350);
       }
     };
+
     raf = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
   }, [onDone]);
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary text-primary-foreground transition-opacity duration-500 ${
         fading ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      <div className="animate-scale-in flex w-full max-w-xs flex-col items-center gap-6 px-8">
+      <div className="animate-scale-in flex w-full max-w-sm flex-col items-center gap-5 px-6">
         <div className="relative">
           <div className="absolute inset-0 animate-pulse-ring rounded-3xl" />
-          <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow sm:h-40 sm:w-40">
+          <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-3xl bg-white/15 backdrop-blur-xl shadow-glow">
             <img
               src={splashLogo.url}
               alt="شعار ثواني"
-              className="h-full w-full object-contain"
+              className="h-full w-full object-contain p-3"
             />
           </div>
         </div>
-        <div className="text-center">
-          <h1 className="text-4xl font-black tracking-tight">ثواني</h1>
-          <p className="mt-3 max-w-xs text-sm font-medium opacity-90 animate-fade-in-slow">
-            {message}
-          </p>
-        </div>
-        <div
-          className="mt-1 h-1.5 w-full max-w-[220px] overflow-hidden rounded-full bg-white/25"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(progress)}
-          aria-label="جاري التحميل"
-        >
-          <div
-            className="h-full rounded-full bg-[hsl(212_95%_58%)] shadow-[0_0_12px_hsl(212_95%_58%/0.7)]"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="w-full text-center text-base font-bold text-primary-foreground">
+          <span className="typing-text">{typed}</span>
+          <span className="caret inline-block h-4 w-0.5 align-middle bg-current animate-blink-caret" />
         </div>
       </div>
     </div>
@@ -373,12 +364,12 @@ function HomePage() {
   }, []);
 
 
-  const finishSplash = () => {
+  const finishSplash = useCallback(() => {
     setShowSplash(false);
     try {
       sessionStorage.setItem("thawani-splash", "1");
     } catch {}
-  };
+  }, []);
 
   useEffect(() => {
     if (!showSplash && location === null) {
