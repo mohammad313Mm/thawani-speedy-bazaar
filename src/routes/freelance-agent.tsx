@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { ArrowRight, MapPin, Loader2, Send, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../lib/auth";
 import { placeFreelanceOrder } from "../lib/freelance.functions";
+import { loadSavedLocation } from "../lib/geo";
+import { useLocationPicker } from "../lib/use-location";
+import { LocationPermissionDialog } from "../components/LocationPermissionDialog";
 
 
 export const Route = createFileRoute("/freelance-agent")({
