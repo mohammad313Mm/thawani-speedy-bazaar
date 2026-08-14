@@ -126,49 +126,8 @@ function LocationCard({
   location: string | null;
   onLocation: (loc: string) => void;
 }) {
-  const [status, setStatus] = useState<LocStatus>("idle");
-
-  const handleGetLocation = useCallback(() => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      alert("هاتفك لا يدعم تحديد الموقع");
-      setStatus("unsupported");
-      return;
-    }
-    setStatus("requesting");
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        console.log("تم جلب الموقع بنجاح:", lat, lng);
-        const label = await reverseGeocode(lat, lng);
-        saveLocation({ label, lat, lng, savedAt: new Date().toISOString() });
-        onLocation(label);
-        setStatus("granted");
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          alert("يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح/التطبيق.");
-          setStatus("denied");
-        } else if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
-          alert("تعذر الحصول على موقع دقيق. تأكد من تفعيل GPS ومن وجود إشارة واضحة.");
-          setStatus("error");
-        } else {
-          alert("حدث خطأ أثناء تحديد الموقع. حاول مرة أخرى.");
-          setStatus("error");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  }, [onLocation]);
-
-  const message =
-    status === "denied"
-      ? "تم رفض إذن الموقع. يرجى تفعيل خدمة الموقع (GPS) في هاتفك ليتم تحديده فوراً."
-      : status === "unsupported"
-      ? "هاتفك لا يدعم تحديد الموقع."
-      : status === "error"
-      ? "تعذر تحديد الموقع. حاول مرة أخرى أو تأكد من تفعيل GPS."
-      : null;
+  const geo = useLocationPicker(onLocation);
+  const shown = geo.label ?? location;
 
   return (
     <div className="mt-4 rounded-2xl border border-border bg-card p-4 shadow-soft animate-fade-in">
@@ -180,31 +139,37 @@ function LocationCard({
           <div className="min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">موقع التوصيل</p>
             <p className="truncate text-sm font-bold text-foreground">
-              {location ?? "لم يتم تحديد الموقع بعد"}
+              {shown ?? "لم يتم تحديد الموقع بعد"}
             </p>
           </div>
         </div>
         <button
-          onClick={handleGetLocation}
-          disabled={status === "requesting"}
+          onClick={geo.request}
+          disabled={geo.status === "requesting"}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
-          {status === "requesting" ? (
+          {geo.status === "requesting" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <MapPin className="h-3.5 w-3.5" />
           )}
-          {status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
+          {geo.status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
         </button>
       </div>
-      {message && (
+      {geo.status !== "granted" && geo.message && (
         <p className="mt-3 rounded-xl bg-muted/60 p-2.5 text-xs font-medium text-foreground">
-          {message}
+          {geo.message}
         </p>
       )}
+      <LocationPermissionDialog
+        open={geo.dialogOpen}
+        onOpenChange={geo.setDialogOpen}
+        onOpenSettings={geo.openSettings}
+      />
     </div>
   );
 }
+
 
 function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
