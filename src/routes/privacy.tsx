@@ -14,7 +14,7 @@ export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
 });
 
-const LAST_UPDATED = "2026-07-14";
+const LAST_UPDATED = "2026-08-14";
 
 const arSections = [
   {
@@ -102,6 +102,13 @@ const arSections = [
     title: "٩. تحديثات سياسة الخصوصية",
     content: [
       "قد يتم تحديث هذه السياسة بشكل دوري. سيتم إشعارك داخل التطبيق عند إجراء تغييرات جوهرية.",
+    ],
+  },
+  {
+    title: "١٠. حذف الحساب وبيانات المستخدم",
+    content: [
+      "نحن نحترم خصوصيتك بشكل كامل؛ لذلك نوفر لك حرية التحكم التامة بحسابك. يمكنك في أي وقت اختيار \"حذف الحساب\" من إعدادات حسابك، وسيقوم النظام فوراً وبشكل نهائي بحذف جميع بياناتك الشخصية، معلومات الاتصال، وسجل نشاطك من قواعد بياناتنا لضمان أمان خصوصيتك.",
+      "بمجرد تأكيد عملية الحذف، لا يمكن استرجاع الحساب أو البيانات المحذوفة، لذا تأكد من رغبتك النهائية قبل المتابعة.",
     ],
   },
 ];
@@ -192,6 +199,13 @@ const enSections = [
     title: "9. Privacy Policy Updates",
     content: [
       "This Privacy Policy may be updated periodically. You will be notified inside the app whenever significant changes are made.",
+    ],
+  },
+  {
+    title: "10. Account Deletion & User Data",
+    content: [
+      "We fully respect your privacy, which is why we give you complete control over your account. At any time, you can choose \"Delete Account\" from your account settings. The system will immediately and permanently delete all your personal data, contact information, and activity history from our databases to ensure your privacy remains secure.",
+      "Once deletion is confirmed, the account and deleted data cannot be recovered. Please make sure you are certain before proceeding.",
     ],
   },
 ];
