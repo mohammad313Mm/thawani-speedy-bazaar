@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, MapPin, Loader2, Send, Info } from "lucide-react";
 import { toast } from "sonner";
-import { LocationPermissionDialog } from "../components/LocationPermissionDialog";
+
 import { useAuth } from "../lib/auth";
 import { placeFreelanceOrder } from "../lib/freelance.functions";
 import { loadSavedLocation } from "../lib/geo";
@@ -38,7 +38,7 @@ function LocationSelector({
           </div>
         </div>
         <button
-          onClick={geo.openDialog}
+          onClick={() => void geo.request()}
           disabled={geo.status === "requesting"}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
@@ -50,16 +50,6 @@ function LocationSelector({
           {geo.status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
         </button>
       </div>
-      <LocationPermissionDialog
-        open={geo.dialogOpen}
-        onOpenChange={(open) => !open && geo.cancel()}
-        onConfirm={geo.confirm}
-        onCancel={geo.cancel}
-        hint={geo.hint}
-        busy={geo.busy}
-        showSettings={geo.isNative}
-        onOpenSettings={geo.openSettings}
-      />
     </div>
   );
 }

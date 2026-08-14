@@ -4,7 +4,7 @@ import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
-import { LocationPermissionDialog } from "../components/LocationPermissionDialog";
+
 import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
 import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
@@ -105,7 +105,7 @@ function LocationCard({
           </div>
         </div>
         <button
-          onClick={geo.openDialog}
+          onClick={() => void geo.request()}
           disabled={geo.status === "requesting"}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
@@ -117,16 +117,6 @@ function LocationCard({
           {geo.status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
         </button>
       </div>
-      <LocationPermissionDialog
-        open={geo.dialogOpen}
-        onOpenChange={(open) => !open && geo.cancel()}
-        onConfirm={geo.confirm}
-        onCancel={geo.cancel}
-        hint={geo.hint}
-        busy={geo.busy}
-        showSettings={geo.isNative}
-        onOpenSettings={geo.openSettings}
-      />
 
     </div>
   );
