@@ -7,6 +7,9 @@ import { BannerCarousel } from "../components/BannerCarousel";
 import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
 import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
+import { loadSavedLocation } from "../lib/geo";
+import { useLocationPicker } from "../lib/use-location";
+import { LocationPermissionDialog } from "../components/LocationPermissionDialog";
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
