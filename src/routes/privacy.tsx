@@ -201,6 +201,13 @@ const enSections = [
       "This Privacy Policy may be updated periodically. You will be notified inside the app whenever significant changes are made.",
     ],
   },
+  {
+    title: "10. Account Deletion & User Data",
+    content: [
+      "We fully respect your privacy, which is why we give you complete control over your account. At any time, you can choose \"Delete Account\" from your account settings. The system will immediately and permanently delete all your personal data, contact information, and activity history from our databases to ensure your privacy remains secure.",
+      "Once deletion is confirmed, the account and deleted data cannot be recovered. Please make sure you are certain before proceeding.",
+    ],
+  },
 ];
 
 function PrivacyPage() {
