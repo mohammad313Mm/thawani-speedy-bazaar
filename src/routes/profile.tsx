@@ -92,23 +92,29 @@ function ProfilePage() {
             <User className="h-8 w-8" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-lg font-black" dir="ltr">
-              {user ? phoneDisplay ?? "مرحباً بك" : "مرحباً بك"}
+            <p className="truncate text-lg font-black">
+              {user ? customerName ?? "زبون ثواني" : "حساب الزبون"}
             </p>
-
-            <p className="mt-0.5 text-xs opacity-90">
-              {user ? "حسابك مفعّل" : "سجل دخولك لتتبع طلباتك وحفظ عناوينك"}
-            </p>
+            {user ? (
+              <p className="mt-0.5 text-xs opacity-90" dir="ltr">
+                {phoneDisplay ?? ""}
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs opacity-90">
+                أنشئ حساب زبون بالاسم ورقم الهاتف لمتابعة طلباتك بسهولة
+              </p>
+            )}
           </div>
           {!user && (
             <Link
               to="/auth"
-              className="rounded-full bg-white px-4 py-2 text-xs font-black text-primary shadow-soft"
+              className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-black text-primary shadow-soft"
             >
-              دخول
+              دخول الزبائن
             </Link>
           )}
         </section>
+
 
         {needsPush && pushState && pushState !== "granted" && (
           <section
