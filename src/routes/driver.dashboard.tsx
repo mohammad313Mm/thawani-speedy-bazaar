@@ -6,6 +6,7 @@ import { useAuth } from "../lib/auth";
 import { formatIQD } from "../lib/format";
 import { ActiveDeliveryDetails, type ActiveOrder } from "../components/ActiveDeliveryDetails";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
+import { DeleteAccountButton } from "../components/DeleteAccountButton";
 
 export const Route = createFileRoute("/driver/dashboard")({
   component: DriverDashboardPage,
@@ -338,7 +339,9 @@ function DriverDashboardPage() {
             ))
           )}
         </Section>
+        <DeleteAccountButton />
       </main>
+
     </>
   );
 }

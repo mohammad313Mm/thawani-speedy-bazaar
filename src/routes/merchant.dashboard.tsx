@@ -22,6 +22,7 @@ import { supabase } from "../integrations/supabase/client";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
+import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { notifyDriversForOrder } from "../lib/notify.functions";
 
 export const Route = createFileRoute("/merchant/dashboard")({
@@ -206,7 +207,11 @@ function MerchantDashboard() {
             <StoreLocationSection store={store} onUpdated={setStore} />
           </>
         )}
+        <div className="mt-6">
+          <DeleteAccountButton />
+        </div>
       </main>
+
     </>
   );
 }
