@@ -205,13 +205,17 @@ function ProfilePage() {
         </Section>
 
         {user && (
-          <button
-            onClick={signOut}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 py-3.5 text-sm font-black text-destructive"
-          >
-            <LogOut className="h-4 w-4" /> تسجيل الخروج
-          </button>
+          <>
+            <button
+              onClick={signOut}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 bg-destructive/5 py-3.5 text-sm font-black text-destructive"
+            >
+              <LogOut className="h-4 w-4" /> تسجيل الخروج
+            </button>
+            <DeleteAccountButton />
+          </>
         )}
+
 
         <p className="text-center text-[11px] text-muted-foreground">
           ثواني — الإصدار ١٫٠٫٠
