@@ -206,7 +206,11 @@ function MerchantDashboard() {
             <StoreLocationSection store={store} onUpdated={setStore} />
           </>
         )}
+        <div className="mt-6">
+          <DeleteAccountButton />
+        </div>
       </main>
+
     </>
   );
 }

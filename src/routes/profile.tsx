@@ -24,6 +24,8 @@ import {
   requestPushPermission,
   type PushPermState,
 } from "../lib/push-notifications";
+import { DeleteAccountButton } from "../components/DeleteAccountButton";
+
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,

@@ -338,7 +338,9 @@ function DriverDashboardPage() {
             ))
           )}
         </Section>
+        <DeleteAccountButton />
       </main>
+
     </>
   );
 }
