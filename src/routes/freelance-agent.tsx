@@ -6,7 +6,6 @@ import { useAuth } from "../lib/auth";
 import { placeFreelanceOrder } from "../lib/freelance.functions";
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
-import { LocationPermissionDialog } from "../components/LocationPermissionDialog";
 
 
 export const Route = createFileRoute("/freelance-agent")({
@@ -55,11 +54,6 @@ function LocationSelector({
           {geo.message}
         </p>
       )}
-      <LocationPermissionDialog
-        open={geo.dialogOpen}
-        onOpenChange={geo.setDialogOpen}
-        onOpenSettings={geo.openSettings}
-      />
     </div>
   );
 }
