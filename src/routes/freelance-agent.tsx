@@ -55,6 +55,10 @@ function LocationSelector({
         onOpenChange={(open) => !open && geo.cancel()}
         onConfirm={geo.confirm}
         onCancel={geo.cancel}
+        hint={geo.hint}
+        busy={geo.busy}
+        showSettings={geo.isNative}
+        onOpenSettings={geo.openSettings}
       />
     </div>
   );
