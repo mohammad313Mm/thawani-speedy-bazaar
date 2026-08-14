@@ -73,27 +73,6 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
   );
 }
 
-async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=ar`,
-      { headers: { Accept: "application/json" } },
-    );
-    if (!res.ok) throw new Error("geocode failed");
-    const data = await res.json();
-    const a = data.address ?? {};
-    const parts = [
-      a.city || a.town || a.village || a.state,
-      a.suburb || a.neighbourhood || a.city_district || a.county,
-    ].filter(Boolean);
-    return parts.join(" — ") || data.display_name || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
-  } catch {
-    return `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
-  }
-}
-
-type LocStatus = "idle" | "requesting" | "granted" | "denied" | "unsupported" | "error";
-
 type SavedLocation = {
   label: string;
   lat: number;
@@ -101,23 +80,6 @@ type SavedLocation = {
   savedAt: string;
 };
 
-const LOC_STORAGE_KEY = "thawani-location";
-
-function loadSavedLocation(): SavedLocation | null {
-  try {
-    const raw = localStorage.getItem(LOC_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedLocation;
-  } catch {
-    return null;
-  }
-}
-
-function saveLocation(loc: SavedLocation) {
-  try {
-    localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(loc));
-  } catch {}
-}
 
 function LocationCard({
   location,
