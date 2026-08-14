@@ -10,52 +10,6 @@ export const Route = createFileRoute("/freelance-agent")({
   component: FreelanceAgentPage,
 });
 
-type LocStatus = "idle" | "requesting" | "granted" | "denied" | "unsupported" | "error";
-
-type SavedLocation = {
-  label: string;
-  lat: number;
-  lng: number;
-  savedAt: string;
-};
-
-const LOC_STORAGE_KEY = "thawani-location";
-
-function loadSavedLocation(): SavedLocation | null {
-  try {
-    const raw = localStorage.getItem(LOC_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as SavedLocation;
-  } catch {
-    return null;
-  }
-}
-
-function saveLocation(loc: SavedLocation) {
-  try {
-    localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(loc));
-  } catch {}
-}
-
-async function reverseGeocode(lat: number, lon: number): Promise<string> {
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=ar`,
-      { headers: { Accept: "application/json" } },
-    );
-    if (!res.ok) throw new Error("geocode failed");
-    const data = await res.json();
-    const a = data.address ?? {};
-    const parts = [
-      a.city || a.town || a.village || a.state,
-      a.suburb || a.neighbourhood || a.city_district || a.county,
-    ].filter(Boolean);
-    return parts.join(" — ") || data.display_name || `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
-  } catch {
-    return `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
-  }
-}
-
 function LocationSelector({
   location,
   onLocation,
@@ -63,47 +17,8 @@ function LocationSelector({
   location: string | null;
   onLocation: (loc: string) => void;
 }) {
-  const [status, setStatus] = useState<LocStatus>("idle");
-
-  const handleGetLocation = useCallback(() => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      toast.error("هاتفك لا يدعم تحديد الموقع");
-      setStatus("unsupported");
-      return;
-    }
-    setStatus("requesting");
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const label = await reverseGeocode(lat, lng);
-        saveLocation({ label, lat, lng, savedAt: new Date().toISOString() });
-        onLocation(label);
-        setStatus("granted");
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          toast.error("يرجى السماح بالوصول إلى الموقع من إعدادات المتصفح/التطبيق.");
-          setStatus("denied");
-        } else if (error.code === error.POSITION_UNAVAILABLE || error.code === error.TIMEOUT) {
-          toast.error("تعذر الحصول على موقع دقيق. تأكد من تفعيل GPS ومن وجود إشارة واضحة.");
-          setStatus("error");
-        } else {
-          toast.error("حدث خطأ أثناء تحديد الموقع. حاول مرة أخرى.");
-          setStatus("error");
-        }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
-    );
-  }, [onLocation]);
-
-  useEffect(() => {
-    const saved = loadSavedLocation();
-    if (saved) {
-      onLocation(saved.label);
-      setStatus("granted");
-    }
-  }, [onLocation]);
+  const geo = useLocationPicker(onLocation);
+  const shown = geo.label ?? location;
 
   return (
     <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
@@ -115,26 +30,37 @@ function LocationSelector({
           <div className="min-w-0">
             <p className="text-xs font-semibold text-muted-foreground">موقع التوصيل</p>
             <p className="truncate text-sm font-bold text-foreground">
-              {location ?? "لم يتم تحديد الموقع بعد"}
+              {shown ?? "لم يتم تحديد الموقع بعد"}
             </p>
           </div>
         </div>
         <button
-          onClick={handleGetLocation}
-          disabled={status === "requesting"}
+          onClick={geo.request}
+          disabled={geo.status === "requesting"}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-elegant transition-all active:scale-95 disabled:opacity-70"
         >
-          {status === "requesting" ? (
+          {geo.status === "requesting" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
             <MapPin className="h-3.5 w-3.5" />
           )}
-          {status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
+          {geo.status === "requesting" ? "جاري التحديد..." : "تحديد موقعي"}
         </button>
       </div>
+      {geo.status !== "granted" && geo.message && (
+        <p className="mt-3 rounded-xl bg-muted/60 p-2.5 text-xs font-medium text-foreground">
+          {geo.message}
+        </p>
+      )}
+      <LocationPermissionDialog
+        open={geo.dialogOpen}
+        onOpenChange={geo.setDialogOpen}
+        onOpenSettings={geo.openSettings}
+      />
     </div>
   );
 }
+
 
 function FreelanceAgentPage() {
   const { user } = useAuth();
