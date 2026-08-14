@@ -14,19 +14,14 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const TYPING_TEXT = "كل ما تحتاجه.. مع ثواني";
+const SPLASH_TEXT = "كل ما تحتاجه.. مع ثواني";
 const SPLASH_DURATION = 3000; // 3 seconds total
-const TYPING_DURATION = 1800; // typing completes in 1.8s
 const FADE_START = 2500; // start fading at 2.5s
 
 function WelcomeSplash({ onDone }: { onDone: () => void }) {
-  const [typed, setTyped] = useState("");
   const [fading, setFading] = useState(false);
-  const fadedRef = useRef(false);
 
   useEffect(() => {
-    const full = TYPING_TEXT;
-    const charCount = full.length;
     const start = performance.now();
     let raf = 0;
     let doneTimer = 0;
@@ -34,15 +29,7 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
     const tick = (now: number) => {
       const elapsed = now - start;
 
-      if (elapsed < TYPING_DURATION) {
-        const idx = Math.min(charCount, Math.floor((elapsed / TYPING_DURATION) * charCount));
-        setTyped(full.slice(0, idx));
-      } else {
-        setTyped(full);
-      }
-
-      if (elapsed >= FADE_START && !fadedRef.current) {
-        fadedRef.current = true;
+      if (elapsed >= FADE_START && !fading) {
         setFading(true);
       }
 
@@ -59,7 +46,7 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
       cancelAnimationFrame(raf);
       clearTimeout(doneTimer);
     };
-  }, [onDone]);
+  }, [onDone, fading]);
 
   return (
     <div
@@ -78,10 +65,9 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
             />
           </div>
         </div>
-        <div className="w-full text-center text-base font-bold text-primary-foreground">
-          <span className="typing-text">{typed}</span>
-          <span className="caret inline-block h-4 w-0.5 align-middle bg-current animate-blink-caret" />
-        </div>
+        <p className="w-full text-center text-base font-bold text-primary-foreground">
+          {SPLASH_TEXT}
+        </p>
       </div>
     </div>
   );
