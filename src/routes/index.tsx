@@ -73,12 +73,8 @@ function WelcomeSplash({ onDone }: { onDone: () => void }) {
   );
 }
 
-type SavedLocation = {
-  label: string;
-  lat: number;
-  lng: number;
-  savedAt: string;
-};
+// location helpers live in ../lib/geo
+
 
 
 function LocationCard({
