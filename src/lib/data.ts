@@ -92,32 +92,8 @@ export const STORES: Store[] = [];
 export const PRODUCTS: Product[] = [];
 
 
-export const BANNERS = [
-  {
-    id: "b1",
-    title: "خصم ٣٠٪ على المطاعم",
-    subtitle: "لفترة محدودة — استخدم كود THAWANI30",
-    image: img("photo-1414235077428-338989a2e8c0"),
-    cta: "اطلب الآن",
-    color: "from-[oklch(0.55_0.22_27)] to-[oklch(0.72_0.18_55)]",
-  },
-  {
-    id: "b2",
-    title: "توصيل مجاني للبقالة",
-    subtitle: "على أول طلبين هذا الأسبوع",
-    image: img("photo-1542838132-92c53300491e"),
-    cta: "اكتشف",
-    color: "from-[oklch(0.72_0.18_55)] to-[oklch(0.85_0.14_85)]",
-  },
-  {
-    id: "b3",
-    title: "حلويات ومشروبات منعشة",
-    subtitle: "تشكيلة جديدة من أفضل المتاجر",
-    image: img("photo-1488477181946-6428a0291777"),
-    cta: "تسوق الآن",
-    color: "from-[oklch(0.68_0.2_350)] to-[oklch(0.55_0.22_27)]",
-  },
-];
+export const BANNERS: never[] = [];
+
 
 export function storesByCategory(key: CategoryKey) {
   return STORES.filter((s) => s.category === key);
