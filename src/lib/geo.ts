@@ -131,9 +131,83 @@ export async function requestCurrentPosition(): Promise<GeoOutcome> {
   });
 }
 
-/** Opens the OS app-settings screen on native; returns false when not possible. */
+type DiagnosticPlugin = {
+  isLocationEnabled?: (ok: (enabled: boolean) => void, err: (e: unknown) => void) => void;
+  switchToLocationSettings?: () => void;
+};
+type LocationAccuracyPlugin = {
+  canRequest?: (cb: (can: boolean) => void) => void;
+  request?: (ok: () => void, err: (e: unknown) => void, accuracy: number) => void;
+};
+
+function cordovaPlugins(): {
+  diagnostic?: DiagnosticPlugin;
+  locationAccuracy?: LocationAccuracyPlugin;
+} {
+  const g = globalThis as {
+    cordova?: { plugins?: { diagnostic?: DiagnosticPlugin; locationAccuracy?: LocationAccuracyPlugin } };
+  };
+  return g.cordova?.plugins ?? {};
+}
+
+/** true إذا كانت خدمة الموقع في النظام مفعّلة (عند توفر إضافة Diagnostic). */
+export async function isDeviceLocationEnabled(): Promise<boolean | null> {
+  const { diagnostic } = cordovaPlugins();
+  if (!diagnostic?.isLocationEnabled) return null;
+  return new Promise((resolve) => {
+    try {
+      diagnostic.isLocationEnabled!(
+        (enabled) => resolve(Boolean(enabled)),
+        () => resolve(null),
+      );
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * يحاول إظهار نافذة Google Play Services لتشغيل الـ GPS بنقرة واحدة.
+ * يرجع true عند نجاح التفعيل.
+ */
+export async function promptEnableDeviceLocation(): Promise<boolean> {
+  if (!isNativeApp()) return false;
+  const { locationAccuracy } = cordovaPlugins();
+  if (!locationAccuracy?.request) return false;
+  const can = await new Promise<boolean>((resolve) => {
+    try {
+      if (locationAccuracy.canRequest) locationAccuracy.canRequest((v) => resolve(Boolean(v)));
+      else resolve(true);
+    } catch {
+      resolve(false);
+    }
+  });
+  if (!can) return false;
+  return new Promise<boolean>((resolve) => {
+    try {
+      locationAccuracy.request!(
+        () => resolve(true),
+        () => resolve(false),
+        0, // REQUEST_PRIORITY_HIGH_ACCURACY
+      );
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+/** Opens the OS location/app-settings screen on native; returns false when not possible. */
 export async function openLocationSettings(): Promise<boolean> {
   if (!isNativeApp()) return false;
+  const { diagnostic } = cordovaPlugins();
+  if (diagnostic?.switchToLocationSettings) {
+    try {
+      diagnostic.switchToLocationSettings();
+      return true;
+    } catch {
+      /* fall through */
+    }
+  }
   try {
     const cap = (
       globalThis as {
@@ -142,7 +216,7 @@ export async function openLocationSettings(): Promise<boolean> {
     ).Capacitor;
     const ns = cap?.Plugins?.NativeSettings;
     if (ns?.openAndroid) {
-      await ns.openAndroid({ option: "application_details" });
+      await ns.openAndroid({ option: "location" });
       return true;
     }
   } catch {
@@ -150,6 +224,7 @@ export async function openLocationSettings(): Promise<boolean> {
   }
   return false;
 }
+
 
 export async function reverseGeocode(lat: number, lon: number): Promise<string> {
   try {
