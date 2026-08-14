@@ -151,10 +151,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <style dangerouslySetInnerHTML={{ __html: BOOT_STYLE }} />
         <script defer dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
@@ -243,6 +240,7 @@ function RootComponent() {
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
+      <Scripts />
     </>
   );
 }
