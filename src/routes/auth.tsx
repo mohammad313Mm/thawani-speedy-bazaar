@@ -1,22 +1,30 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowRight, Lock, User as UserIcon, Phone } from "lucide-react";
+import { ArrowRight, User as UserIcon, Phone } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
-import { phoneToEmail, normalizePhone } from "../lib/phone-auth";
+import { customerSignIn, customerSignUp } from "../lib/customer-auth.functions";
 
 export const Route = createFileRoute("/auth")({
+  head: () => ({
+    meta: [
+      { title: "دخول الزبائن | ثواني" },
+      { name: "description", content: "سجّل دخولك كزبون في تطبيق ثواني بالاسم ورقم الهاتف لمتابعة طلباتك." },
+      { property: "og:title", content: "دخول الزبائن | ثواني" },
+      { property: "og:description", content: "تسجيل دخول وإنشاء حساب زبون في ثواني." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): { next?: string } =>
     typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//")
       ? { next: s.next }
       : {},
-
   component: AuthPage,
 });
 
 function AuthPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -32,45 +40,29 @@ function AuthPage() {
     }
   }, [user, loading, navigate, next]);
 
-
-  const [info, setInfo] = useState<string | null>(null);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setInfo(null);
     setBusy(true);
     try {
-      const normalized = normalizePhone(phone);
-      if (!normalized) {
-        throw new Error("رقم الهاتف غير صالح");
+      const res =
+        mode === "signup"
+          ? await customerSignUp({ data: { fullName, phone } })
+          : await customerSignIn({ data: { phone } });
+
+      if (!res.ok) {
+        setError(res.error);
+        return;
       }
-      const email = phoneToEmail(normalized);
-      if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/profile`,
-            data: { full_name: fullName, phone: normalized },
-          },
-        });
-        if (error) throw error;
-        if (!data.session) {
-          setInfo("تم إنشاء حسابك. يمكنك الآن تسجيل الدخول.");
-          setMode("signin");
-        }
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw new Error("رقم الهاتف أو كلمة المرور غير صحيحة");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "حدث خطأ");
+      const { error: sessErr } = await supabase.auth.setSession(res.session);
+      if (sessErr) throw sessErr;
+      navigate({ to: "/profile" });
+    } catch {
+      setError("حدث خطأ، حاول مرة أخرى");
     } finally {
       setBusy(false);
     }
   };
-
 
   return (
     <>
@@ -79,41 +71,38 @@ function AuthPage() {
           <Link to="/profile" className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
             <ArrowRight className="h-5 w-5" />
           </Link>
-          <h1 className="text-base font-black">{mode === "signin" ? "تسجيل الدخول" : "إنشاء حساب"}</h1>
+          <h1 className="text-base font-black">{mode === "signin" ? "تسجيل الدخول" : "حساب جديد"}</h1>
         </div>
       </header>
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        <section className="rounded-3xl bg-gradient-warm p-5 text-white shadow-elegant">
-          <p className="text-lg font-black">مرحباً بك في ثواني</p>
-          <p className="mt-1 text-xs opacity-90">
-            سجل دخولك لتتبع طلباتك، أو أنشئ حساباً للانضمام كصاحب متجر أو مندوب توصيل.
-          </p>
-        </section>
-
         <div className="grid grid-cols-2 gap-2 rounded-full bg-muted p-1">
           {(["signin", "signup"] as const).map((m) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
+              onClick={() => {
+                setMode(m);
+                setError(null);
+              }}
               className={`rounded-full py-2 text-xs font-black transition-colors ${
                 mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"
               }`}
             >
-              {m === "signin" ? "دخول" : "حساب جديد"}
+              {m === "signin" ? "تسجيل دخول" : "حساب جديد"}
             </button>
           ))}
         </div>
 
         <form onSubmit={submit} className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
           {mode === "signup" && (
-            <Field icon={<UserIcon className="h-4 w-4" />} label="الاسم الكامل">
+            <Field icon={<UserIcon className="h-4 w-4" />} label="الاسم">
               <input
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                maxLength={80}
                 className="w-full bg-transparent text-sm outline-none"
-                placeholder="مثال: علي محمد"
+                placeholder="اسمك"
               />
             </Field>
           )}
@@ -124,20 +113,9 @@ function AuthPage() {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              maxLength={20}
               className="w-full bg-transparent text-sm outline-none"
               placeholder="07XX XXX XXXX"
-              dir="ltr"
-            />
-          </Field>
-          <Field icon={<Lock className="h-4 w-4" />} label="كلمة المرور">
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
-              className="w-full bg-transparent text-sm outline-none"
-              placeholder="٦ أحرف على الأقل"
               dir="ltr"
             />
           </Field>
@@ -147,19 +125,13 @@ function AuthPage() {
               {error}
             </p>
           )}
-          {info && (
-            <p className="rounded-xl bg-success/15 px-3 py-2 text-xs font-black text-success">
-              {info}
-            </p>
-          )}
-
 
           <button
             type="submit"
             disabled={busy}
             className="w-full rounded-full bg-primary py-3 text-sm font-black text-primary-foreground shadow-elegant disabled:opacity-60"
           >
-            {busy ? "..." : mode === "signin" ? "دخول" : "إنشاء الحساب"}
+            {busy ? "..." : mode === "signin" ? "تسجيل دخول" : "إنشاء الحساب"}
           </button>
         </form>
       </main>
