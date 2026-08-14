@@ -19,6 +19,7 @@ import {
   Package,
   Upload,
   ShoppingBag,
+  LifeBuoy,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
@@ -40,12 +41,13 @@ import {
 
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
+import { AdminSupportChat } from "../components/AdminSupportChat";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "orders" | "stores" | "drivers" | "ads" | "areas" | "notifs";
+type Section = "apps" | "orders" | "stores" | "drivers" | "ads" | "areas" | "notifs" | "support";
 type AppKind = "merchant" | "driver";
 
 type Application = {
@@ -220,6 +222,9 @@ function AdminPage() {
           >
             الإشعارات
           </SectionBtn>
+          <SectionBtn active={section === "support"} onClick={() => setSection("support")} icon={<LifeBuoy className="h-4 w-4" />}>
+            دردشة الدعم
+          </SectionBtn>
         </nav>
 
         {section === "apps" && <ApplicationsPanel />}
@@ -229,6 +234,7 @@ function AdminPage() {
         {section === "ads" && <AdsPanel />}
         {section === "areas" && <AreasPanel />}
         {section === "notifs" && <NotificationsPanel />}
+        {section === "support" && <AdminSupportChat />}
       </main>
     </>
   );

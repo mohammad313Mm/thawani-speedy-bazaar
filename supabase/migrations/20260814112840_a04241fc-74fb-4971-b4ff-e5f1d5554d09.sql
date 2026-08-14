@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.support_chat_after_user_message() FROM PUBLIC, anon, authenticated;
