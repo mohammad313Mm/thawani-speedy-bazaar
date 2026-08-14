@@ -73,9 +73,11 @@ function ProfilePage() {
     setRequesting(false);
   };
 
+  const customerName = (user?.user_metadata?.full_name as string | undefined) || null;
   const phoneDisplay =
     (user?.user_metadata?.phone as string | undefined) ??
     (user?.email ? user.email.replace(/@thawani\.app$/, "") : null);
+
 
 
 
