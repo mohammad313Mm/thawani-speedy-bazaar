@@ -125,11 +125,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 const BOOT_STYLE = `html,body{background-color:#D62828}
 #boot-splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#D62828;color:#fff;font-family:Tajawal,Cairo,system-ui,sans-serif;transition:opacity .35s ease}
 #boot-splash .bs-logo{width:128px;height:128px;border-radius:28px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;overflow:hidden;animation:bs-pop .5s ease}
-#boot-splash .bs-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
+#boot-splash .bs-logo img{width:100%;height:100%;object-fit:contain;padding:8px}
 #boot-splash .bs-title{font-size:30px;font-weight:900}
 @keyframes bs-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}`;
 
 const BOOT_SCRIPT = `(function(){function h(){var e=document.getElementById('boot-splash');if(!e)return;e.style.opacity='0';setTimeout(function(){e&&e.remove()},350)}window.__hideBootSplash=h;setTimeout(h,4000);})();`;
+
+function BootSplash() {
+  return (
+    <div
+      id="boot-splash"
+      dangerouslySetInnerHTML={{
+        __html: `<div class="bs-logo"><img src="${splashLogo.url}" alt="شعار ثواني" /></div><div class="bs-title">ثواني</div>`,
+      }}
+      suppressHydrationWarning
+    />
+  );
+}
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
@@ -137,16 +149,9 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
         <style dangerouslySetInnerHTML={{ __html: BOOT_STYLE }} />
+        <script defer dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
       <body>
-        <div
-          id="boot-splash"
-          dangerouslySetInnerHTML={{
-            __html: `<div class="bs-logo"><img src="${splashLogo.url}" alt="شعار ثواني" /></div><div class="bs-title">ثواني</div>`,
-          }}
-          suppressHydrationWarning
-        />
-        <script data-boot-splash="1" dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
         {children}
         <Scripts />
       </body>
@@ -225,16 +230,19 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <CartProvider>
-            <OrdersProvider>
-              <AppFrame />
-            </OrdersProvider>
-          </CartProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <>
+      <BootSplash />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <CartProvider>
+              <OrdersProvider>
+                <AppFrame />
+              </OrdersProvider>
+            </CartProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </>
   );
 }
