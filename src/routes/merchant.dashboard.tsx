@@ -543,6 +543,9 @@ function ProductsPanel({ storeId }: { storeId: string }) {
       {(editing || creating) && (
         <ProductEditor
           storeId={storeId}
+          categories={Array.from(
+            new Set(products.map((p) => (p.category ?? "").trim()).filter(Boolean)),
+          )}
           initial={editing}
           onClose={() => {
             setEditing(null);
