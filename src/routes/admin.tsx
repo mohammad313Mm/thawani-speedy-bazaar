@@ -1797,7 +1797,7 @@ function OrdersPanel() {
 /* ---------------- Taxi ---------------- */
 
 type TaxiDriverRow = {
-  user_id: string;
+  user_id: string | null;
   phone: string;
   full_name: string | null;
   is_active: boolean;
@@ -1829,8 +1829,6 @@ function TaxiPanel() {
   const [drivers, setDrivers] = useState<TaxiDriverRow[]>([]);
   const [requests, setRequests] = useState<TaxiRequestAdminRow[]>([]);
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -1859,22 +1857,18 @@ function TaxiPanel() {
 
   const create = async () => {
     setMsg(null);
-    if (phone.trim().length < 6 || password.length < 4) {
-      setMsg("أدخل رقم هاتف صحيح وكلمة مرور لا تقل عن 4 أحرف");
+    if (phone.trim().length < 6) {
+      setMsg("أدخل رقم هاتف صحيح");
       return;
     }
     setBusy(true);
     try {
-      await adminCreateTaxiDriver({
-        data: { phone: phone.trim(), password, full_name: fullName.trim() || null },
-      });
-      setMsg("تم إنشاء حساب سائق التكسي بنجاح");
+      await adminCreateTaxiDriver({ data: { phone: phone.trim() } });
+      setMsg("تم تخويل الرقم كسائق تكسي");
       setPhone("");
-      setPassword("");
-      setFullName("");
       await load();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "تعذر إنشاء الحساب");
+      setMsg(e instanceof Error ? e.message : "تعذر تخويل الرقم");
     } finally {
       setBusy(false);
     }
@@ -1883,28 +1877,17 @@ function TaxiPanel() {
   return (
     <div className="space-y-4">
       <section className="rounded-2xl bg-card p-4 shadow-soft">
-        <p className="mb-3 text-sm font-black text-foreground">إضافة حساب سائق تكسي</p>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="الاسم (اختياري)"
-            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
+        <p className="mb-1 text-sm font-black text-foreground">تخويل رقم سائق تكسي</p>
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          أدخل رقم الهاتف فقط. عند تسجيل دخول صاحب الرقم كزبون تُفعّل له لوحة «طلباتي» للتكسي تلقائياً.
+        </p>
+        <div className="grid gap-2">
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             dir="ltr"
             inputMode="numeric"
             placeholder="رقم الهاتف"
-            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="text"
-            dir="ltr"
-            placeholder="كلمة المرور"
             className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
         </div>
@@ -1914,30 +1897,30 @@ function TaxiPanel() {
           disabled={busy}
           className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
         >
-          <Plus className="h-4 w-4" /> إنشاء الحساب
+          <Plus className="h-4 w-4" /> تخويل الرقم
         </button>
       </section>
 
       <section className="rounded-2xl bg-card p-4 shadow-soft">
-        <p className="mb-3 text-sm font-black text-foreground">سائقو التكسي ({drivers.length})</p>
+        <p className="mb-3 text-sm font-black text-foreground">الأرقام المخوّلة ({drivers.length})</p>
         <div className="space-y-2">
           {drivers.length === 0 && (
-            <p className="text-xs text-muted-foreground">لا يوجد سائقون بعد</p>
+            <p className="text-xs text-muted-foreground">لا يوجد أرقام مخوّلة بعد</p>
           )}
           {drivers.map((d) => (
-            <div key={d.user_id} className="flex items-center gap-2 rounded-xl bg-muted/60 p-3">
+            <div key={d.phone} className="flex items-center gap-2 rounded-xl bg-muted/60 p-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black text-foreground">
-                  {d.full_name || "سائق تكسي"}
-                </p>
-                <p className="truncate text-xs text-muted-foreground" dir="ltr">
+                <p className="truncate text-sm font-black text-foreground" dir="ltr">
                   {d.phone}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {d.user_id ? "مرتبط بحساب زبون" : "بانتظار تسجيل دخول صاحب الرقم"}
                 </p>
               </div>
               <button
                 onClick={async () => {
                   await adminSetTaxiDriverActive({
-                    data: { user_id: d.user_id, is_active: !d.is_active },
+                    data: { phone: d.phone, is_active: !d.is_active },
                   });
                   await load();
                 }}
@@ -1951,7 +1934,7 @@ function TaxiPanel() {
               </button>
               <button
                 onClick={async () => {
-                  await adminDeleteTaxiDriver({ data: { user_id: d.user_id } });
+                  await adminDeleteTaxiDriver({ data: { phone: d.phone } });
                   await load();
                 }}
                 className="rounded-full bg-destructive/10 p-2 text-destructive"

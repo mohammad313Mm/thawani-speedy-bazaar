@@ -25,6 +25,26 @@ async function derivePassword(normalized: string) {
     .join("");
 }
 
+/**
+ * Links the signed-in account to an admin-authorized taxi phone number
+ * (if any) so the taxi "طلباتي" panel unlocks automatically.
+ */
+async function linkTaxiAuthorization(normalized: string, userId: string | null) {
+  if (!userId) return;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Keep the profile phone in sync so phone-based authorization matches.
+    await supabaseAdmin.from("profiles").update({ phone: normalized }).eq("id", userId);
+    await supabaseAdmin
+      .from("taxi_drivers")
+      .update({ user_id: userId })
+      .eq("phone", normalized)
+      .is("user_id", null);
+  } catch (e) {
+    console.error("[linkTaxiAuthorization]", e);
+  }
+}
+
 async function signInWithDerived(email: string, password: string) {
   const { createClient } = await import("@supabase/supabase-js");
   const client = createClient(
@@ -37,6 +57,7 @@ async function signInWithDerived(email: string, password: string) {
   return {
     access_token: data.session.access_token,
     refresh_token: data.session.refresh_token,
+    user_id: data.user?.id ?? null,
   };
 }
 
@@ -64,6 +85,7 @@ export const customerSignUp = createServerFn({ method: "POST" })
 
     const session = await signInWithDerived(email, password);
     if (!session) return { ok: false as const, error: "تعذر تسجيل الدخول بعد التسجيل" };
+    await linkTaxiAuthorization(normalized, session.user_id);
     return { ok: true as const, session };
   });
 
@@ -76,5 +98,6 @@ export const customerSignIn = createServerFn({ method: "POST" })
     const password = await derivePassword(normalized);
     const session = await signInWithDerived(email, password);
     if (!session) return { ok: false as const, error: "لا يوجد حساب بهذا الرقم، أنشئ حساباً جديداً" };
+    await linkTaxiAuthorization(normalized, session.user_id);
     return { ok: true as const, session };
   });

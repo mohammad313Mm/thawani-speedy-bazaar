@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { normalizePhone, phoneToEmail } from "./phone-auth";
+import { normalizePhone } from "./phone-auth";
 
 // Taxi module: customer requests + admin-managed taxi driver accounts.
 
@@ -138,66 +138,46 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
   if (error || !data) throw new Error("Forbidden: admin role required");
 }
 
+// Admin authorizes a taxi driver by phone number only — no name, no password.
+// The row is linked to a real account automatically when that phone signs in.
 export const adminCreateTaxiDriver = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z
-      .object({
-        phone: z.string().trim().min(6).max(30),
-        password: z.string().min(4).max(72),
-        full_name: z.string().trim().max(200).nullable().optional(),
-      })
-      .parse(d),
+    z.object({ phone: z.string().trim().min(6).max(30) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const normalized = normalizePhone(data.phone);
     if (!normalized) throw new Error("رقم هاتف غير صالح");
-    const email = phoneToEmail(normalized);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    let userId: string | null = null;
-    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password: data.password,
-      email_confirm: true,
-      user_metadata: { phone: normalized, full_name: data.full_name ?? null },
-    });
-    if (createErr) {
-      // Existing account → reset its password and grant taxi access.
-      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-      const found = list?.users?.find((u) => u.email === email);
-      if (!found) throw new Error(createErr.message);
-      userId = found.id;
-      await supabaseAdmin.auth.admin.updateUserById(userId, { password: data.password });
-    } else {
-      userId = created.user?.id ?? null;
-    }
-    if (!userId) throw new Error("تعذر إنشاء الحساب");
+    // Link immediately if a customer with this phone already exists.
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("phone", normalized)
+      .maybeSingle();
 
     const { error: upErr } = await supabaseAdmin
       .from("taxi_drivers")
       .upsert(
         {
-          user_id: userId,
           phone: normalized,
-          full_name: data.full_name || null,
+          user_id: (profile as { id: string } | null)?.id ?? null,
           is_active: true,
         },
-        { onConflict: "user_id" },
+        { onConflict: "phone" },
       );
     if (upErr) throw new Error(upErr.message);
 
-    await supabaseAdmin.from("profiles").update({ status: "active" }).eq("id", userId);
-
-    return { ok: true, user_id: userId, phone: normalized };
+    return { ok: true, phone: normalized };
   });
 
 export const adminSetTaxiDriverActive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ user_id: z.string().uuid(), is_active: z.boolean() }).parse(d),
+    z.object({ phone: z.string().trim().min(3).max(30), is_active: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -205,21 +185,21 @@ export const adminSetTaxiDriverActive = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("taxi_drivers")
       .update({ is_active: data.is_active })
-      .eq("user_id", data.user_id);
+      .eq("phone", data.phone);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const adminDeleteTaxiDriver = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .inputValidator((d: unknown) => z.object({ phone: z.string().trim().min(3).max(30) }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("taxi_drivers")
       .delete()
-      .eq("user_id", data.user_id);
+      .eq("phone", data.phone);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -241,7 +221,7 @@ export const adminListTaxi = createServerFn({ method: "POST" })
         .limit(200),
     ]);
     const driverRows = (drivers.data ?? []) as Array<{
-      user_id: string;
+      user_id: string | null;
       phone: string;
       full_name: string | null;
       is_active: boolean;
