@@ -128,6 +128,7 @@ function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
   const { stores: dbStores } = useDbStores();
   const { products: dbProducts, loading: productsLoading } = useDbProductSearch(query);
+  const { categories: allCategories } = useAllCategories();
 
   const allStores = [...dbStores, ...STORES.filter((s) => !dbStores.some((d) => d.id === s.id))];
   const stores = allStores
