@@ -148,6 +148,8 @@ function CheckoutPage() {
     if (!phone.trim() || phone.trim().length < 10) return toast.error("الرجاء إدخال رقم هاتف صحيح");
     if (!address.trim()) return toast.error("الرجاء إدخال عنوان التوصيل");
     if (items.length === 0) return toast.error("السلة فارغة");
+    if (outsideCoverage)
+      return toast.error("عذراً، الخدمة غير متوفرة في موقعك حالياً — موقعك خارج مناطق التوصيل");
 
     setPlacing(true);
     setTimeout(async () => {
