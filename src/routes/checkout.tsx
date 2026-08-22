@@ -77,6 +77,20 @@ function CheckoutPage() {
     if (coords && storeCoords) setDistanceKm(haversineKm(coords, storeCoords));
   }, [coords, storeCoords]);
 
+  // Admin-defined delivery areas (polygons) decide whether we cover the customer.
+  const [areas, setAreas] = useState<DeliveryArea[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchActiveAreas()
+      .then((rows) => { if (alive) setAreas(rows); })
+      .catch(() => { /* coverage check is best-effort */ });
+    return () => { alive = false; };
+  }, []);
+  const hasCoverageMap = areas.some((a) => a.boundary_points.length >= 3);
+  const matchedArea = coords ? findAreaForPoint(coords, areas) : null;
+  const outsideCoverage = Boolean(coords && hasCoverageMap && !matchedArea);
+
+
 
   if (items.length === 0) {
     return (
