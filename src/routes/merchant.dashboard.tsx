@@ -560,15 +560,21 @@ function ProductsPanel({ storeId }: { storeId: string }) {
 function ProductEditor({
   storeId,
   initial,
+  categories,
   onClose,
 }: {
   storeId: string;
   initial: ProductRow | null;
+  categories: string[];
   onClose: () => void;
 }) {
   const [name, setName] = useState(initial?.name_ar ?? "");
   const [desc, setDesc] = useState(initial?.description ?? "");
   const [price, setPrice] = useState<string>(String(initial?.price_iqd ?? ""));
+  const [category, setCategory] = useState<string>(initial?.category ?? "");
+  const [newCategory, setNewCategory] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [available, setAvailable] = useState<boolean>(initial?.is_available ?? true);
   const [image, setImage] = useState<string | null>(initial?.image_url ?? null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
