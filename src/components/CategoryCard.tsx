@@ -10,12 +10,25 @@ function CardBody({ category, cta }: { category: Category; cta: string }) {
         className={`absolute inset-0 -z-10 bg-gradient-to-br ${category.color}`}
         aria-hidden
       />
-      <div className="absolute -bottom-5 -left-5 text-[80px] leading-none opacity-25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
-        {category.icon}
-      </div>
-      <div className="relative">
-        <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/25 backdrop-blur text-xl">
+      {category.iconUrl ? (
+        <img
+          src={category.iconUrl}
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute -bottom-5 -left-5 h-24 w-24 object-contain opacity-25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
+        />
+      ) : (
+        <div className="absolute -bottom-5 -left-5 text-[80px] leading-none opacity-25 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
           {category.icon}
+        </div>
+      )}
+      <div className="relative">
+        <div className="mb-3 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-white/25 backdrop-blur text-xl">
+          {category.iconUrl ? (
+            <img src={category.iconUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            category.icon
+          )}
         </div>
         <h3 className="text-base font-black">{category.name}</h3>
         <p className="mt-0.5 text-[11px] opacity-90">{category.description}</p>
