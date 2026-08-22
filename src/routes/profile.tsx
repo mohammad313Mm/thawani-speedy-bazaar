@@ -14,7 +14,7 @@ import {
   Bell,
   BellOff,
   LifeBuoy,
-  
+  Car,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "../lib/theme";
@@ -25,6 +25,7 @@ import {
   type PushPermState,
 } from "../lib/push-notifications";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
+import { useIsTaxiDriver } from "../lib/use-taxi-driver";
 
 
 export const Route = createFileRoute("/profile")({
@@ -37,6 +38,7 @@ function ProfilePage() {
   const router = useRouter();
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
+  const { isTaxiDriver } = useIsTaxiDriver();
   const needsPush = !!user && (isMerchant || isDriver);
 
   const [pushState, setPushState] = useState<PushPermState | null>(null);
@@ -186,6 +188,15 @@ function ProfilePage() {
 
 
 
+
+        <Section title="التكسي">
+          <ItemLink
+            to={isTaxiDriver ? "/taxi-orders" : "/taxi-login"}
+            icon={<Car />}
+            label={isTaxiDriver ? "طلباتي" : "دخول سائق تكسي"}
+            trailing={isTaxiDriver ? "مفعّل" : undefined}
+          />
+        </Section>
 
         <Section title="التطبيق">
           <div className="p-4">
