@@ -1671,7 +1671,7 @@ function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => v
   );
 }
 
-/* ---------------- Areas ---------------- */
+/* ---------------- Area Management ---------------- */
 
 type AreaRow = {
   id: string;
@@ -1682,214 +1682,263 @@ type AreaRow = {
   min_order_iqd: number;
   is_active: boolean;
   boundary_points?: unknown;
+  created_at?: string;
+  updated_at?: string;
 };
 
 function AreasPanel() {
   const [rows, setRows] = useState<AreaRow[]>([]);
   const [editing, setEditing] = useState<AreaRow | null>(null);
   const [creating, setCreating] = useState(false);
-  const [assigning, setAssigning] = useState(false);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(false);
   const password = getAdminPass();
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("delivery_areas").select("*").order("name_ar");
+    setFetching(true);
+    const { data } = await supabase
+      .from("delivery_areas")
+      .select("*")
+      .order("name_ar");
     setRows((data ?? []) as AreaRow[]);
+    setFetching(false);
   }, []);
-  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("admin_areas")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "delivery_areas" },
+        load,
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [load]);
 
   const toggle = async (r: AreaRow) => {
     try {
       await adminSaveArea({
-        data: { password, id: r.id, name_ar: r.name_ar, name_en: r.name_en, city: r.city,
-                fee_iqd: r.fee_iqd, min_order_iqd: r.min_order_iqd, is_active: !r.is_active,
-                boundary_points: parseBoundary(r.boundary_points) },
+        data: {
+          password,
+          id: r.id,
+          name_ar: r.name_ar,
+          name_en: r.name_en,
+          city: r.city,
+          fee_iqd: 0,
+          min_order_iqd: 0,
+          is_active: !r.is_active,
+          boundary_points: parseBoundary(r.boundary_points),
+        },
       });
       load();
-    } catch (e) { window.alert((e as Error).message); }
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
   };
+
   const del = async (r: AreaRow) => {
-    if (!window.confirm(`تأكيد الحذف: سيتم حذف منطقة "${r.name_ar}" وحدودها نهائياً. هل أنت متأكد؟`)) return;
+    if (
+      !window.confirm(
+        `تأكيد الحذف: سيتم حذف منطقة "${r.name_ar}" وحدودها نهائياً. هل أنت متأكد؟`,
+      )
+    )
+      return;
     if (!window.confirm("لا يمكن التراجع بعد الحذف. متابعة؟")) return;
-    try { await adminDeleteArea({ data: { password, id: r.id } }); load(); }
-    catch (e) { window.alert((e as Error).message); }
+    try {
+      await adminDeleteArea({ data: { password, id: r.id } });
+      load();
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
   };
 
   return (
-    <section className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={() => setCreating(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
-          <Plus className="h-4 w-4" /> إضافة منطقة جديدة
-        </button>
-        <button onClick={() => setAssigning(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-muted py-3 text-sm font-black">
-          <Bike className="h-4 w-4" /> إسناد المندوبين
-        </button>
+    <section className="space-y-4">
+      <div className="rounded-2xl bg-card p-4 shadow-soft">
+        <p className="mb-1 text-sm font-black">إدارة مناطق التوصيل</p>
+        <p className="text-[11px] text-muted-foreground">
+          حدد المناطق التي يغطيها التطبيق باستخدام الخريطة التفاعلية. يتم التحقق
+          تلقائياً من وقوع موقع الزبون داخل حدود إحدى المناطق.
+        </p>
       </div>
-      {rows.length === 0 ? (
-        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد مناطق.</p>
-      ) : rows.map((r) => {
-        const pts = parseBoundary(r.boundary_points);
-        const open = previewId === r.id;
-        return (
-        <article key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
-          <button
-            type="button"
-            onClick={() => setPreviewId(open ? null : r.id)}
-            className="flex w-full items-start justify-between gap-3 text-right"
-          >
-            <div className="min-w-0">
-              <p className="text-sm font-black">{r.name_ar}</p>
-              {r.city && <p className="text-xs text-muted-foreground">{r.city}</p>}
-              <p className="mt-1 text-xs font-bold text-primary">
-                رسوم التوصيل: {r.fee_iqd.toLocaleString("ar-IQ")} د.ع
-              </p>
-              {r.min_order_iqd > 0 && (
-                <p className="text-[11px] text-muted-foreground">
-                  الحد الأدنى: {r.min_order_iqd.toLocaleString("ar-IQ")} د.ع
-                </p>
-              )}
-              <p className="mt-1 text-[11px] font-bold text-muted-foreground">
-                {pts.length >= 3 ? `حدود محددة (${pts.length} نقاط)` : "لم يتم تحديد الحدود بعد"}
-              </p>
-            </div>
-            <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشطة" : "متوقفة"}</Badge>
-          </button>
-          {open && pts.length >= 2 && (
-            <div className="mt-3">
-              <AreaPolygonEditor points={pts} readOnly height={220} />
-            </div>
-          )}
-          <div className="mt-2 flex gap-2">
-            <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
-            <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
-            <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
-          </div>
-        </article>
-        );
-      })}
+
+      <button
+        onClick={() => setCreating(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow-soft"
+      >
+        <Plus className="h-4 w-4" /> إضافة منطقة جديدة
+      </button>
+
+      {fetching && rows.length === 0 ? (
+        <p className="text-center text-sm text-muted-foreground">جارٍ التحميل...</p>
+      ) : rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد مناطق مسجّلة. اضغط على "إضافة منطقة جديدة" لبدء التغطية.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((r) => {
+            const pts = parseBoundary(r.boundary_points);
+            const open = previewId === r.id;
+            const hasBoundary = pts.length >= 3;
+            return (
+              <article key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
+                <button
+                  type="button"
+                  onClick={() => setPreviewId(open ? null : r.id)}
+                  className="flex w-full items-start justify-between gap-3 text-right"
+                >
+                  <div className="min-w-0 text-right">
+                    <p className="text-sm font-black">{r.name_ar}</p>
+                    {r.city && (
+                      <p className="text-xs text-muted-foreground">{r.city}</p>
+                    )}
+                    <p className="mt-1 text-[11px] font-bold text-muted-foreground">
+                      {hasBoundary
+                        ? `حدود محددة (${pts.length} نقاط)`
+                        : "لم يتم تحديد الحدود بعد"}
+                    </p>
+                    {r.updated_at && (
+                      <p className="text-[10px] text-muted-foreground">
+                        آخر تحديث: {new Date(r.updated_at).toLocaleDateString("ar-IQ")}
+                      </p>
+                    )}
+                  </div>
+                  <Badge tone={r.is_active ? "success" : "muted"}>
+                    {r.is_active ? "نشطة" : "متوقفة"}
+                  </Badge>
+                </button>
+
+                {open && (
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-border">
+                    {pts.length >= 2 ? (
+                      <AreaPolygonEditor points={pts} readOnly height={240} />
+                    ) : (
+                      <div className="flex h-40 items-center justify-center bg-muted text-sm text-muted-foreground">
+                        لا توجد حدود محددة لهذه المنطقة
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <IconBtn onClick={() => setEditing(r)} label="تعديل">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </IconBtn>
+                  <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}>
+                    <Power className="h-3.5 w-3.5" />
+                  </IconBtn>
+                  <IconBtn onClick={() => del(r)} label="حذف" tone="danger">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </IconBtn>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
       {(creating || editing) && (
         <AreaEditor
           area={editing}
-          onClose={() => { setCreating(false); setEditing(null); }}
-          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+          onClose={() => {
+            setCreating(false);
+            setEditing(null);
+          }}
+          onSaved={() => {
+            setCreating(false);
+            setEditing(null);
+            load();
+          }}
         />
       )}
-      {assigning && <DriverAreaAssigner areas={rows} onClose={() => setAssigning(false)} />}
     </section>
   );
 }
 
-function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose: () => void; onSaved: () => void }) {
+function AreaEditor({
+  area,
+  onClose,
+  onSaved,
+}: {
+  area: AreaRow | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
   const [nameAr, setNameAr] = useState(area?.name_ar ?? "");
-  const [nameEn, setNameEn] = useState(area?.name_en ?? "");
   const [city, setCity] = useState(area?.city ?? "");
-  const [fee, setFee] = useState(String(area?.fee_iqd ?? 3000));
-  const [minOrder, setMinOrder] = useState(String(area?.min_order_iqd ?? 0));
+  const [isActive, setIsActive] = useState(area?.is_active ?? true);
   const [points, setPoints] = useState<BoundaryPoint[]>(parseBoundary(area?.boundary_points));
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    if (!nameAr.trim()) { window.alert("اسم المنطقة مطلوب"); return; }
-    if (points.length > 0 && points.length < 3) { window.alert("حدود المنطقة تحتاج 3 نقاط على الأقل"); return; }
+    if (!nameAr.trim()) {
+      window.alert("اسم المنطقة مطلوب");
+      return;
+    }
+    if (points.length > 0 && points.length < 3) {
+      window.alert("حدود المنطقة تحتاج 3 نقاط على الأقل");
+      return;
+    }
     setSaving(true);
     try {
       await adminSaveArea({
         data: {
-          password: getAdminPass(), id: area?.id, name_ar: nameAr.trim(),
-          name_en: nameEn || null, city: city || null,
-          fee_iqd: Math.round(Number(fee) || 0), min_order_iqd: Math.round(Number(minOrder) || 0),
-          is_active: area?.is_active ?? true,
+          password: getAdminPass(),
+          id: area?.id,
+          name_ar: nameAr.trim(),
+          name_en: null,
+          city: city || null,
+          fee_iqd: 0,
+          min_order_iqd: 0,
+          is_active: isActive,
           boundary_points: points,
         },
       });
       onSaved();
-    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+    } catch (e) {
+      window.alert((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Modal title={area ? "تعديل منطقة" : "إضافة منطقة جديدة"} onClose={onClose}>
       <Field label="اسم المنطقة" value={nameAr} onChange={setNameAr} />
-      <Field label="الاسم بالإنجليزية" value={nameEn} onChange={setNameEn} dir="ltr" />
-      <Field label="المدينة" value={city} onChange={setCity} />
-      <Field label="رسوم التوصيل (د.ع)" value={fee} onChange={setFee} type="number" />
-      <Field label="الحد الأدنى للطلب (د.ع)" value={minOrder} onChange={setMinOrder} type="number" />
-      <div className="space-y-2">
+      <Field label="المدينة / المنطقة الفرعية" value={city} onChange={setCity} />
+
+      <div className="flex items-center justify-between rounded-xl bg-muted px-3 py-2">
+        <span className="text-xs font-bold">المنطقة نشطة</span>
+        <button
+          type="button"
+          onClick={() => setIsActive((v) => !v)}
+          className={`h-6 w-11 rounded-full transition-colors ${
+            isActive ? "bg-primary" : "bg-border"
+          }`}
+        >
+          <span
+            className={`block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              isActive ? "translate-x-0.5" : "translate-x-[22px]"
+            }`}
+          />
+        </button>
+      </div>
+
+      <div className="space-y-2 rounded-2xl bg-card p-3 shadow-soft">
         <p className="text-xs font-black text-foreground">حدود المنطقة على الخريطة</p>
+        <p className="text-[11px] text-muted-foreground">
+          اضغط على الخريطة لإضافة نقطة، اسحب النقطة لتحريكها، واضغط عليها لحذفها.
+          يلزم 3 نقاط على الأقل لإغلاق الحدود.
+        </p>
         <AreaPolygonEditor points={points} onChange={setPoints} />
       </div>
+
       <SaveBtn onClick={save} loading={saving} />
-    </Modal>
-  );
-}
-
-function DriverAreaAssigner({ areas, onClose }: { areas: AreaRow[]; onClose: () => void }) {
-  const [drivers, setDrivers] = useState<{ id: string; full_name: string | null; phone: string | null }[]>([]);
-  const [driverId, setDriverId] = useState<string>("");
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "driver");
-      const ids = (roles ?? []).map((r) => r.user_id);
-      if (ids.length === 0) return;
-      const { data } = await supabase.from("profiles").select("id, full_name, phone").in("id", ids);
-      setDrivers(data ?? []);
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!driverId) { setSelected(new Set()); return; }
-    (async () => {
-      const { data } = await supabase.from("driver_delivery_areas").select("area_id").eq("driver_id", driverId);
-      setSelected(new Set((data ?? []).map((r) => r.area_id)));
-    })();
-  }, [driverId]);
-
-  const toggle = (id: string) => {
-    const next = new Set(selected);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    setSelected(next);
-  };
-  const save = async () => {
-    if (!driverId) return;
-    setSaving(true);
-    try {
-      await adminSetDriverAreas({
-        data: { password: getAdminPass(), driver_id: driverId, area_ids: Array.from(selected) },
-      });
-      onClose();
-    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
-  };
-
-  return (
-    <Modal title="إسناد مناطق للمندوب" onClose={onClose}>
-      <div>
-        <label className="mb-1 block text-xs font-bold text-muted-foreground">المندوب</label>
-        <select value={driverId} onChange={(e) => setDriverId(e.target.value)}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
-          <option value="">اختر مندوباً</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>{d.full_name ?? d.phone ?? d.id.slice(0, 8)}</option>
-          ))}
-        </select>
-      </div>
-      {driverId && (
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-muted-foreground">المناطق</p>
-          <div className="grid grid-cols-2 gap-2">
-            {areas.map((a) => (
-              <button key={a.id} onClick={() => toggle(a.id)}
-                className={`rounded-xl border p-2 text-right text-xs font-bold ${
-                  selected.has(a.id) ? "border-primary bg-primary/10 text-primary" : "border-border bg-card"
-                }`}>
-                {a.name_ar}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <SaveBtn onClick={save} loading={saving} disabled={!driverId} />
     </Modal>
   );
 }
