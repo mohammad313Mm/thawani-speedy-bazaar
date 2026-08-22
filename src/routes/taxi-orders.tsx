@@ -40,7 +40,7 @@ function TaxiOrdersPage() {
 
   useEffect(() => {
     if (loading || checking) return;
-    if (!user || !isTaxiDriver) navigate({ to: "/taxi-login" });
+    if (!user || !isTaxiDriver) navigate({ to: "/auth" });
   }, [user, isTaxiDriver, loading, checking, navigate]);
 
   const load = useCallback(async () => {
