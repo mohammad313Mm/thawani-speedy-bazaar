@@ -43,9 +43,12 @@ import {
   adminSaveAppCategory,
   adminDeleteAppCategory,
   adminListAppCategories,
+  adminListCategoryProducts,
+  adminSaveCategoryProduct,
 
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
+import { useAppCategoryOptions } from "../lib/app-category-options";
 import { AdminSupportChat } from "../components/AdminSupportChat";
 import {
   adminListTaxi,
@@ -437,12 +440,20 @@ const STORE_CATEGORIES: { value: string; label: string }[] = [
   { value: "drinks", label: "مشروبات" },
 ];
 
+/** Built-in store categories + the sections the admin created for the home screen. */
+function useStoreCategories(): { value: string; label: string }[] {
+  const { categories } = useAppCategoryOptions();
+  const extra = categories.filter((c) => !STORE_CATEGORIES.some((b) => b.value === c.value));
+  return [...STORE_CATEGORIES, ...extra];
+}
+
 function StoresPanel() {
   const [rows, setRows] = useState<StoreFull[]>([]);
   const [fetching, setFetching] = useState(false);
   const [editing, setEditing] = useState<StoreFull | null>(null);
   const [creating, setCreating] = useState(false);
   const [managingProducts, setManagingProducts] = useState<StoreRow | null>(null);
+  const storeCategories = useStoreCategories();
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -531,7 +542,7 @@ function StoresPanel() {
                     <p className="text-sm font-black">{r.name}</p>
                     {r.category && (
                       <p className="text-xs text-muted-foreground">
-                        {STORE_CATEGORIES.find((c) => c.value === r.category)?.label ?? r.category}
+                        {storeCategories.find((c) => c.value === r.category)?.label ?? r.category}
                       </p>
                     )}
                     {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
@@ -606,6 +617,7 @@ function StoreEditor({
   const [deliveryAvailable, setDeliveryAvailable] = useState<boolean>(store?.delivery_available ?? true);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
+  const storeCategories = useStoreCategories();
 
   const pickLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
@@ -669,7 +681,7 @@ function StoreEditor({
         <label className="mb-1 block text-xs font-bold text-muted-foreground">التصنيف</label>
         <select value={category} onChange={(e) => setCategory(e.target.value)}
           className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
-          {STORE_CATEGORIES.map((c) => (
+          {storeCategories.map((c) => (
             <option key={c.value} value={c.value}>{c.label}</option>
           ))}
         </select>
@@ -1267,6 +1279,7 @@ function AppCategoriesPanel() {
   const [rows, setRows] = useState<AppCategoryRow[]>([]);
   const [editing, setEditing] = useState<AppCategoryRow | null>(null);
   const [creating, setCreating] = useState(false);
+  const [managingProducts, setManagingProducts] = useState<AppCategoryRow | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -1293,6 +1306,10 @@ function AppCategoriesPanel() {
     catch (e) { window.alert((e as Error).message); }
   };
 
+  if (managingProducts) {
+    return <CategoryProductsPanel category={managingProducts} onBack={() => setManagingProducts(null)} />;
+  }
+
   return (
     <section className="space-y-3">
       <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
@@ -1315,7 +1332,8 @@ function AppCategoriesPanel() {
               <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "ظاهر" : "مخفي"}</Badge>
             </div>
             {r.description && <p className="line-clamp-2 text-xs text-muted-foreground">{r.description}</p>}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <IconBtn onClick={() => setManagingProducts(r)} label="إضافة منتج"><Package className="h-3.5 w-3.5" /></IconBtn>
               <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
               <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إخفاء" : "إظهار"}><Power className="h-3.5 w-3.5" /></IconBtn>
               <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
@@ -1391,6 +1409,137 @@ function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | nu
       <ImagePicker url={image} onPick={pickImage} label="صورة كبيرة تظهر مع الوصف (اختياري)" />
       <Field label="المعرف (إنجليزي، يُنشأ تلقائياً)" value={key} onChange={setKey} dir="ltr" />
       <Field label="ترتيب العرض" value={sortOrder} onChange={setSortOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
+  );
+}
+
+function CategoryProductsPanel({ category, onBack }: { category: AppCategoryRow; onBack: () => void }) {
+  const [rows, setRows] = useState<ProductRow[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<ProductRow | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await adminListCategoryProducts({ data: { category_key: category.key } });
+      setRows((res.rows ?? []) as ProductRow[]);
+    } catch (e) { window.alert((e as Error).message); }
+  }, [category.key]);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (p: ProductRow) => {
+    try {
+      await adminSaveCategoryProduct({
+        data: {
+          id: p.id, category_key: category.key, category_name: category.name,
+          name_ar: p.name_ar, description: p.description, image_url: p.image_url,
+          price_iqd: p.price_iqd, is_available: !p.is_available, sort_order: p.sort_order,
+        },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (p: ProductRow) => {
+    if (!window.confirm(`حذف "${p.name_ar}"؟`)) return;
+    try { await adminDeleteProduct({ data: { id: p.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-black">
+          <ArrowRight className="h-4 w-4" /> رجوع
+        </button>
+        <div className="min-w-0 text-right">
+          <p className="text-xs text-muted-foreground">منتجات القسم</p>
+          <p className="truncate text-sm font-black">{category.name}</p>
+        </div>
+      </div>
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> إضافة منتج
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد منتجات في هذا القسم بعد.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {rows.map((p) => (
+            <article key={p.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+              {p.image_url ? (
+                <img src={p.image_url} alt="" className="h-28 w-full object-cover" />
+              ) : (
+                <div className="flex h-28 w-full items-center justify-center bg-muted">
+                  <Package className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <div className="space-y-1 p-3">
+                <p className="truncate text-sm font-black">{p.name_ar}</p>
+                {p.description && <p className="line-clamp-2 text-[11px] text-muted-foreground">{p.description}</p>}
+                <p className="text-xs font-bold text-primary">{p.price_iqd.toLocaleString("ar-IQ")} د.ع</p>
+                <Badge tone={p.is_available ? "success" : "muted"}>{p.is_available ? "متوفر" : "غير متوفر"}</Badge>
+                <div className="flex gap-1 pt-1">
+                  <IconBtn onClick={() => setEditing(p)} label="تعديل"><Pencil className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => toggle(p)} label={p.is_available ? "إخفاء" : "إظهار"}><Power className="h-3 w-3" /></IconBtn>
+                  <IconBtn onClick={() => del(p)} label="حذف" tone="danger"><Trash2 className="h-3 w-3" /></IconBtn>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+      {(creating || editing) && (
+        <CategoryProductEditor
+          category={category}
+          product={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function CategoryProductEditor({
+  category, product, onClose, onSaved,
+}: { category: AppCategoryRow; product: ProductRow | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(product?.name_ar ?? "");
+  const [desc, setDesc] = useState(product?.description ?? "");
+  const [price, setPrice] = useState(String(product?.price_iqd ?? ""));
+  const [image, setImage] = useState(product?.image_url ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setImage(await compressImageToDataUrl(f, { maxWidth: 900, quality: 0.75 }));
+  };
+
+  const save = async () => {
+    if (!name.trim()) { window.alert("اسم المنتج مطلوب"); return; }
+    setSaving(true);
+    try {
+      await adminSaveCategoryProduct({
+        data: {
+          id: product?.id,
+          category_key: category.key,
+          category_name: category.name,
+          name_ar: name.trim(),
+          description: desc.trim() || null,
+          image_url: image || null,
+          price_iqd: Math.round(Number(price) || 0),
+          is_available: product?.is_available ?? true,
+          sort_order: product?.sort_order ?? 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={product ? "تعديل منتج" : "إضافة منتج"} onClose={onClose}>
+      <ImagePicker url={image} onPick={pickImage} label="صورة المنتج" />
+      <Field label="اسم المنتج" value={name} onChange={setName} />
+      <Field label="الوصف" value={desc} onChange={setDesc} multiline />
+      <Field label="السعر (د.ع)" value={price} onChange={setPrice} type="number" />
       <SaveBtn onClick={save} loading={saving} />
     </Modal>
   );
