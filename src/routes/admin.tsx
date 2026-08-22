@@ -1857,22 +1857,18 @@ function TaxiPanel() {
 
   const create = async () => {
     setMsg(null);
-    if (phone.trim().length < 6 || password.length < 4) {
-      setMsg("أدخل رقم هاتف صحيح وكلمة مرور لا تقل عن 4 أحرف");
+    if (phone.trim().length < 6) {
+      setMsg("أدخل رقم هاتف صحيح");
       return;
     }
     setBusy(true);
     try {
-      await adminCreateTaxiDriver({
-        data: { phone: phone.trim(), password, full_name: fullName.trim() || null },
-      });
-      setMsg("تم إنشاء حساب سائق التكسي بنجاح");
+      await adminCreateTaxiDriver({ data: { phone: phone.trim() } });
+      setMsg("تم تخويل الرقم كسائق تكسي");
       setPhone("");
-      setPassword("");
-      setFullName("");
       await load();
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : "تعذر إنشاء الحساب");
+      setMsg(e instanceof Error ? e.message : "تعذر تخويل الرقم");
     } finally {
       setBusy(false);
     }
@@ -1881,28 +1877,17 @@ function TaxiPanel() {
   return (
     <div className="space-y-4">
       <section className="rounded-2xl bg-card p-4 shadow-soft">
-        <p className="mb-3 text-sm font-black text-foreground">إضافة حساب سائق تكسي</p>
-        <div className="grid gap-2 sm:grid-cols-3">
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="الاسم (اختياري)"
-            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
+        <p className="mb-1 text-sm font-black text-foreground">تخويل رقم سائق تكسي</p>
+        <p className="mb-3 text-[11px] text-muted-foreground">
+          أدخل رقم الهاتف فقط. عند تسجيل دخول صاحب الرقم كزبون تُفعّل له لوحة «طلباتي» للتكسي تلقائياً.
+        </p>
+        <div className="grid gap-2">
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             dir="ltr"
             inputMode="numeric"
             placeholder="رقم الهاتف"
-            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="text"
-            dir="ltr"
-            placeholder="كلمة المرور"
             className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
         </div>
