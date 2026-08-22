@@ -1,9 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, SlidersHorizontal, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { categoryByKey, storesByCategory } from "../lib/data";
+import { storesByCategory } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
 import { useDbStores } from "../lib/db-stores";
+import { useCategory } from "../lib/app-categories";
 
 export const Route = createFileRoute("/category/$key")({
   component: CategoryPage,
@@ -13,8 +14,7 @@ type Sort = "recommended" | "rating" | "nearest" | "fastest";
 
 function CategoryPage() {
   const { key } = Route.useParams();
-  const category = categoryByKey(key);
-  if (!category) throw notFound();
+  const { category, loading: catLoading } = useCategory(key);
 
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>("recommended");
@@ -22,6 +22,7 @@ function CategoryPage() {
   const { stores: dbStores, loading: storesLoading } = useDbStores();
 
   const stores = useMemo(() => {
+    if (!category) return [];
     const dbForCat = dbStores.filter((s) => s.category === category.key);
     let list = [...dbForCat, ...storesByCategory(category.key)];
     if (q.trim()) {
@@ -43,7 +44,18 @@ function CategoryPage() {
         break;
     }
     return list;
-  }, [category.key, q, sort, openOnly, dbStores]);
+  }, [category, q, sort, openOnly, dbStores]);
+
+  if (!category) {
+    if (catLoading) {
+      return (
+        <main className="mx-auto max-w-2xl px-4 py-10 text-center text-sm text-muted-foreground">
+          جاري التحميل...
+        </main>
+      );
+    }
+    throw notFound();
+  }
 
 
   return (
@@ -57,8 +69,13 @@ function CategoryPage() {
             <ArrowRight className="h-5 w-5" />
           </Link>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-black text-foreground">
-              {category.icon} {category.name}
+            <h1 className="flex items-center gap-2 truncate text-base font-black text-foreground">
+              {category.iconUrl ? (
+                <img src={category.iconUrl} alt="" className="h-6 w-6 rounded-lg object-cover" />
+              ) : (
+                <span>{category.icon}</span>
+              )}
+              {category.name}
             </h1>
             <p className="truncate text-[11px] text-muted-foreground">
               {stores.length} متجر متاح
@@ -116,6 +133,22 @@ function CategoryPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-4">
+        {(category.imageUrl || category.description) && (
+          <section className="mb-4 overflow-hidden rounded-3xl bg-card shadow-soft">
+            {category.imageUrl && (
+              <img
+                src={category.imageUrl}
+                alt={category.name}
+                className="h-40 w-full object-cover sm:h-52"
+              />
+            )}
+            {category.description && (
+              <p className="p-4 text-sm font-medium leading-relaxed text-muted-foreground">
+                {category.description}
+              </p>
+            )}
+          </section>
+        )}
         {storesLoading && stores.length === 0 ? (
           <div className="grid grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (

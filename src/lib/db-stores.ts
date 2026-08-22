@@ -55,7 +55,12 @@ const CATEGORY_KEY_MAP: Record<string, CategoryKey> = {
   desserts: "desserts",
 };
 
-const FALLBACK_COVER: Record<CategoryKey, string> = {
+const DEFAULT_COVER =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80";
+const DEFAULT_LOGO =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=200&h=200&q=80";
+
+const FALLBACK_COVER: Record<string, string> = {
   restaurants: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80",
   grocery: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
   cosmetics: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
@@ -63,7 +68,7 @@ const FALLBACK_COVER: Record<CategoryKey, string> = {
   freelance: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80",
   taxi: "https://images.unsplash.com/photo-1566008885218-90abf9200ddb?auto=format&fit=crop&w=800&q=80",
 };
-const FALLBACK_LOGO: Record<CategoryKey, string> = {
+const FALLBACK_LOGO: Record<string, string> = {
   restaurants: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=200&h=200&q=80",
   grocery: "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=200&h=200&q=80",
   cosmetics: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&h=200&q=80",
@@ -74,7 +79,8 @@ const FALLBACK_LOGO: Record<CategoryKey, string> = {
 
 export function mapDbCategoryToKey(cat: string | null): CategoryKey | null {
   if (!cat) return null;
-  return CATEGORY_KEY_MAP[cat] ?? null;
+  // Built-in aliases first; otherwise the raw value is an admin-created category key.
+  return CATEGORY_KEY_MAP[cat] ?? cat;
 }
 
 export function adaptDbStore(row: DbStoreRow): Store | null {
@@ -85,8 +91,8 @@ export function adaptDbStore(row: DbStoreRow): Store | null {
     id: row.id,
     category: key,
     name: row.name,
-    cover: row.cover_url || FALLBACK_COVER[key],
-    logo: row.logo_url || FALLBACK_LOGO[key],
+    cover: row.cover_url || FALLBACK_COVER[key] || DEFAULT_COVER,
+    logo: row.logo_url || FALLBACK_LOGO[key] || DEFAULT_LOGO,
     rating: 5.0,
     reviews: 0,
     distanceKm: 0,

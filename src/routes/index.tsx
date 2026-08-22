@@ -5,7 +5,8 @@ import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 
-import { CATEGORIES, STORES, PRODUCTS } from "../lib/data";
+import { STORES, PRODUCTS } from "../lib/data";
+import { useAllCategories } from "../lib/app-categories";
 import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
 import { loadSavedLocation } from "../lib/geo";
@@ -127,6 +128,7 @@ function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
   const { stores: dbStores } = useDbStores();
   const { products: dbProducts, loading: productsLoading } = useDbProductSearch(query);
+  const { categories: allCategories } = useAllCategories();
 
   const allStores = [...dbStores, ...STORES.filter((s) => !dbStores.some((d) => d.id === s.id))];
   const stores = allStores
@@ -147,7 +149,7 @@ function SearchResults({ query }: { query: string }) {
     ...dbProducts,
     ...staticProducts.filter((p) => !dbProducts.some((d) => d.id === p.id)),
   ].slice(0, 12);
-  const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
+  const cats = allCategories.filter((c) => c.name.toLowerCase().includes(q));
   const empty = !productsLoading && stores.length + products.length + cats.length === 0;
 
   return (
@@ -264,6 +266,7 @@ function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [location, setLocation] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const { categories } = useAllCategories();
 
   useEffect(() => {
     // Warm the stores cache immediately so category pages open instantly.
@@ -342,7 +345,7 @@ function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <CategoryCard key={c.key} category={c} />
             ))}
           </div>

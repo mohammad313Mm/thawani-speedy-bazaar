@@ -19,6 +19,7 @@ import {
   Truck,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
+import { useAppCategoryOptions } from "../lib/app-category-options";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
@@ -848,7 +849,7 @@ function StatusPanel({
 
 /* ============ STORE SETUP (first-time) ============ */
 
-const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+const BUILTIN_CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "restaurants", label: "مطعم" },
   { value: "cosmetics", label: "كوزمتك" },
   { value: "grocery", label: "بقالة" },
@@ -869,6 +870,8 @@ function StoreSetup({
   const [phone, setPhone] = useState(store.phone ?? "");
   const [description, setDescription] = useState(store.description ?? "");
   const [category, setCategory] = useState<string>("");
+  const { categories: dynamicCategories } = useAppCategoryOptions();
+  const categoryOptions = [...BUILTIN_CATEGORY_OPTIONS, ...dynamicCategories];
   const [cover, setCover] = useState<string | null>(store.cover_url ?? store.logo_url ?? null);
   const [logo, setLogo] = useState<string | null>(
     store.cover_url ? store.logo_url ?? null : null,
@@ -1041,7 +1044,7 @@ function StoreSetup({
 
         <Field label="التصنيف">
           <div className="grid grid-cols-2 gap-2">
-            {CATEGORY_OPTIONS.map((o) => (
+            {categoryOptions.map((o) => (
               <button
                 key={o.value}
                 type="button"
