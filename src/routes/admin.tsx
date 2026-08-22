@@ -1829,8 +1829,6 @@ function TaxiPanel() {
   const [drivers, setDrivers] = useState<TaxiDriverRow[]>([]);
   const [requests, setRequests] = useState<TaxiRequestAdminRow[]>([]);
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
