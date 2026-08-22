@@ -115,7 +115,7 @@ const areaSchema = z.object({
   name_ar: z.string().min(1),
   name_en: z.string().nullable().optional(),
   city: z.string().nullable().optional(),
-  fee_iqd: z.number().int().min(0),
+  fee_iqd: z.number().int().min(0).default(0),
   min_order_iqd: z.number().int().min(0).default(0),
   is_active: z.boolean().default(true),
   boundary_points: z
