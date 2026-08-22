@@ -59,6 +59,7 @@ type ProductRow = {
   image_url: string | null;
   is_available: boolean;
   sort_order: number;
+  category?: string | null;
 };
 
 type OrderStatus =
@@ -520,6 +521,18 @@ function ProductsPanel({ storeId }: { storeId: string }) {
                 <p className="line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
               )}
               <p className="mt-1 text-sm font-black text-primary">{formatIQD(p.price_iqd)}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {p.category && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                    {p.category}
+                  </span>
+                )}
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_available ? "bg-success/15 text-success" : "bg-destructive/10 text-destructive"}`}
+                >
+                  {p.is_available ? "متاح" : "غير متوفر"}
+                </span>
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <button
@@ -542,6 +555,9 @@ function ProductsPanel({ storeId }: { storeId: string }) {
       {(editing || creating) && (
         <ProductEditor
           storeId={storeId}
+          categories={Array.from(
+            new Set(products.map((p) => (p.category ?? "").trim()).filter(Boolean)),
+          )}
           initial={editing}
           onClose={() => {
             setEditing(null);
@@ -556,15 +572,21 @@ function ProductsPanel({ storeId }: { storeId: string }) {
 function ProductEditor({
   storeId,
   initial,
+  categories,
   onClose,
 }: {
   storeId: string;
   initial: ProductRow | null;
+  categories: string[];
   onClose: () => void;
 }) {
   const [name, setName] = useState(initial?.name_ar ?? "");
   const [desc, setDesc] = useState(initial?.description ?? "");
   const [price, setPrice] = useState<string>(String(initial?.price_iqd ?? ""));
+  const [category, setCategory] = useState<string>(initial?.category ?? "");
+  const [newCategory, setNewCategory] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [available, setAvailable] = useState<boolean>(initial?.is_available ?? true);
   const [image, setImage] = useState<string | null>(initial?.image_url ?? null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -594,7 +616,8 @@ function ProductEditor({
         description: desc.trim() || null,
         price_iqd: Math.round(priceNum),
         image_url: image,
-        is_available: true,
+        category: (addingCategory ? newCategory.trim() : category.trim()) || null,
+        is_available: available,
       };
       if (initial) {
         const { error } = await supabase.from("products").update(row).eq("id", initial.id);
@@ -669,6 +692,64 @@ function ProductEditor({
               className="mt-1 w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </label>
+
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black">التصنيف</span>
+              <button
+                type="button"
+                onClick={() => setAddingCategory((v) => !v)}
+                className="text-[11px] font-black text-primary"
+              >
+                {addingCategory ? "اختيار من القائمة" : "+ تصنيف جديد"}
+              </button>
+            </div>
+            {addingCategory || categories.length === 0 ? (
+              <input
+                value={addingCategory ? newCategory : category}
+                onChange={(e) =>
+                  addingCategory ? setNewCategory(e.target.value) : setCategory(e.target.value)
+                }
+                placeholder="مثال: مشروبات"
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+              />
+            ) : (
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">بدون تصنيف</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setAvailable((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-3"
+          >
+            <span className="min-w-0 text-right">
+              <span className="block text-xs font-black text-foreground">حالة التوفر</span>
+              <span
+                className={`block text-[11px] font-bold ${available ? "text-success" : "text-muted-foreground"}`}
+              >
+                {available ? "متاح" : "غير متوفر"}
+              </span>
+            </span>
+            <span
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${available ? "bg-success" : "bg-muted-foreground/40"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${available ? "left-0.5" : "left-[22px]"}`}
+              />
+            </span>
+          </button>
 
           {err && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
