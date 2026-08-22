@@ -149,7 +149,7 @@ function SearchResults({ query }: { query: string }) {
     ...dbProducts,
     ...staticProducts.filter((p) => !dbProducts.some((d) => d.id === p.id)),
   ].slice(0, 12);
-  const cats = CATEGORIES.filter((c) => c.name.toLowerCase().includes(q));
+  const cats = allCategories.filter((c) => c.name.toLowerCase().includes(q));
   const empty = !productsLoading && stores.length + products.length + cats.length === 0;
 
   return (
