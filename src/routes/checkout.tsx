@@ -250,6 +250,16 @@ function CheckoutPage() {
           <p className="mt-2 text-[11px] text-muted-foreground">
             المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)}
           </p>
+          {matchedArea && (
+            <p className="mt-2 rounded-xl bg-success/10 px-3 py-2 text-[11px] font-bold text-success">
+              موقعك ضمن منطقة التوصيل: {matchedArea.name_ar}
+            </p>
+          )}
+          {outsideCoverage && (
+            <p className="mt-2 rounded-xl bg-destructive/10 px-3 py-2 text-[11px] font-bold text-destructive">
+              عذراً، الخدمة غير متوفرة في موقعك حالياً. موقعك خارج مناطق التوصيل المعتمدة.
+            </p>
+          )}
         </section>
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">
