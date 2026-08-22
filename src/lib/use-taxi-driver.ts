@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "./auth";
 
-/** True when the signed-in user is an active taxi driver account. */
+/**
+ * True when the signed-in user's phone number is in the admin-authorized
+ * taxi list (or their account is directly linked to it).
+ */
 export function useIsTaxiDriver() {
   const { user, loading } = useAuth();
   const [isTaxi, setIsTaxi] = useState(false);
@@ -18,13 +21,9 @@ export function useIsTaxiDriver() {
     }
     setChecking(true);
     (async () => {
-      const { data } = await supabase
-        .from("taxi_drivers")
-        .select("user_id, is_active")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const { data } = await supabase.rpc("is_taxi_driver", { _user_id: user.id });
       if (cancelled) return;
-      setIsTaxi(!!data && (data as { is_active: boolean }).is_active);
+      setIsTaxi(data === true);
       setChecking(false);
     })();
     return () => {
