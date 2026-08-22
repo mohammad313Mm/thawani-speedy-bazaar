@@ -1,0 +1,1 @@
+ALTER TABLE public.delivery_areas ADD COLUMN IF NOT EXISTS boundary_points jsonb NOT NULL DEFAULT '[]'::jsonb;
