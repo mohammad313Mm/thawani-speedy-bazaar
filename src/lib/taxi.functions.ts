@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { normalizePhone, phoneToEmail } from "./phone-auth";
+import { normalizePhone } from "./phone-auth";
 
 // Taxi module: customer requests + admin-managed taxi driver accounts.
 
