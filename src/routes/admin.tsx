@@ -1797,7 +1797,7 @@ function OrdersPanel() {
 /* ---------------- Taxi ---------------- */
 
 type TaxiDriverRow = {
-  user_id: string;
+  user_id: string | null;
   phone: string;
   full_name: string | null;
   is_active: boolean;
