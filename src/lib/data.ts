@@ -1,4 +1,4 @@
-export type CategoryKey = "restaurants" | "grocery" | "cosmetics" | "desserts" | "freelance";
+export type CategoryKey = "restaurants" | "grocery" | "cosmetics" | "desserts" | "freelance" | "taxi";
 
 export interface Category {
   key: CategoryKey;
@@ -77,6 +77,13 @@ export const CATEGORIES: Category[] = [
     description: "اطلب أي شيء من السوق ونوصله لك",
     icon: "🛵",
     color: "from-[oklch(0.72_0.18_55)] to-[oklch(0.62_0.22_35)]",
+  },
+  {
+    key: "taxi",
+    name: "تكسي",
+    description: "اطلب سيارة أجرة إلى موقعك",
+    icon: "🚕",
+    color: "from-[oklch(0.65_0.18_85)] to-[oklch(0.55_0.22_75)]",
   },
 ];
 

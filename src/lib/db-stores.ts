@@ -61,6 +61,7 @@ const FALLBACK_COVER: Record<CategoryKey, string> = {
   cosmetics: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
   desserts: "https://images.unsplash.com/photo-1551024506-0bccd828d307?auto=format&fit=crop&w=800&q=80",
   freelance: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80",
+  taxi: "https://images.unsplash.com/photo-1566008885218-90abf9200ddb?auto=format&fit=crop&w=800&q=80",
 };
 const FALLBACK_LOGO: Record<CategoryKey, string> = {
   restaurants: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=200&h=200&q=80",
@@ -68,6 +69,7 @@ const FALLBACK_LOGO: Record<CategoryKey, string> = {
   cosmetics: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&h=200&q=80",
   desserts: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=200&h=200&q=80",
   freelance: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=200&h=200&q=80",
+  taxi: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=200&h=200&q=80",
 };
 
 export function mapDbCategoryToKey(cat: string | null): CategoryKey | null {
