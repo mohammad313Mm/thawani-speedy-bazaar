@@ -189,14 +189,11 @@ function ProfilePage() {
 
 
 
-        <Section title="التكسي">
-          <ItemLink
-            to={isTaxiDriver ? "/taxi-orders" : "/taxi-login"}
-            icon={<Car />}
-            label={isTaxiDriver ? "طلباتي" : "دخول سائق تكسي"}
-            trailing={isTaxiDriver ? "مفعّل" : undefined}
-          />
-        </Section>
+        {isTaxiDriver && (
+          <Section title="التكسي">
+            <ItemLink to="/taxi-orders" icon={<Car />} label="طلباتي" trailing="مفعّل" />
+          </Section>
+        )}
 
         <Section title="التطبيق">
           <div className="p-4">
