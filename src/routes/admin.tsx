@@ -1688,6 +1688,7 @@ function AreasPanel() {
   const [editing, setEditing] = useState<AreaRow | null>(null);
   const [creating, setCreating] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const password = getAdminPass();
 
   const load = useCallback(async () => {
@@ -1700,13 +1701,15 @@ function AreasPanel() {
     try {
       await adminSaveArea({
         data: { password, id: r.id, name_ar: r.name_ar, name_en: r.name_en, city: r.city,
-                fee_iqd: r.fee_iqd, min_order_iqd: r.min_order_iqd, is_active: !r.is_active },
+                fee_iqd: r.fee_iqd, min_order_iqd: r.min_order_iqd, is_active: !r.is_active,
+                boundary_points: parseBoundary(r.boundary_points) },
       });
       load();
     } catch (e) { window.alert((e as Error).message); }
   };
   const del = async (r: AreaRow) => {
-    if (!window.confirm(`حذف "${r.name_ar}"؟`)) return;
+    if (!window.confirm(`تأكيد الحذف: سيتم حذف منطقة "${r.name_ar}" وحدودها نهائياً. هل أنت متأكد؟`)) return;
+    if (!window.confirm("لا يمكن التراجع بعد الحذف. متابعة؟")) return;
     try { await adminDeleteArea({ data: { password, id: r.id } }); load(); }
     catch (e) { window.alert((e as Error).message); }
   };
@@ -1715,7 +1718,7 @@ function AreasPanel() {
     <section className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <button onClick={() => setCreating(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
-          <Plus className="h-4 w-4" /> منطقة جديدة
+          <Plus className="h-4 w-4" /> إضافة منطقة جديدة
         </button>
         <button onClick={() => setAssigning(true)} className="flex items-center justify-center gap-2 rounded-2xl bg-muted py-3 text-sm font-black">
           <Bike className="h-4 w-4" /> إسناد المندوبين
@@ -1723,9 +1726,16 @@ function AreasPanel() {
       </div>
       {rows.length === 0 ? (
         <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد مناطق.</p>
-      ) : rows.map((r) => (
+      ) : rows.map((r) => {
+        const pts = parseBoundary(r.boundary_points);
+        const open = previewId === r.id;
+        return (
         <article key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
-          <div className="flex items-start justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setPreviewId(open ? null : r.id)}
+            className="flex w-full items-start justify-between gap-3 text-right"
+          >
             <div className="min-w-0">
               <p className="text-sm font-black">{r.name_ar}</p>
               {r.city && <p className="text-xs text-muted-foreground">{r.city}</p>}
@@ -1737,16 +1747,25 @@ function AreasPanel() {
                   الحد الأدنى: {r.min_order_iqd.toLocaleString("ar-IQ")} د.ع
                 </p>
               )}
+              <p className="mt-1 text-[11px] font-bold text-muted-foreground">
+                {pts.length >= 3 ? `حدود محددة (${pts.length} نقاط)` : "لم يتم تحديد الحدود بعد"}
+              </p>
             </div>
             <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "نشطة" : "متوقفة"}</Badge>
-          </div>
+          </button>
+          {open && pts.length >= 2 && (
+            <div className="mt-3">
+              <AreaPolygonEditor points={pts} readOnly height={220} />
+            </div>
+          )}
           <div className="mt-2 flex gap-2">
             <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
             <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إيقاف" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
             <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
           </div>
         </article>
-      ))}
+        );
+      })}
       {(creating || editing) && (
         <AreaEditor
           area={editing}
@@ -1765,10 +1784,12 @@ function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose:
   const [city, setCity] = useState(area?.city ?? "");
   const [fee, setFee] = useState(String(area?.fee_iqd ?? 3000));
   const [minOrder, setMinOrder] = useState(String(area?.min_order_iqd ?? 0));
+  const [points, setPoints] = useState<BoundaryPoint[]>(parseBoundary(area?.boundary_points));
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    if (!nameAr.trim()) { window.alert("الاسم مطلوب"); return; }
+    if (!nameAr.trim()) { window.alert("اسم المنطقة مطلوب"); return; }
+    if (points.length > 0 && points.length < 3) { window.alert("حدود المنطقة تحتاج 3 نقاط على الأقل"); return; }
     setSaving(true);
     try {
       await adminSaveArea({
@@ -1777,6 +1798,7 @@ function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose:
           name_en: nameEn || null, city: city || null,
           fee_iqd: Math.round(Number(fee) || 0), min_order_iqd: Math.round(Number(minOrder) || 0),
           is_active: area?.is_active ?? true,
+          boundary_points: points,
         },
       });
       onSaved();
@@ -1784,12 +1806,16 @@ function AreaEditor({ area, onClose, onSaved }: { area: AreaRow | null; onClose:
   };
 
   return (
-    <Modal title={area ? "تعديل منطقة" : "منطقة جديدة"} onClose={onClose}>
-      <Field label="الاسم بالعربية" value={nameAr} onChange={setNameAr} />
+    <Modal title={area ? "تعديل منطقة" : "إضافة منطقة جديدة"} onClose={onClose}>
+      <Field label="اسم المنطقة" value={nameAr} onChange={setNameAr} />
       <Field label="الاسم بالإنجليزية" value={nameEn} onChange={setNameEn} dir="ltr" />
       <Field label="المدينة" value={city} onChange={setCity} />
       <Field label="رسوم التوصيل (د.ع)" value={fee} onChange={setFee} type="number" />
       <Field label="الحد الأدنى للطلب (د.ع)" value={minOrder} onChange={setMinOrder} type="number" />
+      <div className="space-y-2">
+        <p className="text-xs font-black text-foreground">حدود المنطقة على الخريطة</p>
+        <AreaPolygonEditor points={points} onChange={setPoints} />
+      </div>
       <SaveBtn onClick={save} loading={saving} />
     </Modal>
   );
