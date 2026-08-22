@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
+import AreaPolygonEditor from "@/components/AreaPolygonEditor";
+import { parseBoundary, type BoundaryPoint } from "@/lib/areas";
 import {
   ArrowRight,
   Check,
