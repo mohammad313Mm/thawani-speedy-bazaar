@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TaxiOrdersRouteImport } from './routes/taxi-orders'
+import { Route as TaxiLoginRouteImport } from './routes/taxi-login'
 import { Route as TaxiRouteImport } from './routes/taxi'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -51,6 +52,11 @@ const TermsRoute = TermsRouteImport.update({
 const TaxiOrdersRoute = TaxiOrdersRouteImport.update({
   id: '/taxi-orders',
   path: '/taxi-orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaxiLoginRoute = TaxiLoginRouteImport.update({
+  id: '/taxi-login',
+  path: '/taxi-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TaxiRoute = TaxiRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-login': typeof TaxiLoginRoute
   '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-login': typeof TaxiLoginRoute
   '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-login': typeof TaxiLoginRoute
   '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-login'
     | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-login'
     | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-login'
     | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
@@ -447,6 +459,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   TaxiRoute: typeof TaxiRoute
+  TaxiLoginRoute: typeof TaxiLoginRoute
   TaxiOrdersRoute: typeof TaxiOrdersRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       path: '/taxi-orders'
       fullPath: '/taxi-orders'
       preLoaderRoute: typeof TaxiOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/taxi-login': {
+      id: '/taxi-login'
+      path: '/taxi-login'
+      fullPath: '/taxi-login'
+      preLoaderRoute: typeof TaxiLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/taxi': {
@@ -719,6 +739,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   TaxiRoute: TaxiRoute,
+  TaxiLoginRoute: TaxiLoginRoute,
   TaxiOrdersRoute: TaxiOrdersRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
