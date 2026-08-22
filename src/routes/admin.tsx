@@ -37,7 +37,6 @@ import {
   adminDeleteStore,
   adminSaveProduct,
   adminDeleteProduct,
-  adminSetDriverAreas,
   adminListOrders,
   adminUpdateOrderStatus,
   adminSendBroadcast,
@@ -47,7 +46,6 @@ import {
   adminListAppCategories,
   adminListCategoryProducts,
   adminSaveCategoryProduct,
-
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { useAppCategoryOptions } from "../lib/app-category-options";
