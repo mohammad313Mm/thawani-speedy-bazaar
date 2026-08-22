@@ -171,6 +171,15 @@ function SearchResults({ query }: { query: string }) {
                   <span>{c.icon}</span>
                   {c.name}
                 </Link>
+              ) : c.key === "taxi" ? (
+                <Link
+                  key={c.key}
+                  to="/taxi"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted/80"
+                >
+                  <span>{c.icon}</span>
+                  {c.name}
+                </Link>
               ) : (
                 <Link
                   key={c.key}
