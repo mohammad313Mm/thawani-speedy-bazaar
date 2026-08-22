@@ -617,6 +617,7 @@ function StoreEditor({
   const [deliveryAvailable, setDeliveryAvailable] = useState<boolean>(store?.delivery_available ?? true);
   const [saving, setSaving] = useState(false);
   const [locating, setLocating] = useState(false);
+  const storeCategories = useStoreCategories();
 
   const pickLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
