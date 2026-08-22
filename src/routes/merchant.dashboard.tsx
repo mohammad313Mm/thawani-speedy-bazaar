@@ -59,6 +59,7 @@ type ProductRow = {
   image_url: string | null;
   is_available: boolean;
   sort_order: number;
+  category?: string | null;
 };
 
 type OrderStatus =
