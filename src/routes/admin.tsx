@@ -224,7 +224,7 @@ function AdminPage() {
             الإعلانات
           </SectionBtn>
           <SectionBtn active={section === "areas"} onClick={() => setSection("areas")} icon={<MapPin className="h-4 w-4" />}>
-            المناطق
+            اداره المناطق
           </SectionBtn>
           <SectionBtn
             active={section === "notifs"}
