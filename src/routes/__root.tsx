@@ -20,6 +20,7 @@ import { OrdersProvider } from "../lib/orders";
 import { AuthProvider, useAuth } from "../lib/auth";
 import { Toaster } from "../components/ui/sonner";
 import { GlobalOrderListener } from "../components/GlobalOrderListener";
+import { TaxiRequestListener } from "../components/TaxiRequestListener";
 import { useNativeServices } from "../hooks/useNativeServices";
 
 
@@ -183,6 +184,7 @@ function AppFrame() {
       <PushBootstrap />
       <NativeServicesBootstrap />
       <GlobalOrderListener />
+      <TaxiRequestListener />
     </div>
 
 
