@@ -243,7 +243,6 @@ function RootComponent() {
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
-      <Scripts />
     </>
   );
 }
