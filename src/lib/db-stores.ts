@@ -55,7 +55,12 @@ const CATEGORY_KEY_MAP: Record<string, CategoryKey> = {
   desserts: "desserts",
 };
 
-const FALLBACK_COVER: Record<CategoryKey, string> = {
+const DEFAULT_COVER =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80";
+const DEFAULT_LOGO =
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=200&h=200&q=80";
+
+const FALLBACK_COVER: Record<string, string> = {
   restaurants: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=800&q=80",
   grocery: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
   cosmetics: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
