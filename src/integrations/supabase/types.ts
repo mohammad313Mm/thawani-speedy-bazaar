@@ -593,6 +593,87 @@ export type Database = {
         }
         Relationships: []
       }
+      taxi_drivers: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          is_active: boolean
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          is_active?: boolean
+          phone: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          is_active?: boolean
+          phone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      taxi_requests: {
+        Row: {
+          accepted_at: string | null
+          address: string
+          created_at: string
+          customer_id: string | null
+          customer_lat: number | null
+          customer_lng: number | null
+          customer_name: string | null
+          customer_phone: string
+          delivered_at: string | null
+          driver_id: string | null
+          id: string
+          local_ref: string | null
+          notes: string | null
+          rejected_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          address: string
+          created_at?: string
+          customer_id?: string | null
+          customer_lat?: number | null
+          customer_lng?: number | null
+          customer_name?: string | null
+          customer_phone: string
+          delivered_at?: string | null
+          driver_id?: string | null
+          id?: string
+          local_ref?: string | null
+          notes?: string | null
+          rejected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          address?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_lat?: number | null
+          customer_lng?: number | null
+          customer_name?: string | null
+          customer_phone?: string
+          delivered_at?: string | null
+          driver_id?: string | null
+          id?: string
+          local_ref?: string | null
+          notes?: string | null
+          rejected_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -626,6 +707,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_taxi_driver: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       account_status: "active" | "suspended"
