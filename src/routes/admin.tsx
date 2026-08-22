@@ -1897,30 +1897,30 @@ function TaxiPanel() {
           disabled={busy}
           className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
         >
-          <Plus className="h-4 w-4" /> إنشاء الحساب
+          <Plus className="h-4 w-4" /> تخويل الرقم
         </button>
       </section>
 
       <section className="rounded-2xl bg-card p-4 shadow-soft">
-        <p className="mb-3 text-sm font-black text-foreground">سائقو التكسي ({drivers.length})</p>
+        <p className="mb-3 text-sm font-black text-foreground">الأرقام المخوّلة ({drivers.length})</p>
         <div className="space-y-2">
           {drivers.length === 0 && (
-            <p className="text-xs text-muted-foreground">لا يوجد سائقون بعد</p>
+            <p className="text-xs text-muted-foreground">لا يوجد أرقام مخوّلة بعد</p>
           )}
           {drivers.map((d) => (
-            <div key={d.user_id} className="flex items-center gap-2 rounded-xl bg-muted/60 p-3">
+            <div key={d.phone} className="flex items-center gap-2 rounded-xl bg-muted/60 p-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black text-foreground">
-                  {d.full_name || "سائق تكسي"}
-                </p>
-                <p className="truncate text-xs text-muted-foreground" dir="ltr">
+                <p className="truncate text-sm font-black text-foreground" dir="ltr">
                   {d.phone}
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  {d.user_id ? "مرتبط بحساب زبون" : "بانتظار تسجيل دخول صاحب الرقم"}
                 </p>
               </div>
               <button
                 onClick={async () => {
                   await adminSetTaxiDriverActive({
-                    data: { user_id: d.user_id, is_active: !d.is_active },
+                    data: { phone: d.phone, is_active: !d.is_active },
                   });
                   await load();
                 }}
@@ -1934,7 +1934,7 @@ function TaxiPanel() {
               </button>
               <button
                 onClick={async () => {
-                  await adminDeleteTaxiDriver({ data: { user_id: d.user_id } });
+                  await adminDeleteTaxiDriver({ data: { phone: d.phone } });
                   await load();
                 }}
                 className="rounded-full bg-destructive/10 p-2 text-destructive"
