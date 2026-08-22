@@ -79,7 +79,8 @@ const FALLBACK_LOGO: Record<string, string> = {
 
 export function mapDbCategoryToKey(cat: string | null): CategoryKey | null {
   if (!cat) return null;
-  return CATEGORY_KEY_MAP[cat] ?? null;
+  // Built-in aliases first; otherwise the raw value is an admin-created category key.
+  return CATEGORY_KEY_MAP[cat] ?? cat;
 }
 
 export function adaptDbStore(row: DbStoreRow): Store | null {
