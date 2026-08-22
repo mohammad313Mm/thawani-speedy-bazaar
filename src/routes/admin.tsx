@@ -43,9 +43,12 @@ import {
   adminSaveAppCategory,
   adminDeleteAppCategory,
   adminListAppCategories,
+  adminListCategoryProducts,
+  adminSaveCategoryProduct,
 
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
+import { useAppCategoryOptions } from "../lib/app-category-options";
 import { AdminSupportChat } from "../components/AdminSupportChat";
 import {
   adminListTaxi,
@@ -437,12 +440,20 @@ const STORE_CATEGORIES: { value: string; label: string }[] = [
   { value: "drinks", label: "مشروبات" },
 ];
 
+/** Built-in store categories + the sections the admin created for the home screen. */
+function useStoreCategories(): { value: string; label: string }[] {
+  const { categories } = useAppCategoryOptions();
+  const extra = categories.filter((c) => !STORE_CATEGORIES.some((b) => b.value === c.value));
+  return [...STORE_CATEGORIES, ...extra];
+}
+
 function StoresPanel() {
   const [rows, setRows] = useState<StoreFull[]>([]);
   const [fetching, setFetching] = useState(false);
   const [editing, setEditing] = useState<StoreFull | null>(null);
   const [creating, setCreating] = useState(false);
   const [managingProducts, setManagingProducts] = useState<StoreRow | null>(null);
+  const storeCategories = useStoreCategories();
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -531,7 +542,7 @@ function StoresPanel() {
                     <p className="text-sm font-black">{r.name}</p>
                     {r.category && (
                       <p className="text-xs text-muted-foreground">
-                        {STORE_CATEGORIES.find((c) => c.value === r.category)?.label ?? r.category}
+                        {storeCategories.find((c) => c.value === r.category)?.label ?? r.category}
                       </p>
                     )}
                     {r.phone && <p className="text-xs text-muted-foreground" dir="ltr">{r.phone}</p>}
