@@ -167,7 +167,7 @@ function TaxiOrdersPage() {
                 <button
                   onClick={() => void act(r.id, "deliver")}
                   disabled={busyId === r.id}
-                  className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-success py-3 text-sm font-black text-white disabled:opacity-60"
+                  className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-success py-3 text-sm font-black text-success-foreground disabled:opacity-60"
                 >
                   <CheckCheck className="h-4 w-4" /> تم تسليم الطلب
                 </button>
