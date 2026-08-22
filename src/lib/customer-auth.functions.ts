@@ -98,5 +98,6 @@ export const customerSignIn = createServerFn({ method: "POST" })
     const password = await derivePassword(normalized);
     const session = await signInWithDerived(email, password);
     if (!session) return { ok: false as const, error: "لا يوجد حساب بهذا الرقم، أنشئ حساباً جديداً" };
+    await linkTaxiAuthorization(normalized, session.user_id);
     return { ok: true as const, session };
   });
