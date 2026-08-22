@@ -6,6 +6,7 @@ import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
 import { storeById } from "../lib/data";
 import { formatIQD, formatDistanceKm } from "../lib/format";
+import { fetchActiveAreas, findAreaForPoint, type DeliveryArea } from "../lib/areas";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
@@ -77,6 +78,20 @@ function CheckoutPage() {
     if (coords && storeCoords) setDistanceKm(haversineKm(coords, storeCoords));
   }, [coords, storeCoords]);
 
+  // Admin-defined delivery areas (polygons) decide whether we cover the customer.
+  const [areas, setAreas] = useState<DeliveryArea[]>([]);
+  useEffect(() => {
+    let alive = true;
+    fetchActiveAreas()
+      .then((rows) => { if (alive) setAreas(rows); })
+      .catch(() => { /* coverage check is best-effort */ });
+    return () => { alive = false; };
+  }, []);
+  const hasCoverageMap = areas.some((a) => a.boundary_points.length >= 3);
+  const matchedArea = coords ? findAreaForPoint(coords, areas) : null;
+  const outsideCoverage = Boolean(coords && hasCoverageMap && !matchedArea);
+
+
 
   if (items.length === 0) {
     return (
@@ -133,6 +148,8 @@ function CheckoutPage() {
     if (!phone.trim() || phone.trim().length < 10) return toast.error("الرجاء إدخال رقم هاتف صحيح");
     if (!address.trim()) return toast.error("الرجاء إدخال عنوان التوصيل");
     if (items.length === 0) return toast.error("السلة فارغة");
+    if (outsideCoverage)
+      return toast.error("عذراً، الخدمة غير متوفرة في موقعك حالياً — موقعك خارج مناطق التوصيل");
 
     setPlacing(true);
     setTimeout(async () => {
@@ -233,6 +250,16 @@ function CheckoutPage() {
           <p className="mt-2 text-[11px] text-muted-foreground">
             المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)}
           </p>
+          {matchedArea && (
+            <p className="mt-2 rounded-xl bg-success/10 px-3 py-2 text-[11px] font-bold text-success">
+              موقعك ضمن منطقة التوصيل: {matchedArea.name_ar}
+            </p>
+          )}
+          {outsideCoverage && (
+            <p className="mt-2 rounded-xl bg-destructive/10 px-3 py-2 text-[11px] font-bold text-destructive">
+              عذراً، الخدمة غير متوفرة في موقعك حالياً. موقعك خارج مناطق التوصيل المعتمدة.
+            </p>
+          )}
         </section>
 
         <section className="rounded-2xl bg-card p-4 shadow-soft">

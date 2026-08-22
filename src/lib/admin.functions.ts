@@ -118,6 +118,10 @@ const areaSchema = z.object({
   fee_iqd: z.number().int().min(0),
   min_order_iqd: z.number().int().min(0).default(0),
   is_active: z.boolean().default(true),
+  boundary_points: z
+    .array(z.object({ lat: z.number(), lng: z.number() }))
+    .max(500)
+    .default([]),
 });
 
 export const adminSaveArea = createServerFn({ method: "POST" })

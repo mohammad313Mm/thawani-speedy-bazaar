@@ -249,6 +249,7 @@ export type Database = {
       }
       delivery_areas: {
         Row: {
+          boundary_points: Json
           city: string | null
           created_at: string
           fee_iqd: number
@@ -260,6 +261,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          boundary_points?: Json
           city?: string | null
           created_at?: string
           fee_iqd?: number
@@ -271,6 +273,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          boundary_points?: Json
           city?: string | null
           created_at?: string
           fee_iqd?: number
