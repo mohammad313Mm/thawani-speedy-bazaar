@@ -1,11 +1,23 @@
-export type CategoryKey = "restaurants" | "grocery" | "cosmetics" | "desserts" | "freelance" | "taxi";
+export type BuiltinCategoryKey =
+  | "restaurants"
+  | "grocery"
+  | "cosmetics"
+  | "desserts"
+  | "freelance"
+  | "taxi";
+
+// Categories can also be created dynamically from the admin panel, so the key
+// is an open string that still autocompletes the built-in ones.
+export type CategoryKey = BuiltinCategoryKey | (string & {});
 
 export interface Category {
   key: CategoryKey;
   name: string;
   description: string;
-  icon: string; // emoji
+  icon: string; // emoji (used when no iconUrl is uploaded)
   color: string;
+  iconUrl?: string | null; // uploaded thumbnail shown on the home screen
+  imageUrl?: string | null; // large image shown on the category page
 }
 
 export interface Store {
