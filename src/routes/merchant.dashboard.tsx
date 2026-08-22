@@ -521,6 +521,18 @@ function ProductsPanel({ storeId }: { storeId: string }) {
                 <p className="line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
               )}
               <p className="mt-1 text-sm font-black text-primary">{formatIQD(p.price_iqd)}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {p.category && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
+                    {p.category}
+                  </span>
+                )}
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${p.is_available ? "bg-success/15 text-success" : "bg-destructive/10 text-destructive"}`}
+                >
+                  {p.is_available ? "متاح" : "غير متوفر"}
+                </span>
+              </div>
             </div>
             <div className="flex flex-col gap-1">
               <button
