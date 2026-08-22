@@ -25,6 +25,26 @@ async function derivePassword(normalized: string) {
     .join("");
 }
 
+/**
+ * Links the signed-in account to an admin-authorized taxi phone number
+ * (if any) so the taxi "طلباتي" panel unlocks automatically.
+ */
+async function linkTaxiAuthorization(normalized: string, userId: string | null) {
+  if (!userId) return;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Keep the profile phone in sync so phone-based authorization matches.
+    await supabaseAdmin.from("profiles").update({ phone: normalized }).eq("id", userId);
+    await supabaseAdmin
+      .from("taxi_drivers")
+      .update({ user_id: userId })
+      .eq("phone", normalized)
+      .is("user_id", null);
+  } catch (e) {
+    console.error("[linkTaxiAuthorization]", e);
+  }
+}
+
 async function signInWithDerived(email: string, password: string) {
   const { createClient } = await import("@supabase/supabase-js");
   const client = createClient(
