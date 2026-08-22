@@ -1681,6 +1681,7 @@ type AreaRow = {
   fee_iqd: number;
   min_order_iqd: number;
   is_active: boolean;
+  boundary_points?: unknown;
 };
 
 function AreasPanel() {
