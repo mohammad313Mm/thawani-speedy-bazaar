@@ -85,6 +85,7 @@ export const customerSignUp = createServerFn({ method: "POST" })
 
     const session = await signInWithDerived(email, password);
     if (!session) return { ok: false as const, error: "تعذر تسجيل الدخول بعد التسجيل" };
+    await linkTaxiAuthorization(normalized, session.user_id);
     return { ok: true as const, session };
   });
 
