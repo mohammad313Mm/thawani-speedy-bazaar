@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TaxiOrdersRouteImport } from './routes/taxi-orders'
 import { Route as TaxiRouteImport } from './routes/taxi'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -45,6 +46,11 @@ import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaxiOrdersRoute = TaxiOrdersRouteImport.update({
+  id: '/taxi-orders',
+  path: '/taxi-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TaxiRoute = TaxiRouteImport.update({
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/support': typeof SupportRoute
   '/taxi': typeof TaxiRoute
+  '/taxi-orders': typeof TaxiOrdersRoute
   '/terms': typeof TermsRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -400,6 +411,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/support'
     | '/taxi'
+    | '/taxi-orders'
     | '/terms'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
   TaxiRoute: typeof TaxiRoute
+  TaxiOrdersRoute: typeof TaxiOrdersRoute
   TermsRoute: typeof TermsRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/taxi-orders': {
+      id: '/taxi-orders'
+      path: '/taxi-orders'
+      fullPath: '/taxi-orders'
+      preLoaderRoute: typeof TaxiOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/taxi': {
@@ -699,6 +719,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
   TaxiRoute: TaxiRoute,
+  TaxiOrdersRoute: TaxiOrdersRoute,
   TermsRoute: TermsRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
