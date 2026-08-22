@@ -266,6 +266,7 @@ function HomePage() {
   const [showSplash, setShowSplash] = useState(true);
   const [location, setLocation] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const { categories } = useAllCategories();
 
   useEffect(() => {
     // Warm the stores cache immediately so category pages open instantly.
