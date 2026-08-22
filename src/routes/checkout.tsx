@@ -6,6 +6,7 @@ import { useCart } from "../lib/cart";
 import { useOrders } from "../lib/orders";
 import { storeById } from "../lib/data";
 import { formatIQD, formatDistanceKm } from "../lib/format";
+import { fetchActiveAreas, findAreaForPoint, type DeliveryArea } from "../lib/areas";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
