@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   LifeBuoy,
   Car,
+  LayoutGrid,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
@@ -39,6 +40,9 @@ import {
   adminUpdateOrderStatus,
   adminSendBroadcast,
   adminDeleteBroadcast,
+  adminSaveAppCategory,
+  adminDeleteAppCategory,
+  adminListAppCategories,
 
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
@@ -54,7 +58,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "orders" | "stores" | "drivers" | "taxi" | "ads" | "areas" | "notifs" | "support";
+type Section = "apps" | "orders" | "stores" | "drivers" | "taxi" | "categories" | "ads" | "areas" | "notifs" | "support";
 type AppKind = "merchant" | "driver";
 
 type Application = {
@@ -210,6 +214,9 @@ function AdminPage() {
           <SectionBtn active={section === "taxi"} onClick={() => setSection("taxi")} icon={<Car className="h-4 w-4" />}>
             تكسي
           </SectionBtn>
+          <SectionBtn active={section === "categories"} onClick={() => setSection("categories")} icon={<LayoutGrid className="h-4 w-4" />}>
+            الأقسام
+          </SectionBtn>
           <SectionBtn active={section === "ads"} onClick={() => setSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
             الإعلانات
           </SectionBtn>
@@ -242,6 +249,7 @@ function AdminPage() {
         {section === "stores" && <StoresPanel />}
         {section === "drivers" && <DriversPanel />}
         {section === "taxi" && <TaxiPanel />}
+        {section === "categories" && <AppCategoriesPanel />}
         {section === "ads" && <AdsPanel />}
         {section === "areas" && <AreasPanel />}
         {section === "notifs" && <NotificationsPanel />}
@@ -1239,6 +1247,152 @@ function IconBtn({
       {children}
       {label}
     </button>
+  );
+}
+
+/* ---------------- App categories (home sections) ---------------- */
+
+type AppCategoryRow = {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  icon_url: string | null;
+  is_active: boolean;
+  sort_order: number;
+};
+
+function AppCategoriesPanel() {
+  const [rows, setRows] = useState<AppCategoryRow[]>([]);
+  const [editing, setEditing] = useState<AppCategoryRow | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await adminListAppCategories();
+      setRows((res.rows ?? []) as AppCategoryRow[]);
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const toggle = async (r: AppCategoryRow) => {
+    try {
+      await adminSaveAppCategory({
+        data: { id: r.id, key: r.key, name: r.name, description: r.description,
+                image_url: r.image_url, icon_url: r.icon_url, is_active: !r.is_active, sort_order: r.sort_order },
+      });
+      load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+  const del = async (r: AppCategoryRow) => {
+    if (!window.confirm(`حذف القسم "${r.name}"؟`)) return;
+    try { await adminDeleteAppCategory({ data: { id: r.id } }); load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> قسم جديد
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground">لا توجد أقسام مضافة.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+          {r.image_url && <img src={r.image_url} alt="" className="h-28 w-full object-cover" />}
+          <div className="space-y-2 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                {r.icon_url && <img src={r.icon_url} alt="" className="h-9 w-9 rounded-xl object-cover" />}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black">{r.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground" dir="ltr">{r.key}</p>
+                </div>
+              </div>
+              <Badge tone={r.is_active ? "success" : "muted"}>{r.is_active ? "ظاهر" : "مخفي"}</Badge>
+            </div>
+            {r.description && <p className="line-clamp-2 text-xs text-muted-foreground">{r.description}</p>}
+            <div className="flex gap-2">
+              <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => toggle(r)} label={r.is_active ? "إخفاء" : "إظهار"}><Power className="h-3.5 w-3.5" /></IconBtn>
+              <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+            </div>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <AppCategoryEditor
+          row={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function slugify(v: string) {
+  return v.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState(row?.name ?? "");
+  const [key, setKey] = useState(row?.key ?? "");
+  const [description, setDescription] = useState(row?.description ?? "");
+  const [image, setImage] = useState(row?.image_url ?? "");
+  const [icon, setIcon] = useState(row?.icon_url ?? "");
+  const [sortOrder, setSortOrder] = useState(String(row?.sort_order ?? 0));
+  const [saving, setSaving] = useState(false);
+
+  const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setImage(await compressImageToDataUrl(f, { maxWidth: 1200, quality: 0.8 }));
+  };
+  const pickIcon = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setIcon(await compressImageToDataUrl(f, { maxWidth: 256, quality: 0.85 }));
+  };
+
+  const save = async () => {
+    const finalKey = slugify(key || name) || `cat-${Date.now()}`;
+    if (!name.trim()) { window.alert("اسم القسم مطلوب"); return; }
+    if (!icon) { window.alert("الصورة المصغرة (الأيقونة) مطلوبة"); return; }
+    setSaving(true);
+    try {
+      await adminSaveAppCategory({
+        data: {
+          id: row?.id, key: finalKey, name: name.trim(),
+          description: description.trim() || null,
+          image_url: image || null, icon_url: icon,
+          is_active: row?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={row ? "تعديل قسم" : "قسم جديد"} onClose={onClose}>
+      <ImagePicker url={icon} onPick={pickIcon} label="الصورة المصغرة (أيقونة القسم)" />
+      <Field label="اسم القسم" value={name} onChange={setName} />
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">الوصف</label>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl border border-border bg-background p-3 text-sm"
+          placeholder="وصف القسم كما يظهر للزبون"
+        />
+      </div>
+      <ImagePicker url={image} onPick={pickImage} label="صورة كبيرة تظهر مع الوصف (اختياري)" />
+      <Field label="المعرف (إنجليزي، يُنشأ تلقائياً)" value={key} onChange={setKey} dir="ltr" />
+      <Field label="ترتيب العرض" value={sortOrder} onChange={setSortOrder} type="number" />
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
   );
 }
 
