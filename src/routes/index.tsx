@@ -345,7 +345,7 @@ function HomePage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <CategoryCard key={c.key} category={c} />
             ))}
           </div>
