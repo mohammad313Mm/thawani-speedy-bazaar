@@ -348,3 +348,63 @@ export const adminDeleteBroadcast = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ============== App categories (home-screen sections) ============== */
+
+const appCategorySchema = z.object({
+  id: z.string().uuid().optional(),
+  key: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9_-]+$/, "المعرف يجب أن يكون حروفاً إنجليزية صغيرة أو أرقاماً"),
+  name: z.string().trim().min(1).max(80),
+  description: z.string().trim().max(2000).nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  icon_url: z.string().nullable().optional(),
+  is_active: z.boolean().default(true),
+  sort_order: z.number().int().default(0),
+});
+
+export const adminSaveAppCategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => appCategorySchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { id, ...row } = data;
+    if (id) {
+      const { error } = await supabaseAdmin.from("app_categories").update(row).eq("id", id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("app_categories").insert(row);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminDeleteAppCategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_categories").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminListAppCategories = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("app_categories")
+      .select("*")
+      .order("sort_order")
+      .order("created_at");
+    if (error) throw new Error(error.message);
+    return { rows: data ?? [] };
+  });
