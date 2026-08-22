@@ -20,6 +20,7 @@ import {
   Upload,
   ShoppingBag,
   LifeBuoy,
+  Car,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
@@ -42,12 +43,18 @@ import {
 } from "../lib/admin.functions";
 import { compressImageToDataUrl } from "../lib/image-compress";
 import { AdminSupportChat } from "../components/AdminSupportChat";
+import {
+  adminListTaxi,
+  adminCreateTaxiDriver,
+  adminSetTaxiDriverActive,
+  adminDeleteTaxiDriver,
+} from "../lib/taxi.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "orders" | "stores" | "drivers" | "ads" | "areas" | "notifs" | "support";
+type Section = "apps" | "orders" | "stores" | "drivers" | "taxi" | "ads" | "areas" | "notifs" | "support";
 type AppKind = "merchant" | "driver";
 
 type Application = {
@@ -200,6 +207,9 @@ function AdminPage() {
           <SectionBtn active={section === "drivers"} onClick={() => setSection("drivers")} icon={<Bike className="h-4 w-4" />}>
             المندوبين
           </SectionBtn>
+          <SectionBtn active={section === "taxi"} onClick={() => setSection("taxi")} icon={<Car className="h-4 w-4" />}>
+            تكسي
+          </SectionBtn>
           <SectionBtn active={section === "ads"} onClick={() => setSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
             الإعلانات
           </SectionBtn>
@@ -231,6 +241,7 @@ function AdminPage() {
         {section === "orders" && <OrdersPanel />}
         {section === "stores" && <StoresPanel />}
         {section === "drivers" && <DriversPanel />}
+        {section === "taxi" && <TaxiPanel />}
         {section === "ads" && <AdsPanel />}
         {section === "areas" && <AreasPanel />}
         {section === "notifs" && <NotificationsPanel />}
@@ -1779,6 +1790,206 @@ function OrdersPanel() {
           </article>
         ))
       )}
+    </div>
+  );
+}
+
+/* ---------------- Taxi ---------------- */
+
+type TaxiDriverRow = {
+  user_id: string;
+  phone: string;
+  full_name: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+type TaxiRequestAdminRow = {
+  id: string;
+  local_ref: string | null;
+  customer_name: string | null;
+  customer_phone: string;
+  address: string;
+  notes: string | null;
+  status: string;
+  driver_phone: string | null;
+  created_at: string;
+  customer_lat: number | null;
+  customer_lng: number | null;
+};
+
+const TAXI_STATUS_AR: Record<string, string> = {
+  pending: "بانتظار القبول",
+  accepted: "تم القبول",
+  delivered: "تم التسليم",
+  rejected: "مرفوض",
+};
+
+function TaxiPanel() {
+  const [drivers, setDrivers] = useState<TaxiDriverRow[]>([]);
+  const [requests, setRequests] = useState<TaxiRequestAdminRow[]>([]);
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await adminListTaxi();
+      setDrivers(res.drivers as TaxiDriverRow[]);
+      setRequests(res.requests as unknown as TaxiRequestAdminRow[]);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+    const ch = supabase
+      .channel("admin-taxi")
+      .on("postgres_changes", { event: "*", schema: "public", table: "taxi_requests" }, () => {
+        void load();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [load]);
+
+  const create = async () => {
+    setMsg(null);
+    if (phone.trim().length < 6 || password.length < 4) {
+      setMsg("أدخل رقم هاتف صحيح وكلمة مرور لا تقل عن 4 أحرف");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminCreateTaxiDriver({
+        data: { phone: phone.trim(), password, full_name: fullName.trim() || null },
+      });
+      setMsg("تم إنشاء حساب سائق التكسي بنجاح");
+      setPhone("");
+      setPassword("");
+      setFullName("");
+      await load();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "تعذر إنشاء الحساب");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-2xl bg-card p-4 shadow-soft">
+        <p className="mb-3 text-sm font-black text-foreground">إضافة حساب سائق تكسي</p>
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="الاسم (اختياري)"
+            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+          />
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            dir="ltr"
+            inputMode="numeric"
+            placeholder="رقم الهاتف"
+            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+          />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="text"
+            dir="ltr"
+            placeholder="كلمة المرور"
+            className="h-11 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+          />
+        </div>
+        {msg && <p className="mt-2 text-xs font-bold text-muted-foreground">{msg}</p>}
+        <button
+          onClick={() => void create()}
+          disabled={busy}
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground disabled:opacity-60"
+        >
+          <Plus className="h-4 w-4" /> إنشاء الحساب
+        </button>
+      </section>
+
+      <section className="rounded-2xl bg-card p-4 shadow-soft">
+        <p className="mb-3 text-sm font-black text-foreground">سائقو التكسي ({drivers.length})</p>
+        <div className="space-y-2">
+          {drivers.length === 0 && (
+            <p className="text-xs text-muted-foreground">لا يوجد سائقون بعد</p>
+          )}
+          {drivers.map((d) => (
+            <div key={d.user_id} className="flex items-center gap-2 rounded-xl bg-muted/60 p-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-black text-foreground">
+                  {d.full_name || "سائق تكسي"}
+                </p>
+                <p className="truncate text-xs text-muted-foreground" dir="ltr">
+                  {d.phone}
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  await adminSetTaxiDriverActive({
+                    data: { user_id: d.user_id, is_active: !d.is_active },
+                  });
+                  await load();
+                }}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-black ${
+                  d.is_active
+                    ? "bg-success/15 text-success"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {d.is_active ? "مفعّل" : "موقوف"}
+              </button>
+              <button
+                onClick={async () => {
+                  await adminDeleteTaxiDriver({ data: { user_id: d.user_id } });
+                  await load();
+                }}
+                className="rounded-full bg-destructive/10 p-2 text-destructive"
+                aria-label="حذف"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl bg-card p-4 shadow-soft">
+        <p className="mb-3 text-sm font-black text-foreground">طلبات التكسي ({requests.length})</p>
+        <div className="space-y-2">
+          {requests.length === 0 && <p className="text-xs text-muted-foreground">لا توجد طلبات</p>}
+          {requests.map((r) => (
+            <div key={r.id} className="rounded-xl bg-muted/60 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-black text-foreground">
+                  {r.customer_name || "زبون"}{" "}
+                  <span className="text-xs font-bold text-muted-foreground" dir="ltr">
+                    {r.customer_phone}
+                  </span>
+                </p>
+                <span className="rounded-full bg-background px-2.5 py-1 text-[11px] font-black text-muted-foreground">
+                  {TAXI_STATUS_AR[r.status] ?? r.status}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{r.address}</p>
+              {r.notes && <p className="text-xs text-muted-foreground">ملاحظات: {r.notes}</p>}
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                السائق: {r.driver_phone ?? "—"} · {new Date(r.created_at).toLocaleString("ar-IQ")}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

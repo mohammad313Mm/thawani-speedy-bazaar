@@ -54,7 +54,7 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
           tag: `taxi-${inserted.id}`,
           data: {
             order_id: inserted.id as string,
-            route: "/taxi/orders",
+            route: "/taxi-orders",
             kind: "taxi_request",
           },
         });
