@@ -681,6 +681,64 @@ function ProductEditor({
             />
           </label>
 
+          <div className="block">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black">التصنيف</span>
+              <button
+                type="button"
+                onClick={() => setAddingCategory((v) => !v)}
+                className="text-[11px] font-black text-primary"
+              >
+                {addingCategory ? "اختيار من القائمة" : "+ تصنيف جديد"}
+              </button>
+            </div>
+            {addingCategory || categories.length === 0 ? (
+              <input
+                value={addingCategory ? newCategory : category}
+                onChange={(e) =>
+                  addingCategory ? setNewCategory(e.target.value) : setCategory(e.target.value)
+                }
+                placeholder="مثال: مشروبات"
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+              />
+            ) : (
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">بدون تصنيف</option>
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setAvailable((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-3"
+          >
+            <span className="min-w-0 text-right">
+              <span className="block text-xs font-black text-foreground">حالة التوفر</span>
+              <span
+                className={`block text-[11px] font-bold ${available ? "text-success" : "text-muted-foreground"}`}
+              >
+                {available ? "متاح" : "غير متوفر"}
+              </span>
+            </span>
+            <span
+              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${available ? "bg-success" : "bg-muted-foreground/40"}`}
+            >
+              <span
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${available ? "left-0.5" : "left-[22px]"}`}
+              />
+            </span>
+          </button>
+
           {err && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
               {err}
