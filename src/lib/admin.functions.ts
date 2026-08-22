@@ -408,3 +408,92 @@ export const adminListAppCategories = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { rows: data ?? [] };
   });
+
+/* ============== Products inside an admin-created app category ============== */
+
+const categoryProductSchema = z.object({
+  id: z.string().uuid().optional(),
+  category_key: z.string().trim().min(1),
+  category_name: z.string().trim().min(1),
+  name_ar: z.string().trim().min(1),
+  description: z.string().trim().nullable().optional(),
+  image_url: z.string().nullable().optional(),
+  price_iqd: z.number().int().min(0).default(0),
+  is_available: z.boolean().default(true),
+  sort_order: z.number().int().default(0),
+});
+
+// Every category needs a container store so the normal store/product/order
+// pipeline (cart -> checkout -> merchant + admin) keeps working unchanged.
+async function ensureCategoryStore(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  categoryKey: string,
+  categoryName: string,
+): Promise<string> {
+  const { data: existing } = await admin
+    .from("stores")
+    .select("id")
+    .eq("category", categoryKey)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (existing?.id) return existing.id as string;
+
+  const { data: created, error } = await admin
+    .from("stores")
+    .insert({ name: categoryName, category: categoryKey, status: "active", is_open: true })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return created!.id as string;
+}
+
+export const adminListCategoryProducts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ category_key: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: stores } = await supabaseAdmin
+      .from("stores")
+      .select("id")
+      .eq("category", data.category_key);
+    const ids = (stores ?? []).map((s) => s.id);
+    if (ids.length === 0) return { rows: [] };
+    const { data: rows, error } = await supabaseAdmin
+      .from("products")
+      .select("*")
+      .in("store_id", ids)
+      .order("sort_order")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
+export const adminSaveCategoryProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => categoryProductSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const storeId = await ensureCategoryStore(supabaseAdmin, data.category_key, data.category_name);
+    const row = {
+      store_id: storeId,
+      name_ar: data.name_ar,
+      description: data.description ?? null,
+      image_url: data.image_url ?? null,
+      price_iqd: data.price_iqd,
+      category: data.category_key,
+      is_available: data.is_available,
+      sort_order: data.sort_order,
+    };
+    if (data.id) {
+      const { error } = await supabaseAdmin.from("products").update(row).eq("id", data.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("products").insert(row);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
