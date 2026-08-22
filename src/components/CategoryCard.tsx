@@ -31,13 +31,22 @@ function CardBody({ category, cta }: { category: Category; cta: string }) {
 
 export function CategoryCard({ category }: { category: Category }) {
   const isFreelance = category.key === "freelance";
-  const cta = isFreelance ? "اطلب توصيل" : "تصفح المتاجر";
+  const isTaxi = category.key === "taxi";
+  const cta = isFreelance ? "اطلب توصيل" : isTaxi ? "اطلب تكسي" : "تصفح المتاجر";
   const className =
     "group relative flex flex-col justify-between overflow-hidden rounded-3xl p-5 text-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant";
 
   if (isFreelance) {
     return (
       <Link to="/freelance-agent" className={className}>
+        <CardBody category={category} cta={cta} />
+      </Link>
+    );
+  }
+
+  if (isTaxi) {
+    return (
+      <Link to="/taxi" className={className}>
         <CardBody category={category} cta={cta} />
       </Link>
     );
