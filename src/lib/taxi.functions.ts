@@ -221,7 +221,7 @@ export const adminListTaxi = createServerFn({ method: "POST" })
         .limit(200),
     ]);
     const driverRows = (drivers.data ?? []) as Array<{
-      user_id: string;
+      user_id: string | null;
       phone: string;
       full_name: string | null;
       is_active: boolean;
