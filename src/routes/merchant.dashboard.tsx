@@ -604,7 +604,8 @@ function ProductEditor({
         description: desc.trim() || null,
         price_iqd: Math.round(priceNum),
         image_url: image,
-        is_available: true,
+        category: (addingCategory ? newCategory.trim() : category.trim()) || null,
+        is_available: available,
       };
       if (initial) {
         const { error } = await supabase.from("products").update(row).eq("id", initial.id);
