@@ -87,10 +87,19 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
 
     // Push notification fan-out to drivers (best effort).
     try {
-      const { data: tokens } = await supabaseAdmin
-        .from("device_tokens")
-        .select("token")
-        .eq("role", "driver");
+      // Only drivers registered inside the same area are notified.
+      const { data: areaDrivers } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("area_id", areaId);
+      const driverIds = (areaDrivers ?? []).map((p) => p.id as string);
+      const { data: tokens } = driverIds.length
+        ? await supabaseAdmin
+            .from("device_tokens")
+            .select("token")
+            .eq("role", "driver")
+            .in("user_id", driverIds)
+        : { data: [] as { token: string }[] };
       const list = (tokens ?? []).map((t) => t.token as string);
       if (list.length) {
         const { sendFcmToTokens } = await import("./fcm.server");
