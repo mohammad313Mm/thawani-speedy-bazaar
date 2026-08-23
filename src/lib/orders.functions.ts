@@ -62,6 +62,26 @@ export const placeOrder = createServerFn({ method: "POST" })
       items.push({ name: p.name, qty: it.qty, price: p.price });
     }
 
+    // --- Area isolation: order must stay inside one admin-defined area ---
+    const { data: storeArea, error: storeAreaErr } = await supabaseAdmin
+      .from("stores")
+      .select("area_id")
+      .eq("id", data.store_id)
+      .maybeSingle();
+    if (storeAreaErr) throw new Error(storeAreaErr.message);
+    const areaId = (storeArea as { area_id: string | null } | null)?.area_id ?? null;
+    if (!areaId) throw new Error("عذراً، الخدمة غير متوفرة في موقعك حالياً.");
+
+    if (data.customer_lat != null && data.customer_lng != null) {
+      const { data: custArea } = await supabaseAdmin.rpc("area_for_point" as never, {
+        _lat: data.customer_lat,
+        _lng: data.customer_lng,
+      } as never);
+      if ((custArea as string | null) !== areaId) {
+        throw new Error("عذراً، هذا المتجر لا يخدم منطقتك.");
+      }
+    }
+
     const delivery_fee = feeForDistance(data.distance_km);
     const total = subtotal + delivery_fee;
 
@@ -81,6 +101,7 @@ export const placeOrder = createServerFn({ method: "POST" })
         total,
         payment_method: data.payment_method,
         status: "pending",
+        area_id: areaId,
         customer_lat: data.customer_lat ?? null,
         customer_lng: data.customer_lng ?? null,
       })
