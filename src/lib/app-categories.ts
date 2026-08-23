@@ -12,6 +12,7 @@ export type AppCategoryRow = {
   icon_url: string | null;
   is_active: boolean;
   sort_order: number;
+  area_id: string | null;
 };
 
 const DYNAMIC_COLORS = [
@@ -33,29 +34,49 @@ export function adaptAppCategory(row: AppCategoryRow, index = 0): Category {
   };
 }
 
-const cache: { rows: AppCategoryRow[] | null } = { rows: null };
+const cache: { rows: AppCategoryRow[] | null; areaId: string | null | undefined } = {
+  rows: null,
+  areaId: undefined,
+};
 
-export async function fetchAppCategories(): Promise<AppCategoryRow[]> {
-  const { data } = await supabase
+/**
+ * Fetch active admin-created categories.
+ * When `areaId` is provided, only categories assigned to that area are returned.
+ * When omitted, all active categories are returned (used by admin/merchant forms).
+ */
+export async function fetchAppCategories(areaId?: string | null): Promise<AppCategoryRow[]> {
+  let q = supabase
     .from("app_categories")
-    .select("id,key,name,description,image_url,icon_url,is_active,sort_order")
+    .select("id,key,name,description,image_url,icon_url,is_active,sort_order,area_id")
     .eq("is_active", true)
     .order("sort_order")
     .order("created_at");
+  if (areaId === null) {
+    q = q.is("area_id", null);
+  } else if (areaId !== undefined) {
+    q = q.eq("area_id", areaId);
+  }
+  const { data } = await q;
   const rows = (data ?? []) as unknown as AppCategoryRow[];
   cache.rows = rows;
+  cache.areaId = areaId;
   return rows;
 }
 
 /** Built-in categories + admin-created ones (live). */
-export function useAllCategories(): { categories: Category[]; loading: boolean } {
-  const [rows, setRows] = useState<AppCategoryRow[]>(cache.rows ?? []);
-  const [loading, setLoading] = useState(cache.rows === null);
+export function useAllCategories({ areaId }: { areaId?: string | null } = {}): {
+  categories: Category[];
+  loading: boolean;
+} {
+  const [rows, setRows] = useState<AppCategoryRow[]>(
+    cache.areaId === areaId ? cache.rows ?? [] : [],
+  );
+  const [loading, setLoading] = useState(cache.areaId !== areaId);
 
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const list = await fetchAppCategories();
+      const list = await fetchAppCategories(areaId);
       if (!alive) return;
       setRows(list);
       setLoading(false);
@@ -69,14 +90,17 @@ export function useAllCategories(): { categories: Category[]; loading: boolean }
       alive = false;
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [areaId]);
 
   const dynamic = rows.map((r, i) => adaptAppCategory(r, i));
   return { categories: [...CATEGORIES, ...dynamic], loading };
 }
 
 /** Look up a single category (built-in or dynamic) by key. */
-export function useCategory(key: string): { category: Category | null; loading: boolean } {
-  const { categories, loading } = useAllCategories();
+export function useCategory(
+  key: string,
+  { areaId }: { areaId?: string | null } = {},
+): { category: Category | null; loading: boolean } {
+  const { categories, loading } = useAllCategories({ areaId });
   return { category: categories.find((c) => c.key === key) ?? null, loading };
 }

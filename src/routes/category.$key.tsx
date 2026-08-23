@@ -5,6 +5,7 @@ import { storesByCategory } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
 import { useDbStores } from "../lib/db-stores";
 import { useCategory } from "../lib/app-categories";
+import { useMyArea } from "../lib/use-area";
 
 export const Route = createFileRoute("/category/$key")({
   component: CategoryPage,
@@ -14,7 +15,8 @@ type Sort = "recommended" | "rating" | "nearest" | "fastest";
 
 function CategoryPage() {
   const { key } = Route.useParams();
-  const { category, loading: catLoading } = useCategory(key);
+  const { area } = useMyArea();
+  const { category, loading: catLoading } = useCategory(key, { areaId: area?.id });
 
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>("recommended");
