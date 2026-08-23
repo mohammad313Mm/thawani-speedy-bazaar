@@ -51,7 +51,9 @@ export async function fetchAppCategories(areaId?: string | null): Promise<AppCat
     .eq("is_active", true)
     .order("sort_order")
     .order("created_at");
-  if (areaId !== undefined) {
+  if (areaId === null) {
+    q = q.is("area_id", null);
+  } else if (areaId !== undefined) {
     q = q.eq("area_id", areaId);
   }
   const { data } = await q;
