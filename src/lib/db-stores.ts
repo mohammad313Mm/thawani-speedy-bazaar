@@ -2,6 +2,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
 import type { CategoryKey, Store, Product } from "./data";
+import { currentCoords } from "./use-area";
+import {
+  listAreaStores,
+  getAreaStore,
+  listAreaProducts,
+  searchAreaProducts,
+} from "./area.functions";
 
 export type DbStoreRow = {
   id: string;
@@ -166,11 +173,12 @@ let storesInFlight: Promise<Store[]> | null = null;
 export function prefetchDbStores(): Promise<Store[]> {
   if (storesInFlight) return storesInFlight;
   storesInFlight = (async () => {
-    const { data } = await supabase
-      .from("stores")
-      .select(STORE_COLUMNS)
-      .eq("status", "active")
-      .order("created_at", { ascending: false });
+    const coords = currentCoords();
+    if (!coords) {
+      storesCache.list = [];
+      return [];
+    }
+    const { stores: data } = await listAreaStores({ data: coords });
     const adapted = ((data ?? []) as unknown as DbStoreRow[])
       .map(adaptDbStore)
       .filter((s): s is Store => s !== null);
@@ -221,9 +229,10 @@ export function useDbStore(id: string): { store: Store | null; loading: boolean 
     if (!id) return;
     let alive = true;
     const load = async () => {
-      const { data } = await supabase.from("stores").select("*").eq("id", id).maybeSingle();
+      const coords = currentCoords();
+      const data = coords ? (await getAreaStore({ data: { ...coords, id } })).store : null;
       if (!alive) return;
-      const adapted = data ? adaptDbStore(data as DbStoreRow) : null;
+      const adapted = data ? adaptDbStore(data as unknown as DbStoreRow) : null;
       storeCache.set(id, adapted);
       setStore(adapted);
       setLoading(false);
@@ -255,14 +264,12 @@ export function useDbProducts(storeId: string): { products: Product[]; loading: 
     if (!storeId) return;
     let alive = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("*")
-        .eq("store_id", storeId)
-        .eq("is_available", true)
-        .order("sort_order");
+      const coords = currentCoords();
+      const data = coords
+        ? (await listAreaProducts({ data: { ...coords, storeId } })).products
+        : [];
       if (!alive) return;
-      const adapted = ((data ?? []) as DbProductRow[]).map(adaptDbProduct);
+      const adapted = ((data ?? []) as unknown as DbProductRow[]).map(adaptDbProduct);
       productsCache.set(storeId, adapted);
       setProducts(adapted);
       setLoading(false);
@@ -304,14 +311,8 @@ export function useDbProductSearch(query: string): {
     let alive = true;
     setLoading(true);
     const t = setTimeout(async () => {
-      const safe = q.replace(/[%,()]/g, " ");
-      const { data } = await supabase
-        .from("products")
-        .select("*, stores!inner(id,name,status)")
-        .eq("is_available", true)
-        .eq("stores.status", "active")
-        .or(`name_ar.ilike.%${safe}%,description.ilike.%${safe}%,category.ilike.%${safe}%`)
-        .limit(20);
+      const coords = currentCoords();
+      const data = coords ? (await searchAreaProducts({ data: { ...coords, q } })).products : [];
       if (!alive) return;
       const rows = (data ?? []) as unknown as (DbProductRow & { stores?: { name?: string } })[];
       setProducts(
@@ -326,4 +327,19 @@ export function useDbProductSearch(query: string): {
   }, [query]);
 
   return { products, loading };
+}
+
+// Area changes invalidate every cached list: content is strictly per-area.
+if (typeof window !== "undefined") {
+  window.addEventListener("thawani-location-changed", () => {
+    storesCache.list = null;
+    storeCache.clear();
+    productsCache.clear();
+    try {
+      window.localStorage.removeItem(STORES_LS_KEY);
+    } catch {
+      /* ignore */
+    }
+    void prefetchDbStores();
+  });
 }

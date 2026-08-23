@@ -20,6 +20,17 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Area isolation: resolved server-side from the customer's coordinates.
+    let areaId: string | null = null;
+    if (data.customer_lat != null && data.customer_lng != null) {
+      const { data: a } = await supabaseAdmin.rpc("area_for_point" as never, {
+        _lat: data.customer_lat,
+        _lng: data.customer_lng,
+      } as never);
+      areaId = (a as string | null) ?? null;
+    }
+    if (!areaId) throw new Error("عذرًا، الخدمة غير متوفرة في موقعك حاليًا.");
+
     const localRef = `TX-${Date.now().toString(36).toUpperCase()}`;
 
     const { data: inserted, error: insErr } = await supabaseAdmin
@@ -34,6 +45,7 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
         customer_lat: data.customer_lat ?? null,
         customer_lng: data.customer_lng ?? null,
         status: "pending",
+        area_id: areaId,
       })
       .select("id, local_ref")
       .single();

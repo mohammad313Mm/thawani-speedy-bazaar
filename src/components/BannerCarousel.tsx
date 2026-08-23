@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
+import { currentCoords } from "../lib/use-area";
+import { listAreaAds } from "../lib/area.functions";
 
 type Ad = { id: string; title: string; image_url: string; link_url: string | null };
 
@@ -10,14 +12,12 @@ export function BannerCarousel() {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const { data } = await supabase
-        .from("advertisements")
-        .select("id, title, image_url, link_url")
-        .eq("is_active", true)
-        .eq("position", "home_top")
-        .order("sort_order");
+      const coords = currentCoords();
+      const { ads: data } = await listAreaAds({
+        data: { position: "home_top", ...(coords ?? {}) },
+      });
       if (active) {
-        setAds((data ?? []) as Ad[]);
+        setAds((data ?? []) as unknown as Ad[]);
         setI(0);
       }
     };
@@ -28,8 +28,12 @@ export function BannerCarousel() {
       .on("postgres_changes", { event: "*", schema: "public", table: "advertisements" }, () => load())
       .subscribe();
 
+    const onLoc = () => load();
+    window.addEventListener("thawani-location-changed", onLoc);
+
     return () => {
       active = false;
+      window.removeEventListener("thawani-location-changed", onLoc);
       supabase.removeChannel(channel);
     };
   }, []);

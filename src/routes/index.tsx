@@ -11,6 +11,8 @@ import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
+import { useMyArea } from "../lib/use-area";
+
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
@@ -267,6 +269,8 @@ function HomePage() {
   const [location, setLocation] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const { categories } = useAllCategories();
+  const area = useMyArea();
+
 
   useEffect(() => {
     // Warm the stores cache immediately so category pages open instantly.
@@ -328,28 +332,51 @@ function HomePage() {
 
         <LocationCard location={location} onLocation={setLocation} />
 
-        {/* Banners */}
-        <section className="mt-6 animate-slide-up">
-          <BannerCarousel />
-        </section>
+        {/* Area status — decided by the server from the user's coordinates */}
+        {!area.loading && area.needsLocation && (
+          <div className="mt-4 rounded-2xl border border-border bg-card p-4 text-sm font-bold text-muted-foreground">
+            حدّد موقعك لعرض المتاجر والخدمات المتاحة في منطقتك.
+          </div>
+        )}
+        {!area.loading && area.outside && (
+          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-bold text-destructive">
+            عذرًا، الخدمة غير متوفرة في موقعك حاليًا.
+          </div>
+        )}
+        {area.area && (
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary">
+            <MapPin className="h-3.5 w-3.5" />
+            منطقتك: {area.area.name}
+          </div>
+        )}
 
-        {/* Categories */}
-        <section className="mt-8 animate-slide-up">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-            >
-              الكل <ChevronLeft className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {categories.map((c) => (
-              <CategoryCard key={c.key} category={c} />
-            ))}
-          </div>
-        </section>
+        {area.area && (
+          <>
+            {/* Banners */}
+            <section className="mt-6 animate-slide-up">
+              <BannerCarousel />
+            </section>
+
+            {/* Categories */}
+            <section className="mt-8 animate-slide-up">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                >
+                  الكل <ChevronLeft className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {categories.map((c) => (
+                  <CategoryCard key={c.key} category={c} />
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
       </main>
     </>
   );

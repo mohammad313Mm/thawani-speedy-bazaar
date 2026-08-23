@@ -7,6 +7,7 @@ import { formatIQD } from "../lib/format";
 import { ActiveDeliveryDetails, type ActiveOrder } from "../components/ActiveDeliveryDetails";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
+import { useMyArea } from "../lib/use-area";
 
 export const Route = createFileRoute("/driver/dashboard")({
   component: DriverDashboardPage,
@@ -32,6 +33,7 @@ type Order = {
 type StoreInfo = { id: string; name: string };
 
 function DriverDashboardPage() {
+  const area = useMyArea();
   const { user, roles, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAvailable, setIsAvailable] = useState(false);
@@ -195,6 +197,13 @@ function DriverDashboardPage() {
 
   return (
     <>
+      {!area.loading && !area.area && (
+        <div className="mx-auto mt-3 max-w-2xl px-4">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3 text-xs font-bold text-destructive">
+            لم يتم تحديد منطقتك بعد. فعّل الموقع من صفحة حسابي لعرض طلبات منطقتك فقط.
+          </div>
+        </div>
+      )}
       {incoming && (
         <IncomingOrderModal
           variant="driver"

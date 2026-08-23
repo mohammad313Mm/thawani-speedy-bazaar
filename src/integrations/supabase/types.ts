@@ -49,6 +49,7 @@ export type Database = {
       }
       advertisements: {
         Row: {
+          area_id: string | null
           category: string | null
           created_at: string
           ends_at: string | null
@@ -63,6 +64,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           category?: string | null
           created_at?: string
           ends_at?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           category?: string | null
           created_at?: string
           ends_at?: string | null
@@ -90,7 +93,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_categories: {
         Row: {
@@ -162,6 +173,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           address: string
+          area_id: string | null
           created_at: string
           customer_id: string | null
           customer_lat: number | null
@@ -188,6 +200,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           address: string
+          area_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_lat?: number | null
@@ -214,6 +227,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           address?: string
+          area_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_lat?: number | null
@@ -238,6 +252,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "customer_orders_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "customer_orders_store_id_fkey"
             columns: ["store_id"]
@@ -478,6 +499,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          area_id: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -487,6 +509,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           created_at?: string
           full_name?: string | null
           id: string
@@ -496,6 +519,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -504,11 +528,20 @@ export type Database = {
           status?: Database["public"]["Enums"]["account_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stores: {
         Row: {
           address: string | null
+          area_id: string | null
           category: string | null
           commission_amount: number
           commission_rate: number
@@ -531,6 +564,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          area_id?: string | null
           category?: string | null
           commission_amount?: number
           commission_rate?: number
@@ -553,6 +587,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          area_id?: string | null
           category?: string | null
           commission_amount?: number
           commission_rate?: number
@@ -573,7 +608,15 @@ export type Database = {
           updated_at?: string
           working_hours?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stores_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_chat_messages: {
         Row: {
@@ -666,6 +709,7 @@ export type Database = {
         Row: {
           accepted_at: string | null
           address: string
+          area_id: string | null
           created_at: string
           customer_id: string | null
           customer_lat: number | null
@@ -684,6 +728,7 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           address: string
+          area_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_lat?: number | null
@@ -702,6 +747,7 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           address?: string
+          area_id?: string | null
           created_at?: string
           customer_id?: string | null
           customer_lat?: number | null
@@ -717,7 +763,15 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "taxi_requests_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -745,6 +799,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      area_for_point: { Args: { _lat: number; _lng: number }; Returns: string }
+      current_area_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

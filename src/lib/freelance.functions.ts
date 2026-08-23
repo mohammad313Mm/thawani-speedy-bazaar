@@ -47,6 +47,17 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
       storeId = created.id as string;
     }
 
+    // Area isolation: resolved server-side from the customer's coordinates.
+    let areaId: string | null = null;
+    if (data.customer_lat != null && data.customer_lng != null) {
+      const { data: a } = await supabaseAdmin.rpc("area_for_point" as never, {
+        _lat: data.customer_lat,
+        _lng: data.customer_lng,
+      } as never);
+      areaId = (a as string | null) ?? null;
+    }
+    if (!areaId) throw new Error("عذرًا، الخدمة غير متوفرة في موقعك حاليًا.");
+
     const localId = `FR-${Date.now().toString(36).toUpperCase()}`;
 
     const { data: inserted, error: insErr } = await supabaseAdmin
@@ -66,6 +77,7 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
         payment_method: "cod",
         // Straight into the drivers pool — no merchant approval step.
         status: "searching_driver",
+        area_id: areaId,
         customer_lat: data.customer_lat ?? null,
         customer_lng: data.customer_lng ?? null,
       })
@@ -75,10 +87,19 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
 
     // Push notification fan-out to drivers (best effort).
     try {
-      const { data: tokens } = await supabaseAdmin
-        .from("device_tokens")
-        .select("token")
-        .eq("role", "driver");
+      // Only drivers registered inside the same area are notified.
+      const { data: areaDrivers } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("area_id", areaId);
+      const driverIds = (areaDrivers ?? []).map((p) => p.id as string);
+      const { data: tokens } = driverIds.length
+        ? await supabaseAdmin
+            .from("device_tokens")
+            .select("token")
+            .eq("role", "driver")
+            .in("user_id", driverIds)
+        : { data: [] as { token: string }[] };
       const list = (tokens ?? []).map((t) => t.token as string);
       if (list.length) {
         const { sendFcmToTokens } = await import("./fcm.server");

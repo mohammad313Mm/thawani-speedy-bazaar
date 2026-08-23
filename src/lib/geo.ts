@@ -24,6 +24,7 @@ export function loadSavedLocation(): SavedLocation | null {
 export function saveLocation(loc: SavedLocation) {
   try {
     localStorage.setItem(LOC_STORAGE_KEY, JSON.stringify(loc));
+    window.dispatchEvent(new Event("thawani-location-changed"));
   } catch {
     /* storage unavailable */
   }
