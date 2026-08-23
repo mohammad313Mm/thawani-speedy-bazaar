@@ -22,6 +22,7 @@ import { Toaster } from "../components/ui/sonner";
 import { GlobalOrderListener } from "../components/GlobalOrderListener";
 import { TaxiRequestListener } from "../components/TaxiRequestListener";
 import { useNativeServices } from "../hooks/useNativeServices";
+import { OfflineGuard } from "../components/OfflineGuard";
 
 
 function NotFoundComponent() {
@@ -239,7 +240,9 @@ function RootComponent() {
           <ThemeProvider>
             <CartProvider>
               <OrdersProvider>
-                <AppFrame />
+                <OfflineGuard>
+                  <AppFrame />
+                </OfflineGuard>
               </OrdersProvider>
             </CartProvider>
           </ThemeProvider>
