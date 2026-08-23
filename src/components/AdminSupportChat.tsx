@@ -183,7 +183,13 @@ function AdminThreadView({ thread, onBack }: { thread: Thread; onBack: () => voi
         <button onClick={onBack} className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
           <ArrowRight className="h-4 w-4" />
         </button>
-        <p className="text-sm font-black">{thread.name}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-black">{thread.name}</p>
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            {thread.areaName}
+          </p>
+        </div>
       </div>
 
       <div className="max-h-[50vh] space-y-2 overflow-y-auto rounded-2xl bg-muted/40 p-3">
