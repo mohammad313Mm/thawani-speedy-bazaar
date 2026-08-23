@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
+import { BannerCarousel } from "../components/BannerCarousel";
+
 
 import { STORES, PRODUCTS } from "../lib/data";
 import { useAllCategories } from "../lib/app-categories";
@@ -351,7 +353,12 @@ function HomePage() {
 
         {area.area && (
           <>
-            {/* Categories */}
+            {/* Ads for the user's area */}
+            <section className="mt-6 animate-slide-up">
+              <BannerCarousel />
+            </section>
+
+
             <section className="mt-8 animate-slide-up">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
