@@ -38,6 +38,7 @@ export function AdminSupportChat() {
           name: m.user_id.slice(0, 8),
           last: m.body,
           last_at: m.created_at,
+          areaName: "المنطقة غير محددة",
         });
       }
     }
@@ -45,11 +46,27 @@ export function AdminSupportChat() {
     if (ids.length) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id,full_name,phone")
+        .select("id,full_name,phone,area_id")
         .in("id", ids);
+      const areaIds = new Set<string>();
+      for (const p of profs ?? []) {
+        if (p.area_id) areaIds.add(p.area_id);
+      }
+      const areaMap = new Map<string, string>();
+      if (areaIds.size) {
+        const { data: areas } = await supabase
+          .from("delivery_areas")
+          .select("id,name_ar")
+          .in("id", [...areaIds]);
+        for (const a of areas ?? []) {
+          areaMap.set(a.id, a.name_ar);
+        }
+      }
       for (const p of profs ?? []) {
         const t = map.get(p.id);
-        if (t) t.name = p.full_name || p.phone || t.name;
+        if (!t) continue;
+        t.name = p.full_name || p.phone || t.name;
+        t.areaName = p.area_id ? areaMap.get(p.area_id) || "المنطقة غير محددة" : "المنطقة غير محددة";
       }
     }
     setThreads([...map.values()]);
