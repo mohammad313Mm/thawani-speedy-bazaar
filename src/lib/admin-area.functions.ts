@@ -23,19 +23,26 @@ export const adminAreaApplications = createServerFn({ method: "POST" })
     await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const table = data.kind === "merchant" ? "merchant_applications" : "driver_applications";
+
+    // Requests carry their own area_id (set when submitted). Legacy rows without
+    // one still resolve through the applicant's profile area.
     const { data: profs } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("area_id", data.area_id);
     const ids = (profs ?? []).map((p) => p.id as string);
-    if (ids.length === 0) return { rows: [] };
 
-    const table = data.kind === "merchant" ? "merchant_applications" : "driver_applications";
+    const filter =
+      ids.length > 0
+        ? `area_id.eq.${data.area_id},and(area_id.is.null,user_id.in.(${ids.join(",")}))`
+        : `area_id.eq.${data.area_id}`;
+
     const { data: rows, error } = await supabaseAdmin
       .from(table)
       .select("*")
       .eq("status", data.status)
-      .in("user_id", ids)
+      .or(filter)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { rows: rows ?? [] };
