@@ -173,6 +173,7 @@ const storeSchema = z.object({
   commission_amount: z.number().min(0).default(0),
   delivery_available: z.boolean().default(true),
   is_open: z.boolean().default(true),
+  area_id: z.string().uuid().nullable().optional(),
 });
 
 export const adminSaveStore = createServerFn({ method: "POST" })

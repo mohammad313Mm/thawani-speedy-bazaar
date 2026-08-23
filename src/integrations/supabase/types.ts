@@ -374,6 +374,7 @@ export type Database = {
         Row: {
           admin_note: string | null
           applicant_note: string | null
+          area_id: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -387,6 +388,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           applicant_note?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -400,6 +402,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           applicant_note?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -410,7 +413,15 @@ export type Database = {
           user_id?: string
           vehicle_type?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "driver_applications_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       driver_delivery_areas: {
         Row: {
@@ -442,6 +453,7 @@ export type Database = {
         Row: {
           admin_note: string | null
           applicant_note: string | null
+          area_id: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -455,6 +467,7 @@ export type Database = {
         Insert: {
           admin_note?: string | null
           applicant_note?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -468,6 +481,7 @@ export type Database = {
         Update: {
           admin_note?: string | null
           applicant_note?: string | null
+          area_id?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -478,7 +492,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "merchant_applications_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {

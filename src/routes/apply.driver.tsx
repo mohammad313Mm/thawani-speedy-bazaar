@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ArrowRight, Bike, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
+import { submitApplication } from "../lib/apply.functions";
+import { currentCoords } from "../lib/use-area";
 
 export const Route = createFileRoute("/apply/driver")({
   component: DriverApplyPage,
@@ -57,21 +59,17 @@ function DriverApplyPage() {
         return;
       }
 
-      const { error: appErr } = await supabase
-        .from("driver_applications")
-        .upsert(
-          {
-            user_id: userId,
+      try {
+        await submitApplication({
+          data: {
+            kind: "driver",
             full_name: fullName,
             phone: normalized,
-            status: "pending",
-            email: null,
+            ...(currentCoords() ?? {}),
           },
-          { onConflict: "user_id" },
-        );
-
-      if (appErr) {
-        setError(appErr.message);
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "تعذّر إرسال الطلب");
         return;
       }
 

@@ -619,6 +619,7 @@ function StoresPanel({ areaId }: { areaId: string }) {
         commission_amount: Number(r.commission_amount ?? 0),
         delivery_available: r.delivery_available ?? true,
         is_open: !r.is_open,
+        area_id: (r as { area_id?: string | null }).area_id ?? areaId,
       },
     });
   };
@@ -718,6 +719,7 @@ function StoresPanel({ areaId }: { areaId: string }) {
 
       {(creating || editing) && (
         <StoreEditor
+          areaId={areaId}
           store={editing}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={() => { setCreating(false); setEditing(null); load(); }}
@@ -728,8 +730,8 @@ function StoresPanel({ areaId }: { areaId: string }) {
 }
 
 function StoreEditor({
-  store, onClose, onSaved,
-}: { store: StoreFull | null; onClose: () => void; onSaved: () => void }) {
+  store, areaId, onClose, onSaved,
+}: { store: StoreFull | null; areaId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(store?.name ?? "");
   const [category, setCategory] = useState(store?.category ?? "restaurants");
   const [phone, setPhone] = useState(store?.phone ?? "");
@@ -797,6 +799,7 @@ function StoreEditor({
           commission_amount: Number(commissionAmount) || 0,
           delivery_available: deliveryAvailable,
           is_open: isOpen,
+          area_id: areaId,
         },
       });
       onSaved();
