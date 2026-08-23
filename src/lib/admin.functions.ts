@@ -78,6 +78,7 @@ const adSchema = z.object({
   category: z.string().nullable().optional(),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
+  area_id: z.string().uuid().nullable().optional(),
 });
 
 export const adminSaveAd = createServerFn({ method: "POST" })
@@ -270,14 +271,19 @@ export const adminSetDriverAreas = createServerFn({ method: "POST" })
 
 export const adminListOrders = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z.object({ area_id: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: orders, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("customer_orders")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(200);
+    if (data.area_id) query = query.eq("area_id", data.area_id);
+    const { data: orders, error } = await query;
     if (error) throw new Error(error.message);
     const storeIds = Array.from(new Set((orders ?? []).map((o) => o.store_id)));
     let storeMap: Record<string, { id: string; name: string }> = {};
@@ -328,6 +334,7 @@ export const adminSendBroadcast = createServerFn({ method: "POST" })
       .object({
         title: z.string().trim().max(120).optional(),
         body: z.string().trim().min(1).max(1000),
+        area_id: z.string().uuid().nullable().optional(),
       })
       .parse(d),
   )
@@ -337,6 +344,7 @@ export const adminSendBroadcast = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("broadcast_notifications").insert({
       title: data.title && data.title.length > 0 ? data.title : "إشعار",
       body: data.body,
+      area_id: data.area_id ?? null,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -369,6 +377,7 @@ const appCategorySchema = z.object({
   icon_url: z.string().nullable().optional(),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
+  area_id: z.string().uuid().nullable().optional(),
 });
 
 export const adminSaveAppCategory = createServerFn({ method: "POST" })
@@ -401,14 +410,19 @@ export const adminDeleteAppCategory = createServerFn({ method: "POST" })
 
 export const adminListAppCategories = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z.object({ area_id: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data: input, context }) => {
     await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("app_categories")
       .select("*")
       .order("sort_order")
       .order("created_at");
+    if (input.area_id) query = query.eq("area_id", input.area_id);
+    const { data, error } = await query;
     if (error) throw new Error(error.message);
     return { rows: data ?? [] };
   });
