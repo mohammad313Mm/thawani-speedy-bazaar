@@ -3,6 +3,8 @@ import { useState } from "react";
 import { ArrowRight, Bike, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
+import { submitApplication } from "../lib/apply.functions";
+import { currentCoords } from "../lib/use-area";
 
 export const Route = createFileRoute("/apply/driver")({
   component: DriverApplyPage,
