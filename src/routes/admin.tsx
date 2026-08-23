@@ -1475,6 +1475,7 @@ function AppCategoriesPanel({ areaId }: { areaId: string }) {
       {(creating || editing) && (
         <AppCategoryEditor
           row={editing}
+          areaId={areaId}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={() => { setCreating(false); setEditing(null); load(); }}
         />
@@ -1487,7 +1488,7 @@ function slugify(v: string) {
   return v.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | null; onClose: () => void; onSaved: () => void }) {
+function AppCategoryEditor({ row, areaId, onClose, onSaved }: { row: AppCategoryRow | null; areaId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(row?.name ?? "");
   const [key, setKey] = useState(row?.key ?? "");
   const [description, setDescription] = useState(row?.description ?? "");
@@ -1517,6 +1518,7 @@ function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | nu
           description: description.trim() || null,
           image_url: image || null, icon_url: icon,
           is_active: row?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+          area_id: areaId,
         },
       });
       onSaved();
@@ -1750,6 +1752,7 @@ function AdsPanel({ areaId }: { areaId: string }) {
       {(creating || editing) && (
         <AdEditor
           ad={editing}
+          areaId={areaId}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={() => { setCreating(false); setEditing(null); load(); }}
         />
@@ -1758,7 +1761,7 @@ function AdsPanel({ areaId }: { areaId: string }) {
   );
 }
 
-function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => void; onSaved: () => void }) {
+function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: string; onClose: () => void; onSaved: () => void }) {
   const [title, setTitle] = useState(ad?.title ?? "");
   const [link, setLink] = useState(ad?.link_url ?? "");
   const [pos, setPos] = useState(ad?.position ?? "home_top");
@@ -1780,6 +1783,7 @@ function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => v
           password: getAdminPass(), id: ad?.id, title: title.trim(), image_url: image,
           link_url: link || null, position: pos, category: category || null,
           is_active: ad?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+          area_id: areaId,
         },
       });
       onSaved();
