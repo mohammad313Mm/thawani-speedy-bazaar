@@ -269,6 +269,8 @@ function HomePage() {
   const [location, setLocation] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const { categories } = useAllCategories();
+  const area = useMyArea();
+
 
   useEffect(() => {
     // Warm the stores cache immediately so category pages open instantly.
