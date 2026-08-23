@@ -351,7 +351,12 @@ function HomePage() {
 
         {area.area && (
           <>
-            {/* Categories */}
+            {/* Ads for the user's area */}
+            <section className="mt-6 animate-slide-up">
+              <BannerCarousel />
+            </section>
+
+
             <section className="mt-8 animate-slide-up">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
