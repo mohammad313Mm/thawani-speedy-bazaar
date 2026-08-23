@@ -57,21 +57,17 @@ function DriverApplyPage() {
         return;
       }
 
-      const { error: appErr } = await supabase
-        .from("driver_applications")
-        .upsert(
-          {
-            user_id: userId,
+      try {
+        await submitApplication({
+          data: {
+            kind: "driver",
             full_name: fullName,
             phone: normalized,
-            status: "pending",
-            email: null,
+            ...(currentCoords() ?? {}),
           },
-          { onConflict: "user_id" },
-        );
-
-      if (appErr) {
-        setError(appErr.message);
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "تعذّر إرسال الطلب");
         return;
       }
 
