@@ -11,6 +11,8 @@ import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
+import { useMyArea } from "../lib/use-area";
+
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
