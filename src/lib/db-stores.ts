@@ -328,3 +328,18 @@ export function useDbProductSearch(query: string): {
 
   return { products, loading };
 }
+
+// Area changes invalidate every cached list: content is strictly per-area.
+if (typeof window !== "undefined") {
+  window.addEventListener("thawani-location-changed", () => {
+    storesCache.list = null;
+    storeCache.clear();
+    productsCache.clear();
+    try {
+      window.localStorage.removeItem(STORES_LS_KEY);
+    } catch {
+      /* ignore */
+    }
+    void prefetchDbStores();
+  });
+}
