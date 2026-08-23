@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, MessageCircle, ArrowRight } from "lucide-react";
+import { Send, MessageCircle, ArrowRight, MapPin } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 
 type ChatMsg = {
@@ -15,6 +15,7 @@ type Thread = {
   name: string;
   last: string;
   last_at: string;
+  areaName: string;
 };
 
 export function AdminSupportChat() {
@@ -37,6 +38,7 @@ export function AdminSupportChat() {
           name: m.user_id.slice(0, 8),
           last: m.body,
           last_at: m.created_at,
+          areaName: "المنطقة غير محددة",
         });
       }
     }
@@ -44,11 +46,27 @@ export function AdminSupportChat() {
     if (ids.length) {
       const { data: profs } = await supabase
         .from("profiles")
-        .select("id,full_name,phone")
+        .select("id,full_name,phone,area_id")
         .in("id", ids);
+      const areaIds = new Set<string>();
+      for (const p of profs ?? []) {
+        if (p.area_id) areaIds.add(p.area_id);
+      }
+      const areaMap = new Map<string, string>();
+      if (areaIds.size) {
+        const { data: areas } = await supabase
+          .from("delivery_areas")
+          .select("id,name_ar")
+          .in("id", [...areaIds]);
+        for (const a of areas ?? []) {
+          areaMap.set(a.id, a.name_ar);
+        }
+      }
       for (const p of profs ?? []) {
         const t = map.get(p.id);
-        if (t) t.name = p.full_name || p.phone || t.name;
+        if (!t) continue;
+        t.name = p.full_name || p.phone || t.name;
+        t.areaName = p.area_id ? areaMap.get(p.area_id) || "المنطقة غير محددة" : "المنطقة غير محددة";
       }
     }
     setThreads([...map.values()]);
@@ -95,6 +113,10 @@ export function AdminSupportChat() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-black">{t.name}</span>
+              <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                {t.areaName}
+              </span>
               <span className="block truncate text-xs text-muted-foreground">{t.last}</span>
             </span>
             <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -161,7 +183,13 @@ function AdminThreadView({ thread, onBack }: { thread: Thread; onBack: () => voi
         <button onClick={onBack} className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
           <ArrowRight className="h-4 w-4" />
         </button>
-        <p className="text-sm font-black">{thread.name}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-black">{thread.name}</p>
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            {thread.areaName}
+          </p>
+        </div>
       </div>
 
       <div className="max-h-[50vh] space-y-2 overflow-y-auto rounded-2xl bg-muted/40 p-3">
