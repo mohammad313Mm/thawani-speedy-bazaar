@@ -113,6 +113,10 @@ export function AdminSupportChat() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-black">{t.name}</span>
+              <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                {t.areaName}
+              </span>
               <span className="block truncate text-xs text-muted-foreground">{t.last}</span>
             </span>
             <span className="shrink-0 text-[10px] text-muted-foreground">
