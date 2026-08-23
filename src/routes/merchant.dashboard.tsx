@@ -26,6 +26,7 @@ import { IncomingOrderModal } from "../components/IncomingOrderModal";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { notifyDriversForOrder } from "../lib/notify.functions";
 import { syncMyStoreArea } from "../lib/area.functions";
+import { useMyArea } from "../lib/use-area";
 
 export const Route = createFileRoute("/merchant/dashboard")({
   component: MerchantDashboard,
@@ -110,6 +111,7 @@ const ORDER_LABEL: Record<OrderStatus, string> = {
 };
 
 function MerchantDashboard() {
+  useMyArea();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [store, setStore] = useState<StoreRow | null>(null);

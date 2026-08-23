@@ -26,6 +26,7 @@ import {
 } from "../lib/push-notifications";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { useIsTaxiDriver } from "../lib/use-taxi-driver";
+import { useMyArea } from "../lib/use-area";
 
 
 export const Route = createFileRoute("/profile")({
@@ -33,6 +34,7 @@ export const Route = createFileRoute("/profile")({
 });
 
 function ProfilePage() {
+  useMyArea();
   const { theme, setTheme } = useTheme();
   const { user, roles, signOut } = useAuth();
   const router = useRouter();
