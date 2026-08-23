@@ -866,6 +866,7 @@ export type Database = {
     }
     Functions: {
       area_for_point: { Args: { _lat: number; _lng: number }; Returns: string }
+      cleanup_old_records: { Args: never; Returns: Json }
       current_area_id: { Args: never; Returns: string }
       has_role: {
         Args: {
