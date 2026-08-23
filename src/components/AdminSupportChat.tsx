@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Send, MessageCircle, ArrowRight } from "lucide-react";
+import { Send, MessageCircle, ArrowRight, MapPin } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 
 type ChatMsg = {
