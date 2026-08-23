@@ -15,6 +15,7 @@ type Thread = {
   name: string;
   last: string;
   last_at: string;
+  areaName: string;
 };
 
 export function AdminSupportChat() {
