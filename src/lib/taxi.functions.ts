@@ -155,7 +155,12 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
 export const adminCreateTaxiDriver = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ phone: z.string().trim().min(6).max(30) }).parse(d),
+    z
+      .object({
+        phone: z.string().trim().min(6).max(30),
+        area_id: z.string().uuid().nullable().optional(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -178,6 +183,7 @@ export const adminCreateTaxiDriver = createServerFn({ method: "POST" })
           phone: normalized,
           user_id: (profile as { id: string } | null)?.id ?? null,
           is_active: true,
+          area_id: data.area_id ?? null,
         },
         { onConflict: "phone" },
       );
@@ -218,20 +224,26 @@ export const adminDeleteTaxiDriver = createServerFn({ method: "POST" })
 
 export const adminListTaxi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: unknown) =>
+    z.object({ area_id: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [drivers, requests] = await Promise.all([
-      supabaseAdmin
-        .from("taxi_drivers")
-        .select("user_id, phone, full_name, is_active, created_at")
-        .order("created_at", { ascending: false }),
-      supabaseAdmin
-        .from("taxi_requests")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200),
-    ]);
+    let driversQuery = supabaseAdmin
+      .from("taxi_drivers")
+      .select("user_id, phone, full_name, is_active, created_at")
+      .order("created_at", { ascending: false });
+    let requestsQuery = supabaseAdmin
+      .from("taxi_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.area_id) {
+      driversQuery = driversQuery.eq("area_id", data.area_id);
+      requestsQuery = requestsQuery.eq("area_id", data.area_id);
+    }
+    const [drivers, requests] = await Promise.all([driversQuery, requestsQuery]);
     const driverRows = (drivers.data ?? []) as Array<{
       user_id: string | null;
       phone: string;

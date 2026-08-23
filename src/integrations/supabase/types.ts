@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       admin_notifications: {
         Row: {
+          area_id: string | null
           body: string | null
           created_at: string
           id: string
@@ -26,6 +27,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          area_id?: string | null
           body?: string | null
           created_at?: string
           id?: string
@@ -36,6 +38,7 @@ export type Database = {
           title: string
         }
         Update: {
+          area_id?: string | null
           body?: string | null
           created_at?: string
           id?: string
@@ -45,7 +48,15 @@ export type Database = {
           ref_table?: string | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "admin_notifications_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       advertisements: {
         Row: {
@@ -105,6 +116,7 @@ export type Database = {
       }
       app_categories: {
         Row: {
+          area_id: string | null
           created_at: string
           description: string | null
           icon_url: string | null
@@ -117,6 +129,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           created_at?: string
           description?: string | null
           icon_url?: string | null
@@ -129,6 +142,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           created_at?: string
           description?: string | null
           icon_url?: string | null
@@ -140,10 +154,19 @@ export type Database = {
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "app_categories_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       broadcast_notifications: {
         Row: {
+          area_id: string | null
           body: string
           created_at: string
           id: string
@@ -152,6 +175,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          area_id?: string | null
           body: string
           created_at?: string
           id?: string
@@ -160,6 +184,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          area_id?: string | null
           body?: string
           created_at?: string
           id?: string
@@ -167,7 +192,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_notifications_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_orders: {
         Row: {
@@ -680,6 +713,7 @@ export type Database = {
       }
       taxi_drivers: {
         Row: {
+          area_id: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -688,6 +722,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          area_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -696,6 +731,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          area_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -703,7 +739,15 @@ export type Database = {
           phone?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "taxi_drivers_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       taxi_requests: {
         Row: {

@@ -51,6 +51,15 @@ import { compressImageToDataUrl } from "../lib/image-compress";
 import { useAppCategoryOptions } from "../lib/app-category-options";
 import { AdminSupportChat } from "../components/AdminSupportChat";
 import {
+  adminAreaApplications,
+  adminAreaStores,
+  adminAreaDrivers,
+  adminAreaAds,
+  adminAreaNotifications,
+  adminAreaMarkNotificationsRead,
+  adminListAreasForPicker,
+} from "../lib/admin-area.functions";
+import {
   adminListTaxi,
   adminCreateTaxiDriver,
   adminSetTaxiDriverActive,
@@ -114,7 +123,14 @@ function AdminPage() {
   const navigate = useNavigate();
   const [passOk, setPassOk] = useState(false);
   const [section, setSection] = useState<Section>("apps");
+  const [area, setArea] = useState<PickedArea | null>(null);
   const [unread, setUnread] = useState(0);
+
+  // Every area-isolated section starts from the area list again.
+  const goSection = (next: Section) => {
+    setSection(next);
+    setArea(null);
+  };
 
   useEffect(() => {
     try {
@@ -202,33 +218,33 @@ function AdminPage() {
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-4">
         <nav className="no-scrollbar flex gap-2 overflow-x-auto rounded-2xl bg-muted p-1">
-          <SectionBtn active={section === "apps"} onClick={() => setSection("apps")} icon={<FileText className="h-4 w-4" />}>
+          <SectionBtn active={section === "apps"} onClick={() => goSection("apps")} icon={<FileText className="h-4 w-4" />}>
             الطلبات
           </SectionBtn>
-          <SectionBtn active={section === "orders"} onClick={() => setSection("orders")} icon={<ShoppingBag className="h-4 w-4" />}>
+          <SectionBtn active={section === "orders"} onClick={() => goSection("orders")} icon={<ShoppingBag className="h-4 w-4" />}>
             طلبات الزبائن
           </SectionBtn>
-          <SectionBtn active={section === "stores"} onClick={() => setSection("stores")} icon={<Store className="h-4 w-4" />}>
+          <SectionBtn active={section === "stores"} onClick={() => goSection("stores")} icon={<Store className="h-4 w-4" />}>
             المتاجر
           </SectionBtn>
-          <SectionBtn active={section === "drivers"} onClick={() => setSection("drivers")} icon={<Bike className="h-4 w-4" />}>
+          <SectionBtn active={section === "drivers"} onClick={() => goSection("drivers")} icon={<Bike className="h-4 w-4" />}>
             المندوبين
           </SectionBtn>
-          <SectionBtn active={section === "taxi"} onClick={() => setSection("taxi")} icon={<Car className="h-4 w-4" />}>
+          <SectionBtn active={section === "taxi"} onClick={() => goSection("taxi")} icon={<Car className="h-4 w-4" />}>
             تكسي
           </SectionBtn>
-          <SectionBtn active={section === "categories"} onClick={() => setSection("categories")} icon={<LayoutGrid className="h-4 w-4" />}>
+          <SectionBtn active={section === "categories"} onClick={() => goSection("categories")} icon={<LayoutGrid className="h-4 w-4" />}>
             الأقسام
           </SectionBtn>
-          <SectionBtn active={section === "ads"} onClick={() => setSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
+          <SectionBtn active={section === "ads"} onClick={() => goSection("ads")} icon={<ImageIcon className="h-4 w-4" />}>
             الإعلانات
           </SectionBtn>
-          <SectionBtn active={section === "areas"} onClick={() => setSection("areas")} icon={<MapPin className="h-4 w-4" />}>
+          <SectionBtn active={section === "areas"} onClick={() => goSection("areas")} icon={<MapPin className="h-4 w-4" />}>
             اداره المناطق
           </SectionBtn>
           <SectionBtn
             active={section === "notifs"}
-            onClick={() => setSection("notifs")}
+            onClick={() => goSection("notifs")}
             icon={
               <span className="relative">
                 <Bell className="h-4 w-4" />
@@ -242,29 +258,141 @@ function AdminPage() {
           >
             الإشعارات
           </SectionBtn>
-          <SectionBtn active={section === "support"} onClick={() => setSection("support")} icon={<LifeBuoy className="h-4 w-4" />}>
+          <SectionBtn active={section === "support"} onClick={() => goSection("support")} icon={<LifeBuoy className="h-4 w-4" />}>
             دردشة الدعم
           </SectionBtn>
         </nav>
 
-        {section === "apps" && <ApplicationsPanel />}
-        {section === "orders" && <OrdersPanel />}
-        {section === "stores" && <StoresPanel />}
-        {section === "drivers" && <DriversPanel />}
-        {section === "taxi" && <TaxiPanel />}
-        {section === "categories" && <AppCategoriesPanel />}
-        {section === "ads" && <AdsPanel />}
-        {section === "areas" && <AreasPanel />}
-        {section === "notifs" && <NotificationsPanel />}
-        {section === "support" && <AdminSupportChat />}
+        {section === "areas" ? (
+          <AreasPanel />
+        ) : section === "support" ? (
+          <AdminSupportChat />
+        ) : !area ? (
+          <AreaSelector title={SECTION_LABELS[section]} onPick={setArea} />
+        ) : (
+          <>
+            <AreaScopeBar area={area} onChange={() => setArea(null)} />
+            {section === "apps" && <ApplicationsPanel areaId={area.id} />}
+            {section === "orders" && <OrdersPanel areaId={area.id} />}
+            {section === "stores" && <StoresPanel areaId={area.id} />}
+            {section === "drivers" && <DriversPanel areaId={area.id} />}
+            {section === "taxi" && <TaxiPanel areaId={area.id} />}
+            {section === "categories" && <AppCategoriesPanel areaId={area.id} />}
+            {section === "ads" && <AdsPanel areaId={area.id} />}
+            {section === "notifs" && <NotificationsPanel areaId={area.id} />}
+          </>
+        )}
       </main>
     </>
   );
 }
 
+/* ---------------- Area scoping (إدارة المناطق) ---------------- */
+
+const SECTION_LABELS: Record<Section, string> = {
+  apps: "الطلبات",
+  orders: "طلبات الزبائن",
+  stores: "المتاجر",
+  drivers: "المندوبين",
+  taxi: "تكسي",
+  categories: "الأقسام",
+  ads: "الإعلانات",
+  areas: "اداره المناطق",
+  notifs: "الإشعارات",
+  support: "دردشة الدعم",
+};
+
+type PickedArea = { id: string; name_ar: string; city: string | null; is_active: boolean };
+
+/** The single source of areas — exactly the ones added in «اداره المناطق». */
+function AreaSelector({ title, onPick }: { title: string; onPick: (a: PickedArea) => void }) {
+  const [areas, setAreas] = useState<PickedArea[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await adminListAreasForPicker();
+      setAreas(res.areas as PickedArea[]);
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+    const ch = supabase
+      .channel("admin_area_picker")
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_areas" }, () => {
+        void load();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [load]);
+
+  return (
+    <section className="space-y-3">
+      <div className="rounded-2xl bg-card p-4 shadow-soft">
+        <p className="text-sm font-black">{title} — اختر المنطقة</p>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          تُعرض البيانات الخاصة بالمنطقة المختارة فقط.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-14 animate-pulse rounded-2xl bg-muted" />
+          ))}
+        </div>
+      ) : areas.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">
+          لا توجد مناطق. أضف المناطق من «اداره المناطق».
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {areas.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => onPick(a)}
+              className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 text-right shadow-soft"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <MapPin className="h-5 w-5 text-primary" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-black">{a.name_ar}</span>
+                {a.city && (
+                  <span className="block truncate text-[11px] text-muted-foreground">{a.city}</span>
+                )}
+              </span>
+              <Badge tone={a.is_active ? "success" : "muted"}>{a.is_active ? "نشطة" : "متوقفة"}</Badge>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function AreaScopeBar({ area, onChange }: { area: PickedArea; onChange: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-2xl bg-primary/10 px-4 py-2.5">
+      <p className="flex items-center gap-2 text-xs font-black text-primary">
+        <MapPin className="h-4 w-4" /> المنطقة: {area.name_ar}
+      </p>
+      <button onClick={onChange} className="rounded-full bg-background px-3 py-1.5 text-[11px] font-black">
+        تغيير المنطقة
+      </button>
+    </div>
+  );
+}
+
 /* ---------------- Applications ---------------- */
 
-function ApplicationsPanel() {
+function ApplicationsPanel({ areaId }: { areaId: string }) {
   const [tab, setTab] = useState<AppKind>("merchant");
   const [status, setStatus] = useState<"pending" | "approved" | "rejected">("pending");
   const [rows, setRows] = useState<Application[]>([]);
@@ -274,14 +402,14 @@ function ApplicationsPanel() {
 
   const load = useCallback(async () => {
     setFetching(true);
-    const { data } = await supabase
-      .from(table)
-      .select("*")
-      .eq("status", status)
-      .order("created_at", { ascending: false });
-    setRows((data ?? []) as Application[]);
+    try {
+      const res = await adminAreaApplications({ data: { area_id: areaId, kind: tab, status } });
+      setRows((res.rows ?? []) as unknown as Application[]);
+    } catch {
+      setRows([]);
+    }
     setFetching(false);
-  }, [table, status]);
+  }, [areaId, tab, status]);
 
   useEffect(() => {
     load();
@@ -447,7 +575,7 @@ function useStoreCategories(): { value: string; label: string }[] {
   return [...STORE_CATEGORIES, ...extra];
 }
 
-function StoresPanel() {
+function StoresPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<StoreFull[]>([]);
   const [fetching, setFetching] = useState(false);
   const [editing, setEditing] = useState<StoreFull | null>(null);
@@ -457,10 +585,14 @@ function StoresPanel() {
 
   const load = useCallback(async () => {
     setFetching(true);
-    const { data } = await supabase.from("stores").select("*").order("created_at", { ascending: false });
-    setRows((data ?? []) as StoreFull[]);
+    try {
+      const res = await adminAreaStores({ data: { area_id: areaId } });
+      setRows((res.rows ?? []) as unknown as StoreFull[]);
+    } catch {
+      setRows([]);
+    }
     setFetching(false);
-  }, []);
+  }, [areaId]);
 
   useEffect(() => {
     load();
@@ -918,28 +1050,20 @@ function ProductEditor({
 
 /* ---------------- Drivers ---------------- */
 
-function DriversPanel() {
+function DriversPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<DriverProfile[]>([]);
   const [fetching, setFetching] = useState(false);
 
   const load = useCallback(async () => {
     setFetching(true);
-    // fetch user_ids that have driver role, then join profile
-    const { data: rolesRows } = await supabase.from("user_roles").select("user_id").eq("role", "driver");
-    const ids = (rolesRows ?? []).map((r) => r.user_id);
-    if (ids.length === 0) {
+    try {
+      const res = await adminAreaDrivers({ data: { area_id: areaId } });
+      setRows((res.rows ?? []) as unknown as DriverProfile[]);
+    } catch {
       setRows([]);
-      setFetching(false);
-      return;
     }
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, phone, status, created_at")
-      .in("id", ids)
-      .order("created_at", { ascending: false });
-    setRows((data ?? []) as DriverProfile[]);
     setFetching(false);
-  }, []);
+  }, [areaId]);
 
   useEffect(() => {
     load();
@@ -1006,7 +1130,7 @@ function DriversPanel() {
 
 /* ---------------- Notifications ---------------- */
 
-function BroadcastComposer() {
+function BroadcastComposer({ areaId }: { areaId: string }) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -1016,13 +1140,13 @@ function BroadcastComposer() {
   >([]);
 
   const loadSent = useCallback(async () => {
-    const { data } = await supabase
-      .from("broadcast_notifications")
-      .select("id, title, body, created_at")
-      .order("created_at", { ascending: false })
-      .limit(20);
-    setSent((data ?? []) as typeof sent);
-  }, []);
+    try {
+      const res = await adminAreaNotifications({ data: { area_id: areaId } });
+      setSent((res.broadcasts ?? []) as unknown as typeof sent);
+    } catch {
+      setSent([]);
+    }
+  }, [areaId]);
 
   useEffect(() => {
     loadSent();
@@ -1033,7 +1157,9 @@ function BroadcastComposer() {
     setSending(true);
     setMsg(null);
     try {
-      await adminSendBroadcast({ data: { title: title.trim() || undefined, body: body.trim() } });
+      await adminSendBroadcast({
+        data: { title: title.trim() || undefined, body: body.trim(), area_id: areaId },
+      });
       setTitle("");
       setBody("");
       setMsg("تم إرسال الإشعار للمستخدمين");
@@ -1107,20 +1233,20 @@ function BroadcastComposer() {
 
 
 
-function NotificationsPanel() {
+function NotificationsPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AdminNotif[]>([]);
   const [fetching, setFetching] = useState(false);
 
   const load = useCallback(async () => {
     setFetching(true);
-    const { data } = await supabase
-      .from("admin_notifications")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    setRows((data ?? []) as AdminNotif[]);
+    try {
+      const res = await adminAreaNotifications({ data: { area_id: areaId } });
+      setRows((res.rows ?? []) as unknown as AdminNotif[]);
+    } catch {
+      setRows([]);
+    }
     setFetching(false);
-  }, []);
+  }, [areaId]);
 
   useEffect(() => {
     load();
@@ -1138,13 +1264,17 @@ function NotificationsPanel() {
   }, [load]);
 
   const markAllRead = async () => {
-    await supabase.from("admin_notifications").update({ read_at: new Date().toISOString() }).is("read_at", null);
+    try {
+      await adminAreaMarkNotificationsRead({ data: { area_id: areaId } });
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
     load();
   };
 
   return (
     <section className="space-y-4">
-      <BroadcastComposer />
+      <BroadcastComposer areaId={areaId} />
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">إشعارات إدارية فورية</p>
@@ -1275,7 +1405,7 @@ type AppCategoryRow = {
   sort_order: number;
 };
 
-function AppCategoriesPanel() {
+function AppCategoriesPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AppCategoryRow[]>([]);
   const [editing, setEditing] = useState<AppCategoryRow | null>(null);
   const [creating, setCreating] = useState(false);
@@ -1283,19 +1413,20 @@ function AppCategoriesPanel() {
 
   const load = useCallback(async () => {
     try {
-      const res = await adminListAppCategories();
+      const res = await adminListAppCategories({ data: { area_id: areaId } });
       setRows((res.rows ?? []) as AppCategoryRow[]);
     } catch (e) {
       window.alert((e as Error).message);
     }
-  }, []);
+  }, [areaId]);
   useEffect(() => { load(); }, [load]);
 
   const toggle = async (r: AppCategoryRow) => {
     try {
       await adminSaveAppCategory({
         data: { id: r.id, key: r.key, name: r.name, description: r.description,
-                image_url: r.image_url, icon_url: r.icon_url, is_active: !r.is_active, sort_order: r.sort_order },
+                image_url: r.image_url, icon_url: r.icon_url, is_active: !r.is_active,
+                sort_order: r.sort_order, area_id: areaId },
       });
       load();
     } catch (e) { window.alert((e as Error).message); }
@@ -1344,6 +1475,7 @@ function AppCategoriesPanel() {
       {(creating || editing) && (
         <AppCategoryEditor
           row={editing}
+          areaId={areaId}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={() => { setCreating(false); setEditing(null); load(); }}
         />
@@ -1356,7 +1488,7 @@ function slugify(v: string) {
   return v.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | null; onClose: () => void; onSaved: () => void }) {
+function AppCategoryEditor({ row, areaId, onClose, onSaved }: { row: AppCategoryRow | null; areaId: string; onClose: () => void; onSaved: () => void }) {
   const [name, setName] = useState(row?.name ?? "");
   const [key, setKey] = useState(row?.key ?? "");
   const [description, setDescription] = useState(row?.description ?? "");
@@ -1386,6 +1518,7 @@ function AppCategoryEditor({ row, onClose, onSaved }: { row: AppCategoryRow | nu
           description: description.trim() || null,
           image_url: image || null, icon_url: icon,
           is_active: row?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+          area_id: areaId,
         },
       });
       onSaved();
@@ -1558,23 +1691,28 @@ type AdRow = {
   sort_order: number;
 };
 
-function AdsPanel() {
+function AdsPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AdRow[]>([]);
   const [editing, setEditing] = useState<AdRow | null>(null);
   const [creating, setCreating] = useState(false);
   const password = getAdminPass();
 
   const load = useCallback(async () => {
-    const { data } = await supabase.from("advertisements").select("*").order("sort_order").order("created_at", { ascending: false });
-    setRows((data ?? []) as AdRow[]);
-  }, []);
+    try {
+      const res = await adminAreaAds({ data: { area_id: areaId } });
+      setRows((res.rows ?? []) as unknown as AdRow[]);
+    } catch {
+      setRows([]);
+    }
+  }, [areaId]);
   useEffect(() => { load(); }, [load]);
 
   const toggle = async (r: AdRow) => {
     try {
       await adminSaveAd({
         data: { password, id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url,
-                position: r.position, category: r.category, is_active: !r.is_active, sort_order: r.sort_order },
+                position: r.position, category: r.category, is_active: !r.is_active,
+                sort_order: r.sort_order, area_id: areaId },
       });
       load();
     } catch (e) { window.alert((e as Error).message); }
@@ -1614,6 +1752,7 @@ function AdsPanel() {
       {(creating || editing) && (
         <AdEditor
           ad={editing}
+          areaId={areaId}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={() => { setCreating(false); setEditing(null); load(); }}
         />
@@ -1622,7 +1761,7 @@ function AdsPanel() {
   );
 }
 
-function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => void; onSaved: () => void }) {
+function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: string; onClose: () => void; onSaved: () => void }) {
   const [title, setTitle] = useState(ad?.title ?? "");
   const [link, setLink] = useState(ad?.link_url ?? "");
   const [pos, setPos] = useState(ad?.position ?? "home_top");
@@ -1644,6 +1783,7 @@ function AdEditor({ ad, onClose, onSaved }: { ad: AdRow | null; onClose: () => v
           password: getAdminPass(), id: ad?.id, title: title.trim(), image_url: image,
           link_url: link || null, position: pos, category: category || null,
           is_active: ad?.is_active ?? true, sort_order: Number(sortOrder) || 0,
+          area_id: areaId,
         },
       });
       onSaved();
@@ -2046,7 +2186,7 @@ const ORDER_STATUS_LABEL: Record<string, string> = {
   cancelled: "ملغي",
 };
 
-function OrdersPanel() {
+function OrdersPanel({ areaId }: { areaId: string }) {
   const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [stores, setStores] = useState<Record<string, { id: string; name: string }>>({});
   const [loading, setLoading] = useState(true);
@@ -2054,7 +2194,7 @@ function OrdersPanel() {
 
   const load = useCallback(async () => {
     try {
-      const res = await adminListOrders();
+      const res = await adminListOrders({ data: { area_id: areaId } });
 
       setOrders(res.orders as unknown as AdminOrderRow[]);
       setStores(res.stores);
@@ -2062,7 +2202,7 @@ function OrdersPanel() {
       /* ignore */
     }
     setLoading(false);
-  }, []);
+  }, [areaId]);
 
   useEffect(() => {
     load();
@@ -2204,7 +2344,7 @@ const TAXI_STATUS_AR: Record<string, string> = {
   rejected: "مرفوض",
 };
 
-function TaxiPanel() {
+function TaxiPanel({ areaId }: { areaId: string }) {
   const [drivers, setDrivers] = useState<TaxiDriverRow[]>([]);
   const [requests, setRequests] = useState<TaxiRequestAdminRow[]>([]);
   const [phone, setPhone] = useState("");
@@ -2213,13 +2353,13 @@ function TaxiPanel() {
 
   const load = useCallback(async () => {
     try {
-      const res = await adminListTaxi();
+      const res = await adminListTaxi({ data: { area_id: areaId } });
       setDrivers(res.drivers as TaxiDriverRow[]);
       setRequests(res.requests as unknown as TaxiRequestAdminRow[]);
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [areaId]);
 
   useEffect(() => {
     void load();
@@ -2242,7 +2382,7 @@ function TaxiPanel() {
     }
     setBusy(true);
     try {
-      await adminCreateTaxiDriver({ data: { phone: phone.trim() } });
+      await adminCreateTaxiDriver({ data: { phone: phone.trim(), area_id: areaId } });
       setMsg("تم تخويل الرقم كسائق تكسي");
       setPhone("");
       await load();
