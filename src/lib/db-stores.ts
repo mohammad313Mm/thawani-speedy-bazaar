@@ -200,12 +200,18 @@ export function useDbStores(): { stores: Store[]; loading: boolean } {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const list = await prefetchDbStores();
-      if (!alive) return;
-      setStores(list);
-      setLoading(false);
+      try {
+        const list = await prefetchDbStores();
+        if (!alive) return;
+        setStores(list);
+      } catch (err) {
+        console.warn("stores load failed", err);
+      } finally {
+        if (alive) setLoading(false);
+      }
     };
-    load();
+    void load();
+
     const ch = supabase
       .channel("public_stores")
       .on("postgres_changes", { event: "*", schema: "public", table: "stores" }, load)
