@@ -1692,7 +1692,9 @@ type AdRow = {
   category: string | null;
   is_active: boolean;
   sort_order: number;
+  store_id?: string | null;
 };
+
 
 function AdsPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AdRow[]>([]);
