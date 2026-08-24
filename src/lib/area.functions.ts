@@ -171,10 +171,29 @@ export const listAreaAds = createServerFn({ method: "POST" })
     const db = await admin();
     const q = db
       .from("advertisements")
-      .select("id, title, image_url, link_url, area_id")
+      .select("id, title, image_url, link_url, area_id, store_id")
       .eq("is_active", true)
       .eq("position", data.position)
       .order("sort_order");
     const { data: rows } = areaId ? await q.or(`area_id.is.null,area_id.eq.${areaId}`) : await q.is("area_id", null);
-    return { ads: rows ?? [] };
+    let ads = (rows ?? []) as { id: string; store_id?: string | null }[];
+
+    // Ads linked to a store follow the STORE's area, not the ad's manual area.
+    const storeIds = Array.from(
+      new Set(ads.map((a) => a.store_id).filter((s): s is string => !!s)),
+    );
+    if (storeIds.length > 0) {
+      const { data: stores } = await db
+        .from("stores")
+        .select("id, area_id, status")
+        .in("id", storeIds);
+      const ok = new Set(
+        (stores ?? [])
+          .filter((s) => s.status !== "suspended" && areaId != null && s.area_id === areaId)
+          .map((s) => s.id),
+      );
+      ads = ads.filter((a) => !a.store_id || ok.has(a.store_id));
+    }
+    return { ads };
+
   });

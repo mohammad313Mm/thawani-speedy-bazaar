@@ -71,6 +71,7 @@ export type Database = {
           position: string
           sort_order: number
           starts_at: string | null
+          store_id: string | null
           title: string
           updated_at: string
         }
@@ -86,6 +87,7 @@ export type Database = {
           position?: string
           sort_order?: number
           starts_at?: string | null
+          store_id?: string | null
           title: string
           updated_at?: string
         }
@@ -101,6 +103,7 @@ export type Database = {
           position?: string
           sort_order?: number
           starts_at?: string | null
+          store_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -110,6 +113,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advertisements_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]

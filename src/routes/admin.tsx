@@ -1692,7 +1692,9 @@ type AdRow = {
   category: string | null;
   is_active: boolean;
   sort_order: number;
+  store_id?: string | null;
 };
+
 
 function AdsPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AdRow[]>([]);
@@ -1715,11 +1717,12 @@ function AdsPanel({ areaId }: { areaId: string }) {
       await adminSaveAd({
         data: { password, id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url,
                 position: r.position, category: r.category, is_active: !r.is_active,
-                sort_order: r.sort_order, area_id: areaId },
+                sort_order: r.sort_order, area_id: areaId, store_id: r.store_id ?? null },
       });
       load();
     } catch (e) { window.alert((e as Error).message); }
   };
+
   const del = async (r: AdRow) => {
     if (!window.confirm(`حذف الإعلان "${r.title}"؟`)) return;
     try { await adminDeleteAd({ data: { password, id: r.id } }); load(); }
@@ -1771,7 +1774,25 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
   const [category, setCategory] = useState(ad?.category ?? "");
   const [image, setImage] = useState(ad?.image_url ?? "");
   const [sortOrder, setSortOrder] = useState(String(ad?.sort_order ?? 0));
+  const [storeId, setStoreId] = useState(ad?.store_id ?? "");
+  const [storeOptions, setStoreOptions] = useState<{ id: string; name: string; category: string | null }[]>([]);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await adminAreaStores({ data: { area_id: areaId } });
+        if (!alive) return;
+        setStoreOptions(
+          ((res.rows ?? []) as { id: string; name: string; category: string | null }[]).map((s) => ({
+            id: s.id, name: s.name, category: s.category,
+          })),
+        );
+      } catch { if (alive) setStoreOptions([]); }
+    })();
+    return () => { alive = false; };
+  }, [areaId]);
 
   const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
@@ -1786,7 +1807,7 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
           password: getAdminPass(), id: ad?.id, title: title.trim(), image_url: image,
           link_url: link || null, position: pos, category: category || null,
           is_active: ad?.is_active ?? true, sort_order: Number(sortOrder) || 0,
-          area_id: areaId,
+          area_id: areaId, store_id: storeId || null,
         },
       });
       onSaved();
@@ -1798,6 +1819,19 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
       <ImagePicker url={image} onPick={pick} label="صورة الإعلان" />
       <Field label="العنوان" value={title} onChange={setTitle} />
       <Field label="الرابط (اختياري)" value={link} onChange={setLink} dir="ltr" />
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">ربط الإعلان بمتجر (اختياري)</label>
+        <select value={storeId} onChange={(e) => setStoreId(e.target.value)}
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm">
+          <option value="">بدون ربط</option>
+          {storeOptions.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}{s.category ? ` — ${s.category}` : ""}</option>
+          ))}
+        </select>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          عند الربط يفتح الإعلان صفحة المتجر مباشرة، ويظهر فقط لمستخدمي منطقة المتجر.
+        </p>
+      </div>
       <div>
         <label className="mb-1 block text-xs font-bold text-muted-foreground">الموقع</label>
         <select value={pos} onChange={(e) => setPos(e.target.value)}
@@ -1813,6 +1847,8 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
     </Modal>
   );
 }
+
+
 
 /* ---------------- Area Management ---------------- */
 
