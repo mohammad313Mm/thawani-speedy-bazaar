@@ -79,6 +79,8 @@ const adSchema = z.object({
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
   area_id: z.string().uuid().nullable().optional(),
+  store_id: z.string().uuid().nullable().optional(),
+
 });
 
 export const adminSaveAd = createServerFn({ method: "POST" })
