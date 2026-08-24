@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { WifiOff, RefreshCw } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
@@ -7,6 +8,16 @@ interface OfflineGuardProps {
 
 export function OfflineGuard({ children }: OfflineGuardProps) {
   const { isOnline, isChecking, check } = useOnlineStatus();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Avoid SSR/client hydration mismatch: render children until after hydration.
+  if (!mounted) {
+    return <>{children}</>;
+  }
 
   if (!isOnline) {
     return (
