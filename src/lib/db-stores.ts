@@ -310,16 +310,27 @@ export function useDbProductSearch(query: string): {
     }
     let alive = true;
     setLoading(true);
-    const t = setTimeout(async () => {
-      const coords = currentCoords();
-      const data = coords ? (await searchAreaProducts({ data: { ...coords, q } })).products : [];
-      if (!alive) return;
-      const rows = (data ?? []) as unknown as (DbProductRow & { stores?: { name?: string } })[];
-      setProducts(
-        rows.map((r) => ({ ...adaptDbProduct(r), storeName: r.stores?.name ?? undefined })),
-      );
-      setLoading(false);
+    const t = setTimeout(() => {
+      void (async () => {
+        try {
+          const coords = currentCoords();
+          const data = coords
+            ? (await searchAreaProducts({ data: { ...coords, q } })).products
+            : [];
+          if (!alive) return;
+          const rows = (data ?? []) as unknown as (DbProductRow & { stores?: { name?: string } })[];
+          setProducts(
+            rows.map((r) => ({ ...adaptDbProduct(r), storeName: r.stores?.name ?? undefined })),
+          );
+        } catch (err) {
+          console.warn("product search failed", err);
+          if (alive) setProducts([]);
+        } finally {
+          if (alive) setLoading(false);
+        }
+      })();
     }, 250);
+
     return () => {
       alive = false;
       clearTimeout(t);
