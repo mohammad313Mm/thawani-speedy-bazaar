@@ -82,8 +82,11 @@ export function useAllCategories({ areaId }: { areaId?: string | null } = {}): {
       setLoading(false);
     };
     void load();
+    // Unique channel name per subscriber: reusing one name across concurrently
+    // mounted components makes supabase-js throw ("cannot add postgres_changes
+    // callbacks ... after subscribe()"), which crashed the page.
     const ch = supabase
-      .channel("public_app_categories")
+      .channel(`public_app_categories_${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "app_categories" }, load)
       .subscribe();
     return () => {
