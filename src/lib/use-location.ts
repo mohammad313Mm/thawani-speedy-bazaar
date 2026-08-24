@@ -1,19 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  isNativeApp,
-  isDeviceLocationEnabled,
-  loadSavedLocation,
-  promptEnableDeviceLocation,
-  requestCurrentPosition,
-  reverseGeocode,
-  saveLocation,
-} from "./geo";
+import { loadSavedLocation, requestCurrentPosition, reverseGeocode, saveLocation } from "./geo";
 
 export type LocationUiStatus = "idle" | "requesting" | "granted" | "denied" | "unsupported" | "error";
 
 const GPS_OFF_HINT =
-  "يرجى سحب شريط الإشعارات (البردة) وتفعيل مفتاح (الموقع / GPS) ثم إعادة المحاولة.";
+  "يرجى الموافقة على تفعيل خدمات الموقع (GPS) من النافذة التي ستظهر لك.";
 
 export function useLocationPicker(onResolved?: (label: string) => void) {
   const [label, setLabel] = useState<string | null>(null);
@@ -30,15 +22,9 @@ export function useLocationPicker(onResolved?: (label: string) => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Direct, no-modal request: fires the OS/Google location dialog immediately. */
+  /** Direct, no-modal request: fires the native permission/GPS dialog automatically. */
   const request = useCallback(async () => {
     setStatus("requesting");
-
-    // Native: trigger the official Google "Location accuracy" system dialog first.
-    if (isNativeApp()) {
-      const enabled = await isDeviceLocationEnabled();
-      if (enabled === false) await promptEnableDeviceLocation();
-    }
 
     const res = await requestCurrentPosition();
 
