@@ -22,6 +22,7 @@ import { Toaster } from "../components/ui/sonner";
 import { GlobalOrderListener } from "../components/GlobalOrderListener";
 import { TaxiRequestListener } from "../components/TaxiRequestListener";
 import { useNativeServices } from "../hooks/useNativeServices";
+import { useAppPermissions } from "../hooks/useAppPermissions";
 import { OfflineGuard } from "../components/OfflineGuard";
 
 
@@ -194,6 +195,7 @@ function AppFrame() {
 
 function NativeServicesBootstrap() {
   useNativeServices();
+  useAppPermissions();
   useEffect(() => {
     const unlock = () => {
       void import("../lib/alert-sound").then((m) => m.unlockAlertAudio());
