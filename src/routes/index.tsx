@@ -276,7 +276,7 @@ function HomePage() {
 
   useEffect(() => {
     // Warm the stores cache immediately so category pages open instantly.
-    void prefetchDbStores();
+    void prefetchDbStores().catch(() => {});
     if (typeof sessionStorage === "undefined") return;
     const seen = sessionStorage.getItem("thawani-splash");
     if (seen) setShowSplash(false);

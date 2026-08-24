@@ -357,6 +357,6 @@ if (typeof window !== "undefined") {
     } catch {
       /* ignore */
     }
-    void prefetchDbStores();
+    void prefetchDbStores().catch(() => {});
   });
 }
