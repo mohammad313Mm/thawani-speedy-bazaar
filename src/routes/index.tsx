@@ -129,38 +129,46 @@ function LocationCard({
 
 function SearchResults({ query }: { query: string }) {
   const q = query.toLowerCase();
-  const { stores: dbStores } = useDbStores();
+  const { stores: dbStores, loading: storesLoading } = useDbStores();
   const { products: dbProducts, loading: productsLoading } = useDbProductSearch(query);
-  const { area } = useMyArea();
+  const { area, needsLocation, outside } = useMyArea();
   const { categories: allCategories } = useAllCategories({ areaId: area?.id });
 
-  const allStores = [...dbStores, ...STORES.filter((s) => !dbStores.some((d) => d.id === s.id))];
-  const stores = allStores
+  // Search is strictly area-scoped: every source here is already filtered to the
+  // caller's resolved area on the server.
+  const stores = dbStores
     .filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
-        s.tags.some((t) => t.toLowerCase().includes(q)) ||
-        s.description.toLowerCase().includes(q),
+        (s.tags ?? []).some((t) => t.toLowerCase().includes(q)) ||
+        (s.description ?? "").toLowerCase().includes(q),
     )
     .slice(0, 6);
-  const staticProducts = PRODUCTS.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q),
-  );
-  const products = [
-    ...dbProducts,
-    ...staticProducts.filter((p) => !dbProducts.some((d) => d.id === p.id)),
-  ].slice(0, 12);
-  const cats = allCategories.filter((c) => c.name.toLowerCase().includes(q));
-  const empty = !productsLoading && stores.length + products.length + cats.length === 0;
+  const products = dbProducts.slice(0, 12);
+  const cats = allCategories.filter((c) => (c.name ?? "").toLowerCase().includes(q));
+  const loading = productsLoading || storesLoading;
+  const empty = !loading && stores.length + products.length + cats.length === 0;
+
+  if (needsLocation || outside) {
+    return (
+      <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card p-6 text-center text-sm font-semibold text-muted-foreground shadow-elegant animate-fade-in">
+        {needsLocation
+          ? "حدّد موقعك أولاً لعرض نتائج البحث في منطقتك."
+          : "الخدمة غير متوفرة في موقعك حاليًا."}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-card shadow-elegant animate-fade-in">
+      {loading && stores.length + products.length + cats.length === 0 && (
+        <div className="p-6 text-center text-sm font-semibold text-muted-foreground">
+          جاري البحث...
+        </div>
+      )}
       {empty && (
         <div className="p-6 text-center text-sm font-semibold text-muted-foreground">
-          لا توجد نتائج مطابقة لـ "{query}"
+          لا توجد نتائج في منطقتك
         </div>
       )}
       {cats.length > 0 && (
