@@ -245,7 +245,7 @@ export function useDbStore(id: string): { store: Store | null; loading: boolean 
     };
     load();
     const ch = supabase
-      .channel(`store_${id}`)
+      .channel(`store_${id}_${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "stores", filter: `id=eq.${id}` },
@@ -282,7 +282,7 @@ export function useDbProducts(storeId: string): { products: Product[]; loading: 
     };
     load();
     const ch = supabase
-      .channel(`store_products_${storeId}`)
+      .channel(`store_products_${storeId}_${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "products", filter: `store_id=eq.${storeId}` },
