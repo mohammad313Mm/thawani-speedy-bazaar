@@ -1717,11 +1717,12 @@ function AdsPanel({ areaId }: { areaId: string }) {
       await adminSaveAd({
         data: { password, id: r.id, title: r.title, image_url: r.image_url, link_url: r.link_url,
                 position: r.position, category: r.category, is_active: !r.is_active,
-                sort_order: r.sort_order, area_id: areaId },
+                sort_order: r.sort_order, area_id: areaId, store_id: r.store_id ?? null },
       });
       load();
     } catch (e) { window.alert((e as Error).message); }
   };
+
   const del = async (r: AdRow) => {
     if (!window.confirm(`حذف الإعلان "${r.title}"؟`)) return;
     try { await adminDeleteAd({ data: { password, id: r.id } }); load(); }
