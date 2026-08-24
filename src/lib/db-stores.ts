@@ -213,7 +213,7 @@ export function useDbStores(): { stores: Store[]; loading: boolean } {
     void load();
 
     const ch = supabase
-      .channel("public_stores")
+      .channel(`public_stores_${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "stores" }, load)
       .subscribe();
     return () => {
