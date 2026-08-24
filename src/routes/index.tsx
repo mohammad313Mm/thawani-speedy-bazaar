@@ -6,7 +6,7 @@ import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 
 
-import { STORES, PRODUCTS } from "../lib/data";
+
 import { useAllCategories } from "../lib/app-categories";
 import { formatIQD } from "../lib/format";
 import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-stores";
