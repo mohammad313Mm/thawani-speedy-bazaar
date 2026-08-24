@@ -22,15 +22,9 @@ export function useLocationPicker(onResolved?: (label: string) => void) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** Direct, no-modal request: fires the OS/Google location dialog immediately. */
+  /** Direct, no-modal request: fires the native permission/GPS dialog automatically. */
   const request = useCallback(async () => {
     setStatus("requesting");
-
-    // Native: trigger the official Google "Location accuracy" system dialog first.
-    if (isNativeApp()) {
-      const enabled = await isDeviceLocationEnabled();
-      if (enabled === false) await promptEnableDeviceLocation();
-    }
 
     const res = await requestCurrentPosition();
 
