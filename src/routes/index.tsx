@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { Search, MapPin, ChevronLeft, Loader2 } from "lucide-react";
+import { Search, MapPin, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
 import { CategoryCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
@@ -363,12 +363,6 @@ function HomePage() {
             <section className="mt-8 animate-slide-up">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
-                <Link
-                  to="/"
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary"
-                >
-                  الكل <ChevronLeft className="h-3.5 w-3.5" />
-                </Link>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {categories.map((c) => (
