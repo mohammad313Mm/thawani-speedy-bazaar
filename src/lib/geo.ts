@@ -83,36 +83,51 @@ function mapWebError(error: GeolocationPositionError): GeoOutcome {
 }
 
 /**
- * Requests high-accuracy coordinates, prompting through the native system
- * dialog when the permission has not been decided yet.
+ * Requests high-accuracy coordinates directly. On Android this triggers the
+ * native permission dialog (and the GPS-enable dialog when GPS is off) without
+ * showing any manual settings screen.
  */
 export async function requestCurrentPosition(): Promise<GeoOutcome> {
   if (isNativeApp()) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
-      let state = await Geolocation.checkPermissions();
-      if (state.location !== "granted") {
-        state = await Geolocation.requestPermissions({ permissions: ["location"] });
-      }
-      if (state.location !== "granted") {
-        return { ok: false, reason: "denied", message: "تم رفض إذن الموقع." };
-      }
+
+      // First attempt: direct high-accuracy request. On Android this will prompt
+      // for permission and/or ask the user to enable GPS services automatically.
       const pos = await Geolocation.getCurrentPosition({
         enableHighAccuracy: true,
-        timeout: 15000,
+        timeout: 10000,
         maximumAge: 0,
       });
       return { ok: true, lat: pos.coords.latitude, lng: pos.coords.longitude };
     } catch (e) {
       const msg = e instanceof Error ? e.message.toLowerCase() : "";
-      if (msg.includes("denied") || msg.includes("permission")) {
-        return { ok: false, reason: "denied", message: "تم رفض إذن الموقع." };
+
+      // If the first attempt failed because permission was denied, try once more
+      // after explicitly requesting the permission.
+      if (msg.includes("permission") || msg.includes("denied")) {
+        try {
+          const { Geolocation } = await import("@capacitor/geolocation");
+          const state = await Geolocation.requestPermissions({ permissions: ["location"] });
+          if (state.location !== "granted") {
+            return { ok: false, reason: "denied", message: "تم رفض إذن الموقع." };
+          }
+          const pos = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+          return { ok: true, lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch {
+          return { ok: false, reason: "denied", message: "تم رفض إذن الموقع." };
+        }
       }
+
       if (msg.includes("disabled") || msg.includes("unavailable") || msg.includes("location services")) {
         return {
           ok: false,
           reason: "unavailable",
-          message: "خدمة الموقع (GPS) غير مفعّلة في جهازك.",
+          message: "يرجى الموافقة على تفعيل خدمات الموقع (GPS) من النافذة التي ستظهر لك.",
         };
       }
       return { ok: false, reason: "error", message: "تعذّر تحديد الموقع، حاول مرة أخرى." };
@@ -127,7 +142,7 @@ export async function requestCurrentPosition(): Promise<GeoOutcome> {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ ok: true, lat: pos.coords.latitude, lng: pos.coords.longitude }),
       (err) => resolve(mapWebError(err)),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   });
 }
