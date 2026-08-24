@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "../integrations/supabase/client";
 import { currentCoords } from "../lib/use-area";
 import { listAreaAds } from "../lib/area.functions";
 
-type Ad = { id: string; title: string; image_url: string; link_url: string | null };
+type Ad = {
+  id: string;
+  title: string;
+  image_url: string;
+  link_url: string | null;
+  store_id?: string | null;
+};
 
 export function BannerCarousel() {
   const [ads, setAds] = useState<Ad[]>([]);
@@ -65,7 +72,11 @@ export function BannerCarousel() {
             );
             return (
               <div key={ad.id} className="min-w-full">
-                {ad.link_url ? (
+                {ad.store_id ? (
+                  <Link to="/store/$id" params={{ id: ad.store_id }}>
+                    {inner}
+                  </Link>
+                ) : ad.link_url ? (
                   <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
                     {inner}
                   </a>
