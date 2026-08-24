@@ -1848,9 +1848,7 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
   );
 }
 
-    </Modal>
-  );
-}
+
 
 /* ---------------- Area Management ---------------- */
 
