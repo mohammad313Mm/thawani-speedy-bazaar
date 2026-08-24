@@ -2,6 +2,7 @@
 // Native (Capacitor) only — on the web every step is a safe no-op.
 
 import { useEffect } from "react";
+import { usePushNotificationPermission } from "./usePushNotificationPermission";
 
 function isNative(): boolean {
   const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
@@ -9,25 +10,6 @@ function isNative(): boolean {
 }
 
 const MAX_GPS_ATTEMPTS = 3;
-
-async function setupPush() {
-  try {
-    const { PushNotifications } = await import("@capacitor/push-notifications");
-    let status = await PushNotifications.checkPermissions();
-    if (status.receive === "prompt" || status.receive === "prompt-with-rationale") {
-      status = await PushNotifications.requestPermissions();
-    }
-    if (status.receive !== "granted") return;
-
-    await PushNotifications.addListener("registration", (token) => {
-      console.log("[push] FCM token registered");
-      void token;
-    });
-    await PushNotifications.register();
-  } catch (err) {
-    console.error("[permissions] push setup failed", err);
-  }
-}
 
 async function setupGeolocation(attempt = 1): Promise<void> {
   try {
@@ -54,11 +36,12 @@ async function setupGeolocation(attempt = 1): Promise<void> {
 }
 
 export function useAppPermissions() {
+  usePushNotificationPermission();
+
   useEffect(() => {
     if (typeof window === "undefined" || !isNative()) return;
     let cancelled = false;
     void (async () => {
-      await setupPush();
       if (!cancelled) await setupGeolocation();
     })();
     return () => {
