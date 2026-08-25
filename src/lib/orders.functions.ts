@@ -134,7 +134,7 @@ export const placeOrder = createServerFn({ method: "POST" })
             data: {
               order_id: inserted.id,
               order_num: orderNum,
-              route: "/merchant.dashboard",
+              route: "/merchant/dashboard",
               kind: "store_order",
             },
           });

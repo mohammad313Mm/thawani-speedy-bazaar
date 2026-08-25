@@ -73,7 +73,7 @@ export const notifyDriversForOrder = createServerFn({ method: "POST" })
         store_name: storeName,
         address,
         total: String(orderRow.total),
-        route: "/driver.dashboard",
+        route: "/driver/dashboard",
         kind: "driver_order",
       },
     });

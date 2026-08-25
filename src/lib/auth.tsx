@@ -56,6 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading,
     refreshRoles: () => fetchRoles(user?.id ?? null),
     signOut: async () => {
+      // Detach this device first — removing the token needs a live session.
+      try {
+        const { disablePushNotifications } = await import("./push-notifications");
+        await disablePushNotifications();
+      } catch (e) {
+        console.error("[auth] push cleanup failed", e);
+      }
       await supabase.auth.signOut();
     },
   };

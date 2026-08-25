@@ -53,10 +53,36 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
 
     // Best-effort push fan-out to taxi drivers.
     try {
-      const { data: tokens } = await supabaseAdmin
-        .from("device_tokens")
-        .select("token")
-        .eq("role", "taxi");
+      // Mirror is_taxi_driver(): an active row matches either by user_id or by
+      // the phone on the user's profile. Resolving it here (instead of trusting
+      // the stored role alone) means a driver the admin deactivated stops
+      // receiving requests immediately.
+      const { data: activeDrivers } = await supabaseAdmin
+        .from("taxi_drivers")
+        .select("user_id, phone")
+        .eq("is_active", true);
+      const driverIds = new Set(
+        (activeDrivers ?? [])
+          .map((d) => d.user_id as string | null)
+          .filter((id): id is string => !!id),
+      );
+      const phones = (activeDrivers ?? [])
+        .map((d) => d.phone as string | null)
+        .filter((p): p is string => !!p);
+      if (phones.length) {
+        const { data: byPhone } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .in("phone", phones);
+        for (const p of byPhone ?? []) driverIds.add(p.id as string);
+      }
+      const { data: tokens } = driverIds.size
+        ? await supabaseAdmin
+            .from("device_tokens")
+            .select("token")
+            .eq("role", "taxi")
+            .in("user_id", [...driverIds])
+        : { data: [] as { token: string }[] };
       const list = (tokens ?? []).map((t) => t.token as string);
       if (list.length) {
         const { sendFcmToTokens } = await import("./fcm.server");

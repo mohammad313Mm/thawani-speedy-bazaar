@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "719271532492",
+    "project_id": "thwaniapp-68b4f",
+    "storage_bucket": "thwaniapp-68b4f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719271532492:android:789bc467227a23516d6f69",
+        "android_client_info": {
+          "package_name": "app.lovable.thawani"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8Y0-Er_9oP_RlRl7Mr0wBZXnW2_vlYSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

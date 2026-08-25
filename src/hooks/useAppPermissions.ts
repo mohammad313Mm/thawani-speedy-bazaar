@@ -1,8 +1,9 @@
-// Requests push-notification + geolocation permissions on app start.
+// Requests geolocation permission on app start. Push-notification permission
+// is owned by src/lib/push-notifications.ts and is requested only for the
+// merchant/driver roles that actually receive pushes.
 // Native (Capacitor) only — on the web every step is a safe no-op.
 
 import { useEffect } from "react";
-import { usePushNotificationPermission } from "./usePushNotificationPermission";
 
 function isNative(): boolean {
   const w = window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } };
@@ -36,8 +37,6 @@ async function setupGeolocation(attempt = 1): Promise<void> {
 }
 
 export function useAppPermissions() {
-  usePushNotificationPermission();
-
   useEffect(() => {
     if (typeof window === "undefined" || !isNative()) return;
     let cancelled = false;

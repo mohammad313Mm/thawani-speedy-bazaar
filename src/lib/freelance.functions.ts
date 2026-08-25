@@ -117,7 +117,7 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
             store_name: FREELANCE_STORE_NAME,
             address: data.address,
             total: String(FREELANCE_FEE),
-            route: "/driver.dashboard",
+            route: "/driver/dashboard",
             kind: "driver_order",
           },
         });

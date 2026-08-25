@@ -41,13 +41,13 @@ function ProfilePage() {
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
   const { isTaxiDriver } = useIsTaxiDriver();
-  const needsPush = !!user && (isMerchant || isDriver);
+  const needsPush = !!user && (isMerchant || isDriver || isTaxiDriver);
 
   const [pushState, setPushState] = useState<PushPermState | null>(null);
   const [requesting, setRequesting] = useState(false);
 
   useEffect(() => {
-    if (!needsPush) return;
+    if (!user || !needsPush) return;
     let cancelled = false;
     (async () => {
       const s = await getPushPermissionStatus();
@@ -56,7 +56,7 @@ function ProfilePage() {
       // Auto-prompt native dialog once if we can still ask.
       if (s === "prompt") {
         setRequesting(true);
-        const next = await requestPushPermission(roles, (path) =>
+        const next = await requestPushPermission(user.id, roles, isTaxiDriver, (path) =>
           router.navigate({ to: path }),
         );
         if (!cancelled) {
@@ -68,11 +68,12 @@ function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [needsPush, roles, router]);
+  }, [user, needsPush, roles, isTaxiDriver, router]);
 
   const onEnablePush = async () => {
+    if (!user) return;
     setRequesting(true);
-    const next = await requestPushPermission(roles, (path) =>
+    const next = await requestPushPermission(user.id, roles, isTaxiDriver, (path) =>
       router.navigate({ to: path }),
     );
     setPushState(next);

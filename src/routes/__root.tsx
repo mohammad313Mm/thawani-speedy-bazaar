@@ -18,6 +18,7 @@ import { ThemeProvider } from "../lib/theme";
 import { CartProvider } from "../lib/cart";
 import { OrdersProvider } from "../lib/orders";
 import { AuthProvider, useAuth } from "../lib/auth";
+import { useIsTaxiDriver } from "../lib/use-taxi-driver";
 import { Toaster } from "../components/ui/sonner";
 import { GlobalOrderListener } from "../components/GlobalOrderListener";
 import { TaxiRequestListener } from "../components/TaxiRequestListener";
@@ -213,21 +214,32 @@ function NativeServicesBootstrap() {
 function PushBootstrap() {
   const router = useRouter();
   const { user, roles } = useAuth();
+  // Taxi drivers have no app_role — the admin authorizes their phone, so this
+  // is the only way to know they should receive taxi requests.
+  const { isTaxiDriver, checking } = useIsTaxiDriver();
   useEffect(() => {
-    if (!user) return;
-    if (!roles.includes("merchant") && !roles.includes("driver")) return;
     let cancelled = false;
     (async () => {
-      const { initPushNotifications } = await import("../lib/push-notifications");
+      const mod = await import("../lib/push-notifications");
       if (cancelled) return;
-      await initPushNotifications(roles, (path) => {
+      if (!user) {
+        // Session gone: drop the local binding so the next sign-in on this
+        // device re-registers its token under the new user.
+        mod.resetPushState();
+        return;
+      }
+      // Roles and the taxi check land a tick after the user; skipping here
+      // (instead of resetting) avoids unregistering during that gap.
+      if (checking) return;
+      if (!roles.includes("merchant") && !roles.includes("driver") && !isTaxiDriver) return;
+      await mod.initPushNotifications(user.id, roles, isTaxiDriver, (path) => {
         router.navigate({ to: path });
       });
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, roles, router]);
+  }, [user, roles, isTaxiDriver, checking, router]);
   return null;
 }
 
