@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tint Android applies behind the notification icon. Matches the primary
+         brand colour, oklch(0.55 0.22 27) "Rich Iraqi red", from src/styles.css. -->
+    <color name="notification_color">#D40C1A</color>
+</resources>

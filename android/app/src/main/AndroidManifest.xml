@@ -24,6 +24,20 @@
 
         </activity>
 
+        <!-- FCM notification appearance. Without these Android falls back to the
+             full-colour launcher icon, which the status bar renders as a white
+             square. The channel id is the last-resort fallback for a message
+             that arrives before push-notifications.ts has created the channel. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_notify" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="orders_high_priority" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
