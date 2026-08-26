@@ -21,7 +21,9 @@ export type IncomingOrderData = {
   customer_lng?: number | null;
 };
 
-const RING_SECONDS = 15;
+// Ring for a full minute so a busy merchant/driver doesn't miss the order.
+// The modal stops the tone the moment it unmounts (accept / reject / timeout).
+const RING_SECONDS = 60;
 
 /** Loop a simple two-tone beep via WebAudio. Requires a prior user gesture,
  *  which drivers/merchants have (they're logged into the dashboard). */
