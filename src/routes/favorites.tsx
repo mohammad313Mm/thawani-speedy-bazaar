@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../lib/cart";
-import { productById, storeById, type Store } from "../lib/data";
+import { storeById, type Store } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
 import { ProductCard } from "../components/ProductCard";
-import { useDbStores } from "../lib/db-stores";
+import { useDbStores, useDbProductsByIds } from "../lib/db-stores";
 
 export const Route = createFileRoute("/favorites")({
   component: FavoritesPage,
