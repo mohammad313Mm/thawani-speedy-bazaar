@@ -19,7 +19,7 @@ function FavoritesPage() {
   const stores: Store[] = favStores
     .map((id) => storeById(id) ?? dbStores.find((s) => s.id === id) ?? null)
     .filter((s): s is Store => Boolean(s));
-  const products = favorites.map((id) => productById(id)).filter(Boolean);
+  const { products, loading: productsLoading } = useDbProductsByIds(favorites);
 
   return (
     <>
