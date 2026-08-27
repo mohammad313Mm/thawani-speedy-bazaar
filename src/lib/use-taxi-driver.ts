@@ -21,10 +21,18 @@ export function useIsTaxiDriver() {
     }
     setChecking(true);
     (async () => {
-      const { data } = await supabase.rpc("is_taxi_driver", { _user_id: user.id });
-      if (cancelled) return;
-      setIsTaxi(data === true);
-      setChecking(false);
+      // Always settle `checking`, even when the RPC rejects — callers gate on
+      // it, so a stuck `true` silently disables whatever depends on this.
+      try {
+        const { data } = await supabase.rpc("is_taxi_driver", { _user_id: user.id });
+        if (cancelled) return;
+        setIsTaxi(data === true);
+      } catch {
+        if (cancelled) return;
+        setIsTaxi(false);
+      } finally {
+        if (!cancelled) setChecking(false);
+      }
     })();
     return () => {
       cancelled = true;

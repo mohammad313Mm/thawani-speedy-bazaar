@@ -228,10 +228,16 @@ function PushBootstrap() {
         mod.resetPushState();
         return;
       }
-      // Roles and the taxi check land a tick after the user; skipping here
-      // (instead of resetting) avoids unregistering during that gap.
-      if (checking) return;
-      if (!roles.includes("merchant") && !roles.includes("driver") && !isTaxiDriver) return;
+      // Merchants and drivers must never wait on the taxi lookup: a slow or
+      // failed is_taxi_driver RPC would otherwise block the permission prompt
+      // for everyone. Only the taxi-only case (no app_role at all) needs it.
+      const hasWorkRole = roles.includes("merchant") || roles.includes("driver");
+      if (!hasWorkRole) {
+        // Roles and the taxi check land a tick after the user; skipping here
+        // (instead of resetting) avoids unregistering during that gap.
+        if (checking) return;
+        if (!isTaxiDriver) return;
+      }
       await mod.initPushNotifications(user.id, roles, isTaxiDriver, (path) => {
         router.navigate({ to: path });
       });
