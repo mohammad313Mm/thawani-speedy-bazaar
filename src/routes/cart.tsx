@@ -90,7 +90,7 @@ function CartPage() {
         </button>
       </header>
 
-      <main className="mx-auto max-w-2xl space-y-3 px-4 py-4">
+      <main className="mx-auto max-w-2xl space-y-3 px-4 pt-4 pb-28">
         {items.map((it) => {
           const p = it.product;
           if (!p) return null;
