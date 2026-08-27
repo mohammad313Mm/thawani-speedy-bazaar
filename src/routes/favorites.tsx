@@ -61,7 +61,13 @@ function FavoritesPage() {
             </div>
           ))}
         {tab === "products" &&
-          (products.length === 0 ? (
+          (productsLoading && favorites.length > 0 ? (
+            <div className="space-y-3">
+              {Array.from({ length: Math.min(favorites.length, 4) }).map((_, i) => (
+                <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
             <Empty label="لم تضف أي منتج إلى المفضلة" />
           ) : (
             <div className="space-y-3">
