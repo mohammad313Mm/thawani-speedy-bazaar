@@ -194,7 +194,25 @@
 }
 
 
+
+/* على الأجهزة الأصلية (Capacitor/Android edge-to-edge) نضمن حداً أدنى
+   لارتفاع شريط الحالة حتى لو لم يبلّغ الـWebView عن الـinsets. */
+html.native-shell {
+  --safe-top: max(env(safe-area-inset-top, 0px), 24px);
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+}
+
+/* كل الهيدرات الثابتة في التطبيق تبدأ أسفل شريط الحالة تلقائياً */
+header.sticky.top-0,
+.safe-top {
+  padding-top: var(--safe-top);
+}
+
 @layer utilities {
+  /* مساحة علوية آمنة أسفل شريط الحالة */
+  .pt-safe {
+    padding-top: var(--safe-top);
+  }
   /* مساحة سفلية آمنة فوق شريط التنقل */
   .pb-nav {
     padding-bottom: calc(var(--nav-h) + 0.75rem);
