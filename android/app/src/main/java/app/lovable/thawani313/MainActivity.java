@@ -1,4 +1,4 @@
-package app.lovable.thawani;
+package app.lovable.thawani313;
 
 import com.getcapacitor.BridgeActivity;
 
