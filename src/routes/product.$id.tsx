@@ -1,9 +1,10 @@
-import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowRight, Minus, Plus, Star, Clock, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productById, storeById } from "../lib/data";
 import { formatIQD, formatMinutes } from "../lib/format";
 import { useCart } from "../lib/cart";
+import { useDbProductsByIds, useDbStore } from "../lib/db-stores";
 
 export const Route = createFileRoute("/product/$id")({
   component: ProductPage,
@@ -12,21 +13,25 @@ export const Route = createFileRoute("/product/$id")({
 function ProductPage() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const product = productById(id);
-  if (!product) throw notFound();
-  const store = storeById(product.storeId);
+  const staticProduct = productById(id);
+  const { products: dbProducts, loading } = useDbProductsByIds(staticProduct ? [] : [id]);
+  const product = staticProduct ?? dbProducts[0] ?? null;
+  const { store: dbStore } = useDbStore(
+    product && !storeById(product.storeId) ? product.storeId : "",
+  );
+  const store = product ? (storeById(product.storeId) ?? dbStore) : null;
 
   const { addItem, favorites, toggleFavorite } = useCart();
-  const fav = favorites.includes(product.id);
+  const fav = product ? favorites.includes(product.id) : false;
 
   const [qty, setQty] = useState(1);
   const [notes, setNotes] = useState("");
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
-  const basePrice = product.discountPrice ?? product.price;
+  const basePrice = (product?.discountPrice ?? product?.price) ?? 0;
   const extras = useMemo(() => {
     let sum = 0;
-    for (const opt of product.options ?? []) {
+    for (const opt of product?.options ?? []) {
       const chosen = selectedOptions[opt.name];
       if (chosen) {
         const choice = opt.choices.find((c) => c.name === chosen);
@@ -34,13 +39,36 @@ function ProductPage() {
       }
     }
     return sum;
-  }, [product.options, selectedOptions]);
+  }, [product, selectedOptions]);
 
   const total = (basePrice + extras) * qty;
 
-  const canAdd = (product.options ?? [])
+  const canAdd = (product?.options ?? [])
     .filter((o) => o.required)
     .every((o) => selectedOptions[o.name]);
+
+  if (!product) {
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-20 text-center">
+        {loading ? (
+          <div className="mx-auto h-40 w-full animate-pulse rounded-2xl bg-muted" />
+        ) : (
+          <>
+            <h1 className="text-lg font-black">المنتج غير متوفر</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              قد يكون المنتج محذوفًا أو خارج منطقتك.
+            </p>
+            <Link
+              to="/"
+              className="mt-5 inline-block rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground"
+            >
+              العودة للرئيسية
+            </Link>
+          </>
+        )}
+      </main>
+    );
+  }
 
   return (
     <>

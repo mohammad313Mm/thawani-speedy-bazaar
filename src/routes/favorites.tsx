@@ -2,10 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "../lib/cart";
-import { productById, storeById, type Store } from "../lib/data";
+import { storeById, type Store } from "../lib/data";
 import { StoreCard } from "../components/StoreCard";
 import { ProductCard } from "../components/ProductCard";
-import { useDbStores } from "../lib/db-stores";
+import { useDbStores, useDbProductsByIds } from "../lib/db-stores";
 
 export const Route = createFileRoute("/favorites")({
   component: FavoritesPage,
@@ -19,7 +19,7 @@ function FavoritesPage() {
   const stores: Store[] = favStores
     .map((id) => storeById(id) ?? dbStores.find((s) => s.id === id) ?? null)
     .filter((s): s is Store => Boolean(s));
-  const products = favorites.map((id) => productById(id)).filter(Boolean);
+  const { products, loading: productsLoading } = useDbProductsByIds(favorites);
 
   return (
     <>
@@ -61,7 +61,13 @@ function FavoritesPage() {
             </div>
           ))}
         {tab === "products" &&
-          (products.length === 0 ? (
+          (productsLoading && favorites.length > 0 ? (
+            <div className="space-y-3">
+              {Array.from({ length: Math.min(favorites.length, 4) }).map((_, i) => (
+                <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
             <Empty label="لم تضف أي منتج إلى المفضلة" />
           ) : (
             <div className="space-y-3">
