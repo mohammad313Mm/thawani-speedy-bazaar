@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAppCategoryOptions } from "../lib/app-category-options";
-import { compressImageToDataUrl } from "../lib/image-compress";
+import { compressAndUploadImage } from "../lib/image-compress";
 import { formatIQD } from "../lib/format";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
@@ -598,7 +598,7 @@ function ProductEditor({
 
   const pickImage = async (f: File) => {
     try {
-      const url = await compressImageToDataUrl(f, { maxWidth: 1000, quality: 0.75 });
+      const url = await compressAndUploadImage(f, "products", { maxWidth: 1000, quality: 0.75 });
       setImage(url);
     } catch (e) {
       setErr((e as Error).message);
@@ -896,7 +896,7 @@ function StoreSetup({
     maxWidth: number,
   ) => {
     try {
-      const url = await compressImageToDataUrl(f, { maxWidth, quality: 0.82 });
+      const url = await compressAndUploadImage(f, "stores", { maxWidth, quality: 0.82 });
       setter(url);
     } catch (e) {
       setErr((e as Error).message);
