@@ -54,7 +54,8 @@
 :root {
   --radius: 1rem;
 
-  /* ارتفاع شريط التنقل السفلي + المنطقة الآمنة للجهاز */
+  /* المناطق الآمنة للجهاز (شريط الحالة / النوتش / شريط التنقل) */
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --nav-h: calc(5.75rem + var(--safe-bottom));
 
