@@ -47,7 +47,7 @@ function ProductPage() {
       <div className="relative h-72 overflow-hidden bg-muted">
         <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
-        <div className="absolute top-0 right-0 left-0 flex items-center justify-between p-4">
+        <div className="safe-top absolute top-0 right-0 left-0 flex items-center justify-between p-4">
           <button
             onClick={() => router.history.back()}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/95 shadow-elegant"

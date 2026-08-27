@@ -69,7 +69,7 @@ function StorePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-black/10" />
 
         {/* Top actions */}
-        <div className="absolute top-0 right-0 left-0 flex items-center justify-between p-4">
+        <div className="safe-top absolute top-0 right-0 left-0 flex items-center justify-between p-4">
           <Link
             to="/category/$key"
             params={{ key: store.category }}

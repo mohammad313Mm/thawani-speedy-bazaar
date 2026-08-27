@@ -176,8 +176,14 @@ function AppFrame() {
     pathname.startsWith("/checkout");
 
   useEffect(() => {
-    const w = window as unknown as { __hideBootSplash?: () => void };
+    const w = window as unknown as {
+      __hideBootSplash?: () => void;
+      Capacitor?: { isNativePlatform?: () => boolean };
+    };
     w.__hideBootSplash?.();
+    if (w.Capacitor?.isNativePlatform?.()) {
+      document.documentElement.classList.add("native-shell");
+    }
   }, []);
 
 
