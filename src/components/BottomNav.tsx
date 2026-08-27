@@ -16,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 w-full border-t border-border bg-card/95 backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-2xl items-stretch justify-around px-1 pb-[env(safe-area-inset-bottom)] pt-2 sm:px-2">
+      <div className="mx-auto flex w-full max-w-2xl items-stretch justify-around px-1 pb-[max(env(safe-area-inset-bottom),0.25rem)] pt-2 sm:px-2">
         {tabs.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;

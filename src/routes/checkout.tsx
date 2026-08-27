@@ -341,7 +341,7 @@ function CheckoutPage() {
         </section>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl pb-safe">
         <div className="mx-auto max-w-2xl p-4">
           <button
             disabled={placing}

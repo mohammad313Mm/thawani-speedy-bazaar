@@ -186,7 +186,7 @@ function CartPage() {
         </div>
       </main>
 
-      <div className="fixed bottom-24 left-0 right-0 z-30 px-4">
+      <div className="fixed bottom-nav-offset left-0 right-0 z-30 px-3 sm:px-4">
         <Link
           to="/checkout"
           className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant"
