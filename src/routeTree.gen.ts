@@ -41,6 +41,7 @@ import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
 import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
+import { Route as ApiPublicOrderEscalationRouteImport } from './routes/api/public/order-escalation'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
@@ -207,6 +208,12 @@ const Char91DotmcpChar93ListToolsRoute =
     path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicOrderEscalationRoute =
+  ApiPublicOrderEscalationRouteImport.update({
+    id: '/api/public/order-escalation',
+    path: '/api/public/order-escalation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -259,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/store/$id': typeof StoreIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/order-escalation': typeof ApiPublicOrderEscalationRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
 }
 export interface FileRoutesByTo {
@@ -296,6 +304,7 @@ export interface FileRoutesByTo {
   '/store/$id': typeof StoreIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/order-escalation': typeof ApiPublicOrderEscalationRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
 }
 export interface FileRoutesById {
@@ -334,6 +343,7 @@ export interface FileRoutesById {
   '/store/$id': typeof StoreIdRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/api/public/order-escalation': typeof ApiPublicOrderEscalationRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
 }
 export interface FileRouteTypes {
@@ -373,6 +383,7 @@ export interface FileRouteTypes {
     | '/store/$id'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/order-escalation'
     | '/api/public/img/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/store/$id'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/order-escalation'
     | '/api/public/img/$'
   id:
     | '__root__'
@@ -447,6 +459,7 @@ export interface FileRouteTypes {
     | '/store/$id'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/api/public/order-escalation'
     | '/api/public/img/$'
   fileRoutesById: FileRoutesById
 }
@@ -485,6 +498,7 @@ export interface RootRouteChildren {
   StoreIdRoute: typeof StoreIdRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiPublicOrderEscalationRoute: typeof ApiPublicOrderEscalationRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
 }
 
@@ -714,6 +728,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/order-escalation': {
+      id: '/api/public/order-escalation'
+      path: '/api/public/order-escalation'
+      fullPath: '/api/public/order-escalation'
+      preLoaderRoute: typeof ApiPublicOrderEscalationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -774,6 +795,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoreIdRoute: StoreIdRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiPublicOrderEscalationRoute: ApiPublicOrderEscalationRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
 }
 export const routeTree = rootRouteImport

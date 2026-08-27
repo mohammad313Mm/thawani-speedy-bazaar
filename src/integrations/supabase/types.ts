@@ -229,10 +229,14 @@ export type Database = {
           driver_lat: number | null
           driver_lng: number | null
           driver_location_updated_at: string | null
+          escalation_due_at: string | null
           id: string
           items: Json
           local_order_id: string | null
           notes: string | null
+          notified_at: string | null
+          owner_escalation_sent: boolean
+          owner_escalation_sent_at: string | null
           payment_method: string
           status: string
           store_id: string
@@ -256,10 +260,14 @@ export type Database = {
           driver_lat?: number | null
           driver_lng?: number | null
           driver_location_updated_at?: string | null
+          escalation_due_at?: string | null
           id?: string
           items?: Json
           local_order_id?: string | null
           notes?: string | null
+          notified_at?: string | null
+          owner_escalation_sent?: boolean
+          owner_escalation_sent_at?: string | null
           payment_method?: string
           status?: string
           store_id: string
@@ -283,10 +291,14 @@ export type Database = {
           driver_lat?: number | null
           driver_lng?: number | null
           driver_location_updated_at?: string | null
+          escalation_due_at?: string | null
           id?: string
           items?: Json
           local_order_id?: string | null
           notes?: string | null
+          notified_at?: string | null
+          owner_escalation_sent?: boolean
+          owner_escalation_sent_at?: string | null
           payment_method?: string
           status?: string
           store_id?: string
@@ -458,6 +470,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      internal_job_secrets: {
+        Row: {
+          created_at: string
+          name: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+          secret?: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+          secret?: string
+        }
+        Relationships: []
       }
       merchant_applications: {
         Row: {
@@ -886,6 +916,7 @@ export type Database = {
         Returns: boolean
       }
       is_taxi_driver: { Args: { _user_id: string }; Returns: boolean }
+      ping_order_escalation: { Args: never; Returns: undefined }
     }
     Enums: {
       account_status: "active" | "suspended"

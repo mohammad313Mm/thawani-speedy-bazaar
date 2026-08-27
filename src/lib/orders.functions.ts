@@ -144,6 +144,17 @@ export const placeOrder = createServerFn({ method: "POST" })
               .delete()
               .in("token", result.invalidTokens);
           }
+          if (result.sent > 0) {
+            // Start the 5-minute owner-escalation window from the real send time.
+            const sentAt = new Date();
+            await supabaseAdmin
+              .from("customer_orders")
+              .update({
+                notified_at: sentAt.toISOString(),
+                escalation_due_at: new Date(sentAt.getTime() + 5 * 60 * 1000).toISOString(),
+              })
+              .eq("id", inserted.id);
+          }
         }
       }
     } catch (e) {
