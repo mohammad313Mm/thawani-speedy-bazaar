@@ -47,7 +47,7 @@ import {
   adminListCategoryProducts,
   adminSaveCategoryProduct,
 } from "../lib/admin.functions";
-import { compressImageToDataUrl } from "../lib/image-compress";
+import { compressAndUploadImage } from "../lib/image-compress";
 import { useAppCategoryOptions } from "../lib/app-category-options";
 import { AdminSupportChat } from "../components/AdminSupportChat";
 import {
@@ -755,11 +755,11 @@ function StoreEditor({
 
   const pickLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setLogoUrl(await compressImageToDataUrl(f, { maxWidth: 400, quality: 0.75 }));
+    setLogoUrl(await compressAndUploadImage(f, "stores", { maxWidth: 400, quality: 0.75 }));
   };
   const pickCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setCoverUrl(await compressImageToDataUrl(f, { maxWidth: 1400, quality: 0.75 }));
+    setCoverUrl(await compressAndUploadImage(f, "stores", { maxWidth: 1400, quality: 0.75 }));
   };
 
   const useMyLocation = () => {
@@ -1012,7 +1012,7 @@ function ProductEditor({
   const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const url = await compressImageToDataUrl(f, { maxWidth: 900, quality: 0.75 });
+    const url = await compressAndUploadImage(f, "products", { maxWidth: 900, quality: 0.75 });
     setImage(url);
   };
 
@@ -1502,11 +1502,11 @@ function AppCategoryEditor({ row, areaId, onClose, onSaved }: { row: AppCategory
 
   const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setImage(await compressImageToDataUrl(f, { maxWidth: 1200, quality: 0.8 }));
+    setImage(await compressAndUploadImage(f, "categories", { maxWidth: 1200, quality: 0.8 }));
   };
   const pickIcon = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setIcon(await compressImageToDataUrl(f, { maxWidth: 256, quality: 0.85 }));
+    setIcon(await compressAndUploadImage(f, "categories", { maxWidth: 256, quality: 0.85 }));
   };
 
   const save = async () => {
@@ -1646,7 +1646,7 @@ function CategoryProductEditor({
 
   const pickImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setImage(await compressImageToDataUrl(f, { maxWidth: 900, quality: 0.75 }));
+    setImage(await compressAndUploadImage(f, "products", { maxWidth: 900, quality: 0.75 }));
   };
 
   const save = async () => {
@@ -1796,7 +1796,7 @@ function AdEditor({ ad, areaId, onClose, onSaved }: { ad: AdRow | null; areaId: 
 
   const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
-    setImage(await compressImageToDataUrl(f, { maxWidth: 1200, quality: 0.8 }));
+    setImage(await compressAndUploadImage(f, "advertisements", { maxWidth: 1200, quality: 0.8 }));
   };
   const save = async () => {
     if (!title.trim() || !image) { window.alert("العنوان والصورة مطلوبان"); return; }
