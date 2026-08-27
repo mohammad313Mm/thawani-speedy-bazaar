@@ -171,13 +171,14 @@
     max-width: 100%;
   }
 
-  /* منع تكبير الصفحة تلقائياً على iOS عند الكتابة */
-  @media (pointer: coarse) {
-    input,
-    textarea,
-    select {
-      font-size: max(16px, 1em);
-    }
+  /* منع التكبير التلقائي على iOS/Android WebView عند التركيز على أي حقل:
+     المتصفح يكبّر الصفحة إذا كان حجم خط الحقل أقل من 16px. */
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-size: max(16px, 1em);
+    touch-action: manipulation;
   }
 
   /* Arabic-Indic numerals for currency displays that opt in */
