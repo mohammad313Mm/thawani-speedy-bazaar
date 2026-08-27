@@ -1,10 +1,12 @@
-// Client-side image compression to a data URL (JPEG, base64).
-// Keeps output small enough to store directly in a text column.
+import { uploadImage } from "./image-upload.functions";
+
+// Client-side image compression to a data URL.
+// Used as an intermediate step before uploading to storage.
 export async function compressImageToDataUrl(
   file: File,
-  opts: { maxWidth?: number; maxHeight?: number; quality?: number } = {},
+  opts: { maxWidth?: number; maxHeight?: number; quality?: number; mime?: string } = {},
 ): Promise<string> {
-  const { maxWidth = 1200, maxHeight = 1200, quality = 0.8 } = opts;
+  const { maxWidth = 1200, maxHeight = 1200, quality = 0.8, mime = "image/webp" } = opts;
   const url = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -23,8 +25,24 @@ export async function compressImageToDataUrl(
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Canvas غير مدعوم");
     ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL("image/jpeg", quality);
+    const out = canvas.toDataURL(mime, quality);
+    // Older browsers silently fall back to PNG when WebP is unsupported.
+    return out.startsWith("data:image/") ? out : canvas.toDataURL("image/jpeg", quality);
   } finally {
     URL.revokeObjectURL(url);
   }
+}
+
+export type ImageFolder = "stores" | "products" | "advertisements" | "categories" | "users";
+
+// Compress on the device, then store the file in Supabase Storage and return
+// the URL to persist in the database (never base64).
+export async function compressAndUploadImage(
+  file: File,
+  folder: ImageFolder,
+  opts: { maxWidth?: number; maxHeight?: number; quality?: number } = {},
+): Promise<string> {
+  const dataUrl = await compressImageToDataUrl(file, opts);
+  const { url } = await uploadImage({ data: { dataUrl, folder } });
+  return url;
 }
