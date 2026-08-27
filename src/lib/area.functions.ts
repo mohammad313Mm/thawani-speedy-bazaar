@@ -141,6 +141,24 @@ export const listAreaProducts = createServerFn({ method: "POST" })
     return { products: rows ?? [] };
   });
 
+/** Public (area-scoped): specific products by id (used by favorites / product page). */
+export const listAreaProductsByIds = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    coordsSchema.extend({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const areaId = await areaForPoint(data.lat, data.lng);
+    if (!areaId) return { products: [] };
+    const db = await admin();
+    const { data: rows } = await db
+      .from("products")
+      .select("*, stores!inner(id,name,status,area_id)")
+      .in("id", data.ids)
+      .eq("stores.status", "active")
+      .eq("stores.area_id", areaId);
+    return { products: rows ?? [] };
+  });
+
 /** Public (area-scoped): product search limited to the caller's area. */
 export const searchAreaProducts = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => coordsSchema.extend({ q: z.string().min(1).max(80) }).parse(d))
