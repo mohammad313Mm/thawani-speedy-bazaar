@@ -25,6 +25,7 @@ import { TaxiRequestListener } from "../components/TaxiRequestListener";
 import { useNativeServices } from "../hooks/useNativeServices";
 import { useAppPermissions } from "../hooks/useAppPermissions";
 import { OfflineGuard } from "../components/OfflineGuard";
+import { PushPermissionNotice } from "../components/PushPermissionNotice";
 
 
 function NotFoundComponent() {
@@ -179,6 +180,7 @@ function AppFrame() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PushPermissionNotice />
       <div className={hideNav ? "" : "pb-24"}>
         <Outlet />
       </div>
