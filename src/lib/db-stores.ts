@@ -8,6 +8,7 @@ import {
   getAreaStore,
   listAreaProducts,
   searchAreaProducts,
+  listAreaProductsByIds,
 } from "./area.functions";
 
 export type DbStoreRow = {
@@ -342,6 +343,49 @@ export function useDbProductSearch(query: string): {
       clearTimeout(t);
     };
   }, [query]);
+
+  return { products, loading };
+}
+
+/**
+ * Resolve arbitrary product ids (favorites) into full products from the DB,
+ * scoped to the caller's area. Unknown/removed ids are simply skipped.
+ */
+export function useDbProductsByIds(ids: string[]): { products: Product[]; loading: boolean } {
+  const key = ids.join(",");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(ids.length > 0);
+
+  useEffect(() => {
+    const list = key ? key.split(",").filter(Boolean) : [];
+    if (list.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    (async () => {
+      try {
+        const coords = currentCoords();
+        const data = coords
+          ? (await listAreaProductsByIds({ data: { ...coords, ids: list } })).products
+          : [];
+        if (!alive) return;
+        const rows = (data ?? []) as unknown as DbProductRow[];
+        const byId = new Map(rows.map((r) => [r.id, adaptDbProduct(r)]));
+        setProducts(list.map((id) => byId.get(id)).filter((p): p is Product => Boolean(p)));
+      } catch (err) {
+        console.warn("favorite products load failed", err);
+        if (alive) setProducts([]);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [key]);
 
   return { products, loading };
 }
