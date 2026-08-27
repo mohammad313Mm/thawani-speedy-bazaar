@@ -161,7 +161,7 @@ function ProductPage() {
       </main>
 
       {/* Sticky footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      <div className="fixed bottom-nav-offset left-0 right-0 z-30 rounded-t-3xl border-t border-border bg-card/95 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center gap-3 p-4">
           <div className="flex items-center gap-2 rounded-full bg-muted p-1">
             <button

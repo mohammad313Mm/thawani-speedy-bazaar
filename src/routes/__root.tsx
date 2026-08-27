@@ -185,7 +185,7 @@ function AppFrame() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <PushPermissionNotice />
-      <div className={hideNav ? "" : "pb-24"}>
+      <div className={hideNav ? (pathname.startsWith("/checkout") ? "pb-bar" : "") : "pb-nav"}>
         <Outlet />
       </div>
       {!hideNav && <BottomNav />}

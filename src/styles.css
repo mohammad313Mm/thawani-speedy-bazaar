@@ -54,6 +54,10 @@
 :root {
   --radius: 1rem;
 
+  /* ارتفاع شريط التنقل السفلي + المنطقة الآمنة للجهاز */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: calc(5.75rem + var(--safe-bottom));
+
   --background: oklch(0.985 0.003 60);
   --foreground: oklch(0.18 0.02 260);
 
@@ -190,6 +194,26 @@
 
 
 @layer utilities {
+  /* مساحة سفلية آمنة فوق شريط التنقل */
+  .pb-nav {
+    padding-bottom: calc(var(--nav-h) + 0.75rem);
+  }
+  /* لصفحات فيها شريط أزرار ثابت بدون شريط تنقل */
+  .pb-bar {
+    padding-bottom: calc(6.5rem + var(--safe-bottom));
+  }
+  /* عنصر ثابت يجلس فوق شريط التنقل مباشرة */
+  .bottom-nav-offset {
+    bottom: calc(var(--nav-h) + 0.5rem);
+  }
+  .pb-safe {
+    padding-bottom: max(var(--safe-bottom), 0.5rem);
+  }
+  .min-h-dvh {
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }

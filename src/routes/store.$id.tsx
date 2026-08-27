@@ -214,7 +214,7 @@ function StorePage() {
 
       {/* Cart floating bar */}
       {itemCount > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 z-30 px-4">
+        <div className="fixed bottom-nav-offset left-0 right-0 z-30 px-3 sm:px-4">
           <Link
             to="/cart"
             className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-full bg-primary px-5 py-3.5 text-primary-foreground shadow-elegant animate-slide-up"
