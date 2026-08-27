@@ -56,7 +56,7 @@
 
   /* ارتفاع شريط التنقل السفلي + المنطقة الآمنة للجهاز */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-h: calc(4.75rem + var(--safe-bottom));
+  --nav-h: calc(5.75rem + var(--safe-bottom));
 
   --background: oklch(0.985 0.003 60);
   --foreground: oklch(0.18 0.02 260);
