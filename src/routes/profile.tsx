@@ -16,7 +16,7 @@ import {
   LifeBuoy,
   Car,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
 import {
@@ -48,6 +48,7 @@ function ProfilePage() {
   const [pushState, setPushState] = useState<PushPermState | null>(null);
   const [requesting, setRequesting] = useState(false);
   const [diag, setDiag] = useState<PushDiagnostics | null>(null);
+  const [diagErr, setDiagErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !needsPush) return;
@@ -72,6 +73,22 @@ function ProfilePage() {
       cancelled = true;
     };
   }, [user, needsPush, roles, isTaxiDriver, router]);
+
+  // Run on mount: a diagnostic nobody can trigger is no diagnostic at all, and
+  // the previous button swallowed a rejected promise with no visible effect.
+  const runDiag = useCallback(async () => {
+    setDiagErr(null);
+    try {
+      setDiag(await getPushDiagnostics());
+    } catch (e) {
+      setDiag(null);
+      setDiagErr(e instanceof Error ? e.message : String(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (needsPush) void runDiag();
+  }, [needsPush, runDiag]);
 
   const onEnablePush = async () => {
     if (!user) return;
@@ -171,12 +188,23 @@ function ProfilePage() {
 
         {needsPush && (
           <section className="rounded-2xl border border-border bg-card p-4 shadow-soft">
-            <button
-              onClick={() => void getPushDiagnostics().then(setDiag)}
-              className="text-xs font-black text-muted-foreground"
-            >
-              تشخيص الإشعارات ⟳
-            </button>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-black text-foreground">تشخيص الإشعارات</p>
+              <button
+                onClick={() => void runDiag()}
+                className="rounded-full border border-border px-3 py-1 text-[11px] font-black text-foreground"
+              >
+                تحديث ⟳
+              </button>
+            </div>
+            {!diag && !diagErr && (
+              <p className="mt-2 text-[11px] text-muted-foreground">جارٍ القراءة…</p>
+            )}
+            {diagErr && (
+              <p className="mt-2 text-[11px] font-semibold text-destructive">
+                تعذّر التشخيص: {diagErr}
+              </p>
+            )}
             {diag && (
               <dl className="mt-3 space-y-1.5 text-[11px]">
                 <DiagRow k="بيئة أصلية (تطبيق)" v={diag.native ? "نعم" : "لا — متصفح"} bad={!diag.native} />
