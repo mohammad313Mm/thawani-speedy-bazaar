@@ -34,6 +34,12 @@ let lastToken: string | null = null;
 let currentUserRole: DeviceRole | null = null;
 let navigateFn: ((path: string) => void) | null = null;
 
+// Registration failures used to go only to console.error, which is invisible on
+// a phone — so a device that never registers looks identical to one that has no
+// orders. Record the last stage reached so the profile page can show it.
+let lastStep = "لم تبدأ";
+let lastError: string | null = null;
+
 async function loadPlugin() {
   try {
     const { Capacitor } = await import("@capacitor/core");
@@ -64,7 +70,11 @@ async function sendTokenToServer(token: string, role: DeviceRole) {
   try {
     const { registerDeviceToken } = await import("./device-tokens.functions");
     await registerDeviceToken({ data: { token, platform: "android", role } });
+    lastStep = "حُفظ التوكن في الخادم";
+    lastError = null;
   } catch (err) {
+    lastStep = "فشل حفظ التوكن في الخادم";
+    lastError = err instanceof Error ? err.message : String(err);
     console.error("[push] registerDeviceToken failed", err);
   }
 }
@@ -100,10 +110,13 @@ async function bindListeners(
 
   await PushNotifications.addListener("registration", (t) => {
     lastToken = t.value;
+    lastStep = "وصل التوكن من FCM";
     if (currentUserRole) void sendTokenToServer(t.value, currentUserRole);
   });
 
   await PushNotifications.addListener("registrationError", (err) => {
+    lastStep = "رفض FCM إصدار توكن";
+    lastError = JSON.stringify(err);
     console.error("[push] registration error", err);
   });
 
@@ -132,7 +145,10 @@ export async function initPushNotifications(
   navigate: (path: string) => void,
 ) {
   const role = pickRole(roles, isTaxiDriver);
-  if (!role) return;
+  if (!role) {
+    lastStep = "لا يوجد دور عامل (تاجر/سائق/تكسي)";
+    return;
+  }
   // Keep role/navigate fresh even when registration already happened, so the
   // tap handler always routes with the current user's context.
   currentUserRole = role;
@@ -140,22 +156,30 @@ export async function initPushNotifications(
   if (registeredUserId === userId && registeredRole === role) return;
 
   const PushNotifications = await loadPlugin();
-  if (!PushNotifications) return; // web / no native runtime
+  if (!PushNotifications) {
+    lastStep = "ليست بيئة أصلية (متصفح) — الإضافة غير متاحة";
+    return;
+  }
 
   try {
+    lastStep = "فحص الإذن";
     const perm = await PushNotifications.checkPermissions();
     let status = perm.receive;
     if (status !== "granted") {
       const req = await PushNotifications.requestPermissions();
       status = req.receive;
     }
-    if (status !== "granted") return;
+    if (status !== "granted") {
+      lastStep = `الإذن غير ممنوح (${status})`;
+      return;
+    }
 
     await ensureChannel(PushNotifications);
     await bindListeners(PushNotifications);
 
     registeredUserId = userId;
     registeredRole = role;
+    lastStep = "طُلب التوكن من FCM — بانتظار الرد";
     await PushNotifications.register();
 
     // register() normally re-fires `registration`, but if the token is already
@@ -164,6 +188,8 @@ export async function initPushNotifications(
   } catch (err) {
     registeredUserId = null;
     registeredRole = null;
+    lastStep = "تعثّرت التهيئة";
+    lastError = err instanceof Error ? err.message : String(err);
     console.error("[push] init failed", err);
   }
 }
@@ -208,6 +234,33 @@ export async function getPushPermissionStatus(): Promise<PushPermState> {
   } catch {
     return "unsupported";
   }
+}
+
+export type PushDiagnostics = {
+  /** false in a plain browser — then nothing else can work. */
+  native: boolean;
+  permission: PushPermState;
+  /** Device role picked from the app roles, or null when none applies. */
+  deviceRole: DeviceRole | null;
+  hasToken: boolean;
+  /** Last 6 chars only — enough to tell two devices apart, useless to anyone else. */
+  tokenTail: string | null;
+  step: string;
+  error: string | null;
+};
+
+/** Snapshot of how far registration got, for the profile screen. */
+export async function getPushDiagnostics(): Promise<PushDiagnostics> {
+  const permission = await getPushPermissionStatus();
+  return {
+    native: permission !== "unsupported",
+    permission,
+    deviceRole: currentUserRole,
+    hasToken: !!lastToken,
+    tokenTail: lastToken ? lastToken.slice(-6) : null,
+    step: lastStep,
+    error: lastError,
+  };
 }
 
 export async function requestPushPermission(

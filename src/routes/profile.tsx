@@ -20,8 +20,10 @@ import { useEffect, useState } from "react";
 import { useTheme } from "../lib/theme";
 import { useAuth } from "../lib/auth";
 import {
+  getPushDiagnostics,
   getPushPermissionStatus,
   requestPushPermission,
+  type PushDiagnostics,
   type PushPermState,
 } from "../lib/push-notifications";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
@@ -45,6 +47,7 @@ function ProfilePage() {
 
   const [pushState, setPushState] = useState<PushPermState | null>(null);
   const [requesting, setRequesting] = useState(false);
+  const [diag, setDiag] = useState<PushDiagnostics | null>(null);
 
   useEffect(() => {
     if (!user || !needsPush) return;
@@ -166,6 +169,26 @@ function ProfilePage() {
           </section>
         )}
 
+        {needsPush && (
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+            <button
+              onClick={() => void getPushDiagnostics().then(setDiag)}
+              className="text-xs font-black text-muted-foreground"
+            >
+              تشخيص الإشعارات ⟳
+            </button>
+            {diag && (
+              <dl className="mt-3 space-y-1.5 text-[11px]">
+                <DiagRow k="بيئة أصلية (تطبيق)" v={diag.native ? "نعم" : "لا — متصفح"} bad={!diag.native} />
+                <DiagRow k="حالة الإذن" v={diag.permission} bad={diag.permission !== "granted"} />
+                <DiagRow k="دور الجهاز" v={diag.deviceRole ?? "لا يوجد"} bad={!diag.deviceRole} />
+                <DiagRow k="توكن FCM" v={diag.hasToken ? `…${diag.tokenTail}` : "لم يصل"} bad={!diag.hasToken} />
+                <DiagRow k="آخر مرحلة" v={diag.step} />
+                {diag.error && <DiagRow k="الخطأ" v={diag.error} bad />}
+              </dl>
+            )}
+          </section>
+        )}
 
         {/* Store Owners & Drivers sections */}
         <Section title="أصحاب المتاجر">
@@ -326,5 +349,20 @@ function ThemeChip({
       <span className={active ? "text-primary" : "text-foreground"}>{icon}</span>
       <span className="text-[11px] font-bold">{label}</span>
     </button>
+  );
+}
+
+function DiagRow({ k, v, bad }: { k: string; v: string; bad?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <dt className="shrink-0 text-muted-foreground">{k}</dt>
+      <dd
+        className={`min-w-0 break-words text-left font-semibold ${
+          bad ? "text-destructive" : "text-foreground"
+        }`}
+      >
+        {v}
+      </dd>
+    </div>
   );
 }
