@@ -1256,7 +1256,7 @@ function MerchantPushTester() {
     setError(null);
     setReport(null);
     try {
-      const res = await adminTestMerchantPush({ data: {} });
+      const res = await adminTestMerchantPush();
       setReport(res as typeof report);
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر تنفيذ الاختبار");
