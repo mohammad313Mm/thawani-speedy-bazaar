@@ -46,6 +46,8 @@ import {
   adminListAppCategories,
   adminListCategoryProducts,
   adminSaveCategoryProduct,
+  adminTestMerchantPush,
+  type MerchantPushResult,
 } from "../lib/admin.functions";
 import { compressAndUploadImage } from "../lib/image-compress";
 import { useAppCategoryOptions } from "../lib/app-category-options";
@@ -1235,6 +1237,127 @@ function BroadcastComposer({ areaId }: { areaId: string }) {
 }
 
 
+
+function MerchantPushTester() {
+  const [confirming, setConfirming] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [report, setReport] = useState<{
+    total: number;
+    accepted: number;
+    failed: number;
+    no_token: number;
+    results: MerchantPushResult[];
+  } | null>(null);
+
+  const run = async () => {
+    setConfirming(false);
+    setRunning(true);
+    setError(null);
+    setReport(null);
+    try {
+      const res = await adminTestMerchantPush({ data: {} });
+      setReport(res as typeof report);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "تعذر تنفيذ الاختبار");
+    }
+    setRunning(false);
+  };
+
+  const ok = (report?.results ?? []).filter((r) => r.status === "accepted");
+  const bad = (report?.results ?? []).filter((r) => r.status !== "accepted");
+  const fmt = (t: string) => new Date(t).toLocaleString("ar-IQ");
+
+  return (
+    <div className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
+      <p className="text-sm font-black">اختبار إشعارات أصحاب المتاجر</p>
+      <button
+        onClick={() => setConfirming(true)}
+        disabled={running}
+        className="w-full rounded-full bg-muted py-2.5 text-sm font-black disabled:opacity-50"
+      >
+        {running ? "جاري إرسال الإشعارات..." : "🧪 إرسال إشعار تجريبي لأصحاب المتاجر"}
+      </button>
+
+      {confirming && (
+        <div className="space-y-3 rounded-xl border border-border/60 bg-muted/50 p-3">
+          <p className="text-xs font-bold">
+            سيتم إرسال إشعار تجريبي إلى جميع أصحاب المتاجر المسجلين حاليًا. هل تريد المتابعة؟
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setConfirming(false)}
+              className="flex-1 rounded-full bg-card py-2 text-xs font-black"
+            >
+              إلغاء
+            </button>
+            <button
+              onClick={run}
+              className="flex-1 rounded-full bg-primary py-2 text-xs font-black text-primary-foreground"
+            >
+              إرسال الاختبار
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <p className="text-center text-xs font-bold text-destructive">{error}</p>}
+
+      {report && (
+        <div className="space-y-3 border-t border-border/40 pt-3">
+          <div className="grid grid-cols-2 gap-2 text-[11px] font-black">
+            <div className="rounded-xl bg-muted/60 p-2">إجمالي أصحاب المتاجر: {report.total}</div>
+            <div className="rounded-xl bg-muted/60 p-2">قبِلها FCM: {report.accepted}</div>
+            <div className="rounded-xl bg-muted/60 p-2">فشل الإرسال: {report.failed}</div>
+            <div className="rounded-xl bg-muted/60 p-2">بدون FCM Token: {report.no_token}</div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-black text-muted-foreground">✅ الإشعارات الناجحة</p>
+            {ok.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">لا يوجد</p>
+            ) : (
+              ok.map((r) => (
+                <div key={r.user_id} className="rounded-xl bg-muted/60 p-2.5">
+                  <p className="text-xs font-black">{r.merchant_name}</p>
+                  <p className="text-[11px] text-muted-foreground">المتجر: {r.store_name}</p>
+                  {r.phone && <p className="text-[11px] text-muted-foreground">الهاتف: {r.phone}</p>}
+                  <p className="text-[11px] text-muted-foreground">الحالة: تم قبول الإرسال من FCM</p>
+                  <p className="text-[10px] text-muted-foreground">{fmt(r.attempted_at)}</p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-black text-muted-foreground">❌ الإشعارات الفاشلة</p>
+            {bad.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground">لا يوجد</p>
+            ) : (
+              bad.map((r) => (
+                <div key={r.user_id} className="rounded-xl bg-destructive/10 p-2.5">
+                  <p className="text-xs font-black">{r.merchant_name}</p>
+                  <p className="text-[11px] text-muted-foreground">المتجر: {r.store_name}</p>
+                  {r.phone && <p className="text-[11px] text-muted-foreground">الهاتف: {r.phone}</p>}
+                  <p className="text-[11px] text-muted-foreground">
+                    FCM Token: {r.has_token ? "موجود" : "غير موجود"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    الحالة: {r.status === "no_token" ? "⚠️ لا يوجد FCM Token" : "❌ فشل الإرسال"}
+                  </p>
+                  {r.detail && (
+                    <p className="break-all text-[11px] text-muted-foreground">السبب: {r.detail}</p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground">{fmt(r.attempted_at)}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function NotificationsPanel({ areaId }: { areaId: string }) {
   const [rows, setRows] = useState<AdminNotif[]>([]);
