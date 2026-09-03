@@ -1278,6 +1278,7 @@ function NotificationsPanel({ areaId }: { areaId: string }) {
   return (
     <section className="space-y-4">
       <BroadcastComposer areaId={areaId} />
+      <MerchantPushTester />
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">إشعارات إدارية فورية</p>
