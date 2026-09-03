@@ -207,7 +207,12 @@ function ProfilePage() {
             )}
             {diag && (
               <dl className="mt-3 space-y-1.5 text-[11px]">
-                <DiagRow k="بيئة أصلية (تطبيق)" v={diag.native ? "نعم" : "لا — متصفح"} bad={!diag.native} />
+                <DiagRow k="المنصّة" v={diag.platform} bad={diag.platform === "web"} />
+                <DiagRow
+                  k="إضافة الإشعارات في التطبيق"
+                  v={diag.pluginAvailable ? "موجودة" : "غير موجودة — APK قديم"}
+                  bad={!diag.pluginAvailable}
+                />
                 <DiagRow k="حالة الإذن" v={diag.permission} bad={diag.permission !== "granted"} />
                 <DiagRow k="دور الجهاز" v={diag.deviceRole ?? "لا يوجد"} bad={!diag.deviceRole} />
                 <DiagRow k="توكن FCM" v={diag.hasToken ? `…${diag.tokenTail}` : "لم يصل"} bad={!diag.hasToken} />

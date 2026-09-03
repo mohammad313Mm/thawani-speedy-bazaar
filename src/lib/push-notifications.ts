@@ -236,7 +236,19 @@ export async function getPushPermissionStatus(): Promise<PushPermState> {
   }
 }
 
+/** A bridge call into a plugin the APK does not ship never settles. */
+function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export type PushDiagnostics = {
+  /** "android" | "ios" | "web" as reported by Capacitor. */
+  platform: string;
+  /** Whether the installed APK actually ships the PushNotifications plugin. */
+  pluginAvailable: boolean;
   /** false in a plain browser — then nothing else can work. */
   native: boolean;
   permission: PushPermState;
@@ -251,9 +263,27 @@ export type PushDiagnostics = {
 
 /** Snapshot of how far registration got, for the profile screen. */
 export async function getPushDiagnostics(): Promise<PushDiagnostics> {
-  const permission = await getPushPermissionStatus();
+  let platform = "web";
+  let pluginAvailable = false;
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    platform = Capacitor.getPlatform();
+    pluginAvailable = Capacitor.isPluginAvailable("PushNotifications");
+  } catch {
+    /* leave the defaults */
+  }
+
+  // Without the timeout the panel hangs on "loading" forever — the same silent
+  // failure we are trying to expose.
+  const permission = await withTimeout<PushPermState>(
+    getPushPermissionStatus(),
+    5000,
+    "unsupported",
+  );
   return {
-    native: permission !== "unsupported",
+    platform,
+    pluginAvailable,
+    native: platform !== "web",
     permission,
     deviceRole: currentUserRole,
     hasToken: !!lastToken,
