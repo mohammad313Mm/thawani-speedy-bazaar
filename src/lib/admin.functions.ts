@@ -518,3 +518,123 @@ export const adminSaveCategoryProduct = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/* ============== Test push to merchants (admin only) ============== */
+
+export type MerchantPushResult = {
+  user_id: string;
+  merchant_name: string;
+  phone: string | null;
+  store_name: string;
+  has_token: boolean;
+  status: "accepted" | "failed" | "no_token";
+  detail: string | null;
+  attempted_at: string;
+};
+
+export const adminTestMerchantPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendFcmDetailed } = await import("./fcm.server");
+
+    // Active store owners only.
+    const { data: stores, error: storesErr } = await supabaseAdmin
+      .from("stores")
+      .select("owner_id, name, status")
+      .not("owner_id", "is", null)
+      .eq("status", "active");
+    if (storesErr) throw new Error(storesErr.message);
+
+    const byOwner = new Map<string, string[]>();
+    for (const s of stores ?? []) {
+      const id = s.owner_id as string;
+      byOwner.set(id, [...(byOwner.get(id) ?? []), (s.name as string) || "متجر"]);
+    }
+    const ownerIds = [...byOwner.keys()];
+    if (ownerIds.length === 0) {
+      return { total: 0, accepted: 0, failed: 0, no_token: 0, results: [] as MerchantPushResult[] };
+    }
+
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, phone, status")
+      .in("id", ownerIds);
+    const profById = new Map((profiles ?? []).map((p) => [p.id as string, p]));
+
+    const { data: tokenRows } = await supabaseAdmin
+      .from("device_tokens")
+      .select("user_id, token")
+      .eq("role", "merchant")
+      .in("user_id", ownerIds);
+    const tokensByUser = new Map<string, string[]>();
+    for (const t of tokenRows ?? []) {
+      const uid = t.user_id as string;
+      tokensByUser.set(uid, [...(tokensByUser.get(uid) ?? []), t.token as string]);
+    }
+
+    const allTokens = [...new Set((tokenRows ?? []).map((t) => t.token as string))];
+    const sendResults = allTokens.length
+      ? await sendFcmDetailed(allTokens, {
+          title: "إشعار تجريبي - ثواني",
+          body: "هذا إشعار تجريبي للتأكد من عمل إشعارات أصحاب المتاجر بشكل صحيح.",
+          tag: "test-merchant-push",
+          data: { kind: "test", route: "/merchant/dashboard" },
+        })
+      : [];
+    const resByToken = new Map(sendResults.map((r) => [r.token, r]));
+
+    const results: MerchantPushResult[] = [];
+    for (const uid of ownerIds) {
+      const prof = profById.get(uid) as
+        | { full_name: string | null; phone: string | null; status: string }
+        | undefined;
+      if (prof && prof.status !== "active") continue; // skip suspended accounts
+      const storeName = (byOwner.get(uid) ?? []).join("، ") || "متجر";
+      const name = prof?.full_name?.trim() || "صاحب متجر";
+      const phone = prof?.phone ?? null;
+      const attempted_at = new Date().toISOString();
+      const toks = tokensByUser.get(uid) ?? [];
+      if (toks.length === 0) {
+        results.push({
+          user_id: uid,
+          merchant_name: name,
+          phone,
+          store_name: storeName,
+          has_token: false,
+          status: "no_token",
+          detail: "لا يوجد FCM Token مسجل لهذا الحساب",
+          attempted_at,
+        });
+        continue;
+      }
+      const rs = toks.map((t) => resByToken.get(t)).filter(Boolean) as {
+        ok: boolean;
+        status: number;
+        error?: string;
+      }[];
+      const okOne = rs.find((r) => r.ok);
+      results.push({
+        user_id: uid,
+        merchant_name: name,
+        phone,
+        store_name: storeName,
+        has_token: true,
+        status: okOne ? "accepted" : "failed",
+        detail: okOne
+          ? `تم قبول الإرسال من FCM (${rs.length} جهاز)`
+          : rs.map((r) => `HTTP ${r.status}: ${r.error ?? "خطأ غير معروف"}`).join(" | ") ||
+            "لم يصل رد من FCM",
+        attempted_at,
+      });
+    }
+
+    return {
+      total: results.length,
+      accepted: results.filter((r) => r.status === "accepted").length,
+      failed: results.filter((r) => r.status === "failed").length,
+      no_token: results.filter((r) => r.status === "no_token").length,
+      results,
+    };
+  });

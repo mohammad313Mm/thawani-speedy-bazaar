@@ -131,6 +131,20 @@ async function sendOne(
   return { token, ok: resp.ok, status: resp.status, error: resp.ok ? undefined : text };
 }
 
+/**
+ * Per-token send result, for diagnostics screens. Does NOT prune anything —
+ * callers decide what to do with invalid tokens.
+ */
+export async function sendFcmDetailed(
+  tokens: string[],
+  msg: FcmMessage,
+): Promise<{ token: string; ok: boolean; status: number; error?: string }[]> {
+  if (tokens.length === 0) return [];
+  const sa = loadServiceAccount();
+  const accessToken = await getAccessToken(sa);
+  return Promise.all(tokens.map((t) => sendOne(sa, accessToken, t, msg)));
+}
+
 export async function sendFcmToTokens(
   tokens: string[],
   msg: FcmMessage,
