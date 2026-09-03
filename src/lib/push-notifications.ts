@@ -40,11 +40,45 @@ let navigateFn: ((path: string) => void) | null = null;
 let lastStep = "لم تبدأ";
 let lastError: string | null = null;
 
-async function loadPlugin() {
+type PushPlugin = (typeof import("@capacitor/push-notifications"))["PushNotifications"];
+
+/** Resolve to `fallback` instead of hanging forever. */
+function raceTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+/**
+ * The native bridge already exposes every registered plugin on
+ * window.Capacitor.Plugins, so read it from there first and skip module
+ * loading entirely. On a real device the dynamic import of the plugin chunk
+ * never settled — registration froze before it could even check permissions,
+ * with no error to show for it. The import stays as the web/dev fallback.
+ */
+async function loadPlugin(): Promise<PushPlugin | null> {
+  if (typeof window === "undefined") return null;
+  const bridge = (window as unknown as {
+    Capacitor?: {
+      isNativePlatform?: () => boolean;
+      Plugins?: Record<string, unknown>;
+    };
+  }).Capacitor;
+
+  if (bridge?.isNativePlatform?.()) {
+    const direct = bridge.Plugins?.PushNotifications;
+    if (direct) return direct as PushPlugin;
+  }
+
   try {
     const { Capacitor } = await import("@capacitor/core");
     if (!Capacitor.isNativePlatform()) return null; // web: plugin unavailable
-    const mod = await import("@capacitor/push-notifications");
+    const mod = await raceTimeout(import("@capacitor/push-notifications"), 8000, null);
+    if (!mod) {
+      lastStep = "تعذّر تحميل إضافة الإشعارات";
+      return null;
+    }
     return mod.PushNotifications;
   } catch {
     return null;
@@ -163,7 +197,11 @@ export async function initPushNotifications(
 
   try {
     lastStep = "فحص الإذن";
-    const perm = await PushNotifications.checkPermissions();
+    const perm = await raceTimeout(PushNotifications.checkPermissions(), 8000, null);
+    if (!perm) {
+      lastStep = "لم يردّ الجسر على فحص الإذن";
+      return;
+    }
     let status = perm.receive;
     if (status !== "granted") {
       const req = await PushNotifications.requestPermissions();
@@ -236,14 +274,6 @@ export async function getPushPermissionStatus(): Promise<PushPermState> {
   }
 }
 
-/** A bridge call into a plugin the APK does not ship never settles. */
-function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
-  return Promise.race([
-    p,
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
-  ]);
-}
-
 export type PushDiagnostics = {
   /** "android" | "ios" | "web" as reported by Capacitor. */
   platform: string;
@@ -275,7 +305,7 @@ export async function getPushDiagnostics(): Promise<PushDiagnostics> {
 
   // Without the timeout the panel hangs on "loading" forever — the same silent
   // failure we are trying to expose.
-  const permission = await withTimeout<PushPermState>(
+  const permission = await raceTimeout<PushPermState>(
     getPushPermissionStatus(),
     5000,
     "unsupported",
