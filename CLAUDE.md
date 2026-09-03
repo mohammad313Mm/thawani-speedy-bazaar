@@ -45,6 +45,11 @@ customers whose phone the admin authorized in `taxi_drivers`; resolve with the `
   prompt entirely when the RPC is slow or fails.
 - Taxi fan-out re-resolves authorized drivers from `taxi_drivers` (by `user_id` **and** by phone via
   `profiles`), so deactivating a driver stops their pushes immediately.
+- **Never `import()` a Capacitor plugin lazily.** Inside the WebView that dynamic import never
+  settles — no success, no error — and registration freezes before it can even ask for permission.
+  Read the plugin off the injected bridge (`window.Capacitor.Plugins`) instead, and put a timeout on
+  every bridge call. This cost a full debugging session; the profile page's diagnostics panel
+  (`getPushDiagnostics`) is what finally located it.
 - `IncomingOrderModal` rings for `RING_SECONDS` (60) and stops the moment it unmounts (accept/reject).
   This only works while the app is foregrounded; background ringing would need a long `res/raw` sound.
 
