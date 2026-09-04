@@ -188,8 +188,14 @@ function CheckoutPage() {
             customer_lng: coords?.lng ?? null,
           },
         });
-      } catch {
-        /* non-fatal — local order still saved */
+      } catch (e) {
+        // Server rejected the order (e.g. a product became unavailable or the
+        // store stopped accepting orders) — surface the reason and do NOT
+        // confirm the order locally.
+        const msg = e instanceof Error ? e.message : "";
+        toast.error(msg || "تعذّر إرسال الطلب، حاول مجددًا");
+        setPlacing(false);
+        return;
       }
 
       clear();
