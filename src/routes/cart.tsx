@@ -37,6 +37,36 @@ function CartPage() {
   const [coupon, setCoupon] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
 
+  // Live availability check: cart items are snapshots, so re-read is_available
+  // from the database to catch products the merchant marked unavailable later.
+  const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+  const itemIdsKey = items.map((i) => i.productId).join(",");
+  useEffect(() => {
+    const ids = itemIdsKey.split(",").filter(Boolean);
+    if (!ids.length) {
+      setUnavailableIds(new Set());
+      return;
+    }
+    let alive = true;
+    supabase
+      .from("products")
+      .select("id, is_available")
+      .in("id", ids)
+      .then(({ data }) => {
+        if (!alive) return;
+        const set = new Set<string>();
+        for (const row of data ?? []) {
+          if (!(row as { is_available: boolean }).is_available)
+            set.add((row as { id: string }).id);
+        }
+        setUnavailableIds(set);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [itemIdsKey]);
+  const hasUnavailable = unavailableIds.size > 0;
+
   const deliveryFee = store?.deliveryFee ?? 0;
   const discount = applied?.discount ?? 0;
   const total = Math.max(0, subtotal - discount);
