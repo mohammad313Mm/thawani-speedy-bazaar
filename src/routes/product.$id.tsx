@@ -43,9 +43,9 @@ function ProductPage() {
 
   const total = (basePrice + extras) * qty;
 
-  const canAdd = (product?.options ?? [])
-    .filter((o) => o.required)
-    .every((o) => selectedOptions[o.name]);
+  const canAdd =
+    Boolean(product?.available) &&
+    (product?.options ?? []).filter((o) => o.required).every((o) => selectedOptions[o.name]);
 
   if (!product) {
     return (
@@ -99,6 +99,11 @@ function ProductPage() {
       </div>
 
       <main className="mx-auto max-w-2xl px-4 pb-40">
+        {!product.available && (
+          <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-sm font-black text-destructive">
+            المنتج غير متوفر حاليًا
+          </div>
+        )}
         <div className="mt-4 flex items-start justify-between gap-3">
           <div className="flex-1">
             <h1 className="text-2xl font-black text-foreground">{product.name}</h1>
