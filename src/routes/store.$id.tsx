@@ -55,6 +55,26 @@ function StorePage() {
     );
   }
 
+  if (!store.isOpen) {
+    return (
+      <main className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-16 text-center">
+        <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-4xl">
+          🔒
+        </div>
+        <h1 className="text-xl font-black text-foreground">{store.name}</h1>
+        <p className="max-w-xs text-sm font-bold text-muted-foreground">
+          المتجر غير متاح حاليًا ولا يمكن استقبال الطلبات.
+        </p>
+        <Link
+          to="/"
+          className="rounded-full bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground"
+        >
+          العودة للرئيسية
+        </Link>
+      </main>
+    );
+  }
+
   const fav = favStores.includes(store.id);
 
   return (

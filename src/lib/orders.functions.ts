@@ -65,11 +65,15 @@ export const placeOrder = createServerFn({ method: "POST" })
     // --- Area isolation: order must stay inside one admin-defined area ---
     const { data: storeArea, error: storeAreaErr } = await supabaseAdmin
       .from("stores")
-      .select("area_id")
+      .select("area_id, is_open, status")
       .eq("id", data.store_id)
       .maybeSingle();
     if (storeAreaErr) throw new Error(storeAreaErr.message);
-    const areaId = (storeArea as { area_id: string | null } | null)?.area_id ?? null;
+    const storeRow = storeArea as { area_id: string | null; is_open: boolean; status: string } | null;
+    if (!storeRow?.is_open || storeRow.status !== "active") {
+      throw new Error("المتجر غير متاح حاليًا ولا يمكن استقبال الطلبات.");
+    }
+    const areaId = storeRow.area_id ?? null;
     if (!areaId) throw new Error("عذراً، الخدمة غير متوفرة في موقعك حالياً.");
 
     if (data.customer_lat != null && data.customer_lng != null) {
