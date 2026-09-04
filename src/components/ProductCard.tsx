@@ -29,6 +29,11 @@ export function ProductCard({ product }: { product: Product }) {
               خصم
             </span>
           )}
+          {!product.available && (
+            <span className="absolute inset-0 flex items-center justify-center bg-background/60 text-[11px] font-black text-destructive">
+              المنتج غير متوفر حاليًا
+            </span>
+          )}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <h4 className="line-clamp-1 text-sm font-bold text-foreground">{product.name}</h4>
@@ -59,16 +64,22 @@ export function ProductCard({ product }: { product: Product }) {
             strokeWidth={2.2}
           />
         </button>
-        <button
-          onClick={() => {
-            addItem(product);
-            toast.success("تمت الإضافة إلى السلة", { description: product.name });
-          }}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-110 active:scale-95"
-          aria-label="أضف إلى السلة"
-        >
-          <Plus className="h-4 w-4" strokeWidth={3} />
-        </button>
+        {product.available ? (
+          <button
+            onClick={() => {
+              addItem(product);
+              toast.success("تمت الإضافة إلى السلة", { description: product.name });
+            }}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elegant transition-transform hover:scale-110 active:scale-95"
+            aria-label="أضف إلى السلة"
+          >
+            <Plus className="h-4 w-4" strokeWidth={3} />
+          </button>
+        ) : (
+          <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold text-muted-foreground">
+            غير متوفر
+          </span>
+        )}
       </div>
     </div>
   );
