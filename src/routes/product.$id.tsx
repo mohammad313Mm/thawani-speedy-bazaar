@@ -198,15 +198,17 @@ function ProductPage() {
         <div className="mx-auto flex max-w-2xl items-center gap-3 p-4">
           <div className="flex items-center gap-2 rounded-full bg-muted p-1">
             <button
+              disabled={!product.available}
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-soft"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-soft disabled:opacity-40"
             >
               <Minus className="h-4 w-4" />
             </button>
             <span className="w-6 text-center text-sm font-black">{qty}</span>
             <button
+              disabled={!product.available}
               onClick={() => setQty((q) => q + 1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-soft"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-card shadow-soft disabled:opacity-40"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -220,9 +222,15 @@ function ProductPage() {
             }}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-primary py-3.5 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-50"
           >
-            <span>أضف إلى السلة</span>
-            <span className="opacity-80">•</span>
-            <span>{formatIQD(total)}</span>
+            {product.available ? (
+              <>
+                <span>أضف إلى السلة</span>
+                <span className="opacity-80">•</span>
+                <span>{formatIQD(total)}</span>
+              </>
+            ) : (
+              <span>غير متوفر حاليًا</span>
+            )}
           </button>
         </div>
       </div>
