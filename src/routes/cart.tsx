@@ -137,6 +137,11 @@ function CartPage() {
               />
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-bold text-foreground">{p.name}</h3>
+                {unavailableIds.has(it.productId) && (
+                  <p className="mt-0.5 text-[11px] font-bold text-destructive">
+                    هذا المنتج أصبح غير متوفر حاليًا
+                  </p>
+                )}
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {formatIQD(price)} × {it.quantity}
                 </p>
@@ -217,12 +222,18 @@ function CartPage() {
       </main>
 
       <div className="fixed bottom-nav-offset left-0 right-0 z-30 px-3 sm:px-4">
-        <Link
-          to="/checkout"
-          className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant"
-        >
-          متابعة الطلب • {formatIQD(total)}
-        </Link>
+        {hasUnavailable ? (
+          <div className="mx-auto max-w-2xl rounded-full bg-muted py-4 text-center text-sm font-black text-muted-foreground">
+            أزل المنتجات غير المتوفرة لمتابعة الطلب
+          </div>
+        ) : (
+          <Link
+            to="/checkout"
+            className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant"
+          >
+            متابعة الطلب • {formatIQD(total)}
+          </Link>
+        )}
       </div>
     </>
   );
