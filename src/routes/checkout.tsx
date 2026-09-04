@@ -36,7 +36,7 @@ function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: num
 function CheckoutPage() {
   const navigate = useNavigate();
   const { items, storeId, subtotal, clear } = useCart();
-  const { addOrder } = useOrders();
+  const { addOrder, cancelOrder } = useOrders();
   const staticStore = storeId ? storeById(storeId) : null;
   const [dbStore, setDbStore] = useState<ReturnType<typeof storeById> | null>(null);
   const [storeCoords, setStoreCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -188,8 +188,15 @@ function CheckoutPage() {
             customer_lng: coords?.lng ?? null,
           },
         });
-      } catch {
-        /* non-fatal — local order still saved */
+      } catch (e) {
+        // Server rejected the order (e.g. a product became unavailable or the
+        // store stopped accepting orders) — surface the reason and do NOT
+        // confirm the order locally.
+        cancelOrder(order.id);
+        const msg = e instanceof Error ? e.message : "";
+        toast.error(msg || "تعذّر إرسال الطلب، حاول مجددًا");
+        setPlacing(false);
+        return;
       }
 
       clear();

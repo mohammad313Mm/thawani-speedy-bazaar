@@ -56,7 +56,8 @@ export const placeOrder = createServerFn({ method: "POST" })
     for (const it of data.items) {
       const p = priceMap.get(it.product_id);
       if (!p) throw new Error("Invalid product in cart");
-      if (!p.available) throw new Error("Product no longer available");
+      if (!p.available)
+        throw new Error(`المنتج "${p.name}" أصبح غير متوفر حاليًا ولا يمكن إتمام الطلب به.`);
       if (p.store_id !== data.store_id) throw new Error("Product does not belong to this store");
       subtotal += p.price * it.qty;
       items.push({ name: p.name, qty: it.qty, price: p.price });

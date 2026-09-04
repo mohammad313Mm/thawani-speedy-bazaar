@@ -136,7 +136,6 @@ export const listAreaProducts = createServerFn({ method: "POST" })
       .from("products")
       .select("*")
       .eq("store_id", data.storeId)
-      .eq("is_available", true)
       .order("sort_order");
     return { products: rows ?? [] };
   });

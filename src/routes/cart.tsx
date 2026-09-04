@@ -37,6 +37,36 @@ function CartPage() {
   const [coupon, setCoupon] = useState("");
   const [applied, setApplied] = useState<{ code: string; discount: number } | null>(null);
 
+  // Live availability check: cart items are snapshots, so re-read is_available
+  // from the database to catch products the merchant marked unavailable later.
+  const [unavailableIds, setUnavailableIds] = useState<Set<string>>(new Set());
+  const itemIdsKey = items.map((i) => i.productId).join(",");
+  useEffect(() => {
+    const ids = itemIdsKey.split(",").filter(Boolean);
+    if (!ids.length) {
+      setUnavailableIds(new Set());
+      return;
+    }
+    let alive = true;
+    supabase
+      .from("products")
+      .select("id, is_available")
+      .in("id", ids)
+      .then(({ data }) => {
+        if (!alive) return;
+        const set = new Set<string>();
+        for (const row of data ?? []) {
+          if (!(row as { is_available: boolean }).is_available)
+            set.add((row as { id: string }).id);
+        }
+        setUnavailableIds(set);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [itemIdsKey]);
+  const hasUnavailable = unavailableIds.size > 0;
+
   const deliveryFee = store?.deliveryFee ?? 0;
   const discount = applied?.discount ?? 0;
   const total = Math.max(0, subtotal - discount);
@@ -107,6 +137,11 @@ function CartPage() {
               />
               <div className="min-w-0 flex-1">
                 <h3 className="line-clamp-1 text-sm font-bold text-foreground">{p.name}</h3>
+                {unavailableIds.has(it.productId) && (
+                  <p className="mt-0.5 text-[11px] font-bold text-destructive">
+                    هذا المنتج أصبح غير متوفر حاليًا
+                  </p>
+                )}
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {formatIQD(price)} × {it.quantity}
                 </p>
@@ -187,12 +222,18 @@ function CartPage() {
       </main>
 
       <div className="fixed bottom-nav-offset left-0 right-0 z-30 px-3 sm:px-4">
-        <Link
-          to="/checkout"
-          className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant"
-        >
-          متابعة الطلب • {formatIQD(total)}
-        </Link>
+        {hasUnavailable ? (
+          <div className="mx-auto max-w-2xl rounded-full bg-muted py-4 text-center text-sm font-black text-muted-foreground">
+            أزل المنتجات غير المتوفرة لمتابعة الطلب
+          </div>
+        ) : (
+          <Link
+            to="/checkout"
+            className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant"
+          >
+            متابعة الطلب • {formatIQD(total)}
+          </Link>
+        )}
       </div>
     </>
   );
