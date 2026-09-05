@@ -12,13 +12,13 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
+// Keep in sync with the server-side tiers in src/lib/orders.functions.ts so
+// the displayed fee is exactly the fee adopted when the order is created.
 function feeForDistance(km: number): number {
-  if (km < 3) return 1000;
-  if (km < 5) return 2000;
-  if (km < 8) return 3000;
-  if (km < 11) return 4000;
-  if (km < 15) return 5000;
-  return 6000;
+  if (km < 4) return 1000;
+  if (km < 7) return 2000;
+  if (km < 12) return 3000;
+  return 5000;
 }
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -274,7 +274,9 @@ function CheckoutPage() {
             <label className="text-xs font-black text-foreground">
               <Truck className="mb-1 inline h-3.5 w-3.5 text-primary" /> سعر التوصيل
             </label>
-            <span className="text-sm font-black text-primary">{formatIQD(deliveryFee)}</span>
+            <span className="text-sm font-black text-primary">
+              {coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+            </span>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
             {coords && storeCoords
@@ -334,11 +336,16 @@ function CheckoutPage() {
           <h3 className="mb-3 text-xs font-black text-foreground">ملخص الطلب</h3>
           <div className="space-y-1.5 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
-            <Row label="سعر التوصيل" value={formatIQD(deliveryFee)} />
+            <Row
+              label="سعر التوصيل"
+              value={coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+            />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
-              <span className="text-primary">{formatIQD(total)}</span>
+              <span className="text-primary">
+                {coords ? formatIQD(total) : "يُحدد بعد تحديد موقعك"}
+              </span>
             </div>
 
           </div>
@@ -355,7 +362,11 @@ function CheckoutPage() {
             onClick={place}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-70"
           >
-            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(total)}`}
+            {placing
+              ? "جاري تأكيد الطلب..."
+              : coords
+                ? `تأكيد الطلب • ${formatIQD(total)}`
+                : "تأكيد الطلب"}
           </button>
         </div>
       </div>
