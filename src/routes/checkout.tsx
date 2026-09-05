@@ -336,11 +336,16 @@ function CheckoutPage() {
           <h3 className="mb-3 text-xs font-black text-foreground">ملخص الطلب</h3>
           <div className="space-y-1.5 text-sm">
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
-            <Row label="سعر التوصيل" value={formatIQD(deliveryFee)} />
+            <Row
+              label="سعر التوصيل"
+              value={coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+            />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
-              <span className="text-primary">{formatIQD(total)}</span>
+              <span className="text-primary">
+                {coords ? formatIQD(total) : "يُحدد بعد تحديد موقعك"}
+              </span>
             </div>
 
           </div>
