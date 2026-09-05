@@ -274,7 +274,9 @@ function CheckoutPage() {
             <label className="text-xs font-black text-foreground">
               <Truck className="mb-1 inline h-3.5 w-3.5 text-primary" /> سعر التوصيل
             </label>
-            <span className="text-sm font-black text-primary">{formatIQD(deliveryFee)}</span>
+            <span className="text-sm font-black text-primary">
+              {coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+            </span>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
             {coords && storeCoords
