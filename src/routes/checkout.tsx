@@ -12,13 +12,13 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
+// Keep in sync with the server-side tiers in src/lib/orders.functions.ts so
+// the displayed fee is exactly the fee adopted when the order is created.
 function feeForDistance(km: number): number {
-  if (km < 3) return 1000;
-  if (km < 5) return 2000;
-  if (km < 8) return 3000;
-  if (km < 11) return 4000;
-  if (km < 15) return 5000;
-  return 6000;
+  if (km < 4) return 1000;
+  if (km < 7) return 2000;
+  if (km < 12) return 3000;
+  return 5000;
 }
 
 function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
