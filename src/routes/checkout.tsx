@@ -362,7 +362,11 @@ function CheckoutPage() {
             onClick={place}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary py-4 text-sm font-black text-primary-foreground shadow-elegant transition-transform active:scale-95 disabled:opacity-70"
           >
-            {placing ? "جاري تأكيد الطلب..." : `تأكيد الطلب • ${formatIQD(total)}`}
+            {placing
+              ? "جاري تأكيد الطلب..."
+              : coords
+                ? `تأكيد الطلب • ${formatIQD(total)}`
+                : "تأكيد الطلب"}
           </button>
         </div>
       </div>
