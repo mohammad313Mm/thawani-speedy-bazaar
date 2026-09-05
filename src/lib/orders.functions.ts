@@ -23,10 +23,12 @@ const inputSchema = z.object({
 });
 
 function feeForDistance(km: number): number {
-  if (km < 4) return 1000;
-  if (km < 7) return 2000;
-  if (km < 12) return 3000;
-  return 5000;
+  if (km < 3) return 1000;
+  if (km < 5) return 2000;
+  if (km < 7) return 3000;
+  if (km < 10) return 4000;
+  if (km <= 12) return 5000;
+  return 6000;
 }
 
 export const placeOrder = createServerFn({ method: "POST" })
