@@ -1,8 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  feeForDistance,
+  haversineKm,
+  isValidCoord,
+  STORE_NO_LOCATION_MSG,
+} from "./delivery-fee";
 
-// Server-authoritative order placement. Prices, delivery fee, and totals are
-// recomputed from the database — the client cannot dictate them.
+// Server-authoritative order placement. Prices, distance, delivery fee, and
+// totals are recomputed from the database — the client cannot dictate them.
 
 const inputSchema = z.object({
   local_order_id: z.string().min(1),
@@ -16,20 +22,11 @@ const inputSchema = z.object({
     .array(z.object({ product_id: z.string().uuid(), qty: z.number().int().min(1).max(999) }))
     .min(1)
     .max(200),
-  distance_km: z.number().min(0).max(500),
   payment_method: z.enum(["cod", "wallet"]),
   customer_lat: z.number().nullable().optional(),
   customer_lng: z.number().nullable().optional(),
 });
 
-function feeForDistance(km: number): number {
-  if (km < 3) return 1000;
-  if (km < 5) return 2000;
-  if (km < 7) return 3000;
-  if (km < 10) return 4000;
-  if (km <= 12) return 5000;
-  return 6000;
-}
 
 export const placeOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => inputSchema.parse(d))
@@ -68,11 +65,17 @@ export const placeOrder = createServerFn({ method: "POST" })
     // --- Area isolation: order must stay inside one admin-defined area ---
     const { data: storeArea, error: storeAreaErr } = await supabaseAdmin
       .from("stores")
-      .select("area_id, is_open, status")
+      .select("area_id, is_open, status, latitude, longitude")
       .eq("id", data.store_id)
       .maybeSingle();
     if (storeAreaErr) throw new Error(storeAreaErr.message);
-    const storeRow = storeArea as { area_id: string | null; is_open: boolean; status: string } | null;
+    const storeRow = storeArea as {
+      area_id: string | null;
+      is_open: boolean;
+      status: string;
+      latitude: number | null;
+      longitude: number | null;
+    } | null;
     if (!storeRow?.is_open || storeRow.status !== "active") {
       throw new Error("المتجر غير متاح حاليًا ولا يمكن استقبال الطلبات.");
     }
@@ -89,8 +92,20 @@ export const placeOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const delivery_fee = feeForDistance(data.distance_km);
+    // --- Delivery fee: distance is recomputed here from the real coordinates ---
+    if (!isValidCoord(data.customer_lat, data.customer_lng)) {
+      throw new Error("يرجى تحديد موقعك أولاً لاحتساب أجور التوصيل.");
+    }
+    if (!isValidCoord(storeRow.latitude, storeRow.longitude)) {
+      throw new Error(STORE_NO_LOCATION_MSG);
+    }
+    const distance_km = haversineKm(
+      { lat: data.customer_lat as number, lng: data.customer_lng as number },
+      { lat: storeRow.latitude as number, lng: storeRow.longitude as number },
+    );
+    const delivery_fee = feeForDistance(distance_km);
     const total = subtotal + delivery_fee;
+
 
     const { data: inserted, error: insErr } = await supabaseAdmin
       .from("customer_orders")
