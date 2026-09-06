@@ -12,27 +12,9 @@ export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
 
-// Keep in sync with the server-side tiers in src/lib/orders.functions.ts so
-// the displayed fee is exactly the fee adopted when the order is created.
-function feeForDistance(km: number): number {
-  if (km < 3) return 1000;
-  if (km < 5) return 2000;
-  if (km < 7) return 3000;
-  if (km < 10) return 4000;
-  if (km <= 12) return 5000;
-  return 6000;
-}
+// Delivery pricing lives in one place only: the server (quoteDeliveryFee /
+// placeOrder). The UI never computes or assumes a fee.
 
-function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
 
 
 function CheckoutPage() {
@@ -71,14 +53,50 @@ function CheckoutPage() {
   const [notes, setNotes] = useState("");
   const [payment, setPayment] = useState<"cod" | "wallet">("cod");
   const [placing, setPlacing] = useState(false);
-  const [distanceKm, setDistanceKm] = useState<number>(store?.distanceKm ?? 3);
+  const [quote, setQuote] = useState<{ distance_km: number; delivery_fee: number } | null>(null);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // Recompute distance whenever both the customer and store coordinates are known.
+  // Ask the server for an authoritative quote whenever the customer location or
+  // the store changes. No location -> no fee at all.
   useEffect(() => {
-    if (coords && storeCoords) setDistanceKm(haversineKm(coords, storeCoords));
-  }, [coords, storeCoords]);
+    if (!coords || !storeId) {
+      setQuote(null);
+      setQuoteError(null);
+      return;
+    }
+    let alive = true;
+    setQuoteError(null);
+    (async () => {
+      try {
+        const { quoteDeliveryFee } = await import("../lib/delivery.functions");
+        const res = await quoteDeliveryFee({
+          data: { store_id: storeId, customer_lat: coords.lat, customer_lng: coords.lng },
+        });
+        if (!alive) return;
+        if (res.ok) {
+          setQuote({ distance_km: res.distance_km, delivery_fee: res.delivery_fee });
+        } else {
+          setQuote(null);
+          setQuoteError(
+            res.reason === "store_no_location"
+              ? "لم يحدد المتجر موقعه على الخريطة بعد، لذلك لا يمكن احتساب أجور التوصيل."
+              : "تعذّر قراءة موقعك، حاول تحديد الموقع مجدداً.",
+          );
+        }
+      } catch {
+        if (alive) {
+          setQuote(null);
+          setQuoteError("تعذّر احتساب أجور التوصيل، حاول مجدداً.");
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [coords, storeId]);
+
 
   // Admin-defined delivery areas (polygons) decide whether we cover the customer.
   const [areas, setAreas] = useState<DeliveryArea[]>([]);
@@ -106,8 +124,9 @@ function CheckoutPage() {
     );
   }
 
-  const deliveryFee = feeForDistance(distanceKm);
-  const total = subtotal + deliveryFee;
+  const deliveryFee = quote?.delivery_fee ?? null;
+  const total = subtotal + (deliveryFee ?? 0);
+
 
   const useMyLocation = () => {
     if (!("geolocation" in navigator)) {
@@ -128,9 +147,8 @@ function CheckoutPage() {
             const j = await res.json();
             if (j.display_name) setAddress(j.display_name);
           }
-          // Distance is computed from the store coordinates (effect above);
-          // fall back to the store's declared distance for demo stores.
-          if (!storeCoords && store) setDistanceKm(store.distanceKm);
+          // The delivery quote is refetched from the server by the effect above.
+
 
           toast.success("تم تحديد موقعك");
         } finally {
@@ -152,6 +170,10 @@ function CheckoutPage() {
     if (items.length === 0) return toast.error("السلة فارغة");
     if (outsideCoverage)
       return toast.error("عذراً، الخدمة غير متوفرة في موقعك حالياً — موقعك خارج مناطق التوصيل");
+    if (deliveryFee == null)
+      return toast.error(
+        quoteError ?? "الرجاء الضغط على «استخدم موقعي» لاحتساب أجور التوصيل قبل تأكيد الطلب",
+      );
 
     setPlacing(true);
     setTimeout(async () => {
@@ -160,6 +182,7 @@ function CheckoutPage() {
         items,
         subtotal,
         deliveryFee,
+
         discount: 0,
         total,
         etaMin: store?.deliveryMin ?? 30,
@@ -184,8 +207,8 @@ function CheckoutPage() {
             items: items
               .filter((it) => /^[0-9a-f-]{36}$/i.test(it.productId))
               .map((it) => ({ product_id: it.productId, qty: it.quantity })),
-            distance_km: distanceKm,
             payment_method: payment,
+
             customer_lat: coords?.lat ?? null,
             customer_lng: coords?.lng ?? null,
           },
@@ -256,9 +279,12 @@ function CheckoutPage() {
             placeholder="أدخل عنوان التوصيل"
             className="mt-2 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
           />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(distanceKm)}
-          </p>
+          {quote && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              المسافة إلى {store?.name ?? "المتجر"}: {formatDistanceKm(quote.distance_km)}
+            </p>
+          )}
+
           {matchedArea && (
             <p className="mt-2 rounded-xl bg-success/10 px-3 py-2 text-[11px] font-bold text-success">
               موقعك ضمن منطقة التوصيل: {matchedArea.name_ar}
@@ -277,14 +303,20 @@ function CheckoutPage() {
               <Truck className="mb-1 inline h-3.5 w-3.5 text-primary" /> سعر التوصيل
             </label>
             <span className="text-sm font-black text-primary">
-              {coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+              {deliveryFee != null ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
             </span>
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            {coords && storeCoords
-              ? `محتسب تلقائياً حسب المسافة (${formatDistanceKm(distanceKm)}) بين موقعك وموقع المتجر.`
+            {quote
+              ? `محتسب تلقائياً حسب المسافة (${formatDistanceKm(quote.distance_km)}) بين موقعك وموقع المتجر.`
               : "حدّد موقعك بالضغط على «استخدم موقعي» لاحتساب سعر التوصيل حسب المسافة."}
           </p>
+          {quoteError && (
+            <p className="mt-2 rounded-xl bg-destructive/10 px-3 py-2 text-[11px] font-bold text-destructive">
+              {quoteError}
+            </p>
+          )}
+
         </section>
 
 
@@ -340,15 +372,16 @@ function CheckoutPage() {
             <Row label="المجموع الفرعي" value={formatIQD(subtotal)} />
             <Row
               label="سعر التوصيل"
-              value={coords ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
+              value={deliveryFee != null ? formatIQD(deliveryFee) : "يُحدد بعد تحديد موقعك"}
             />
             <div className="my-2 h-px bg-border" />
             <div className="flex items-center justify-between text-base font-black">
               <span>الإجمالي</span>
               <span className="text-primary">
-                {coords ? formatIQD(total) : "يُحدد بعد تحديد موقعك"}
+                {deliveryFee != null ? formatIQD(total) : "يُحدد بعد تحديد موقعك"}
               </span>
             </div>
+
 
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">
@@ -366,9 +399,10 @@ function CheckoutPage() {
           >
             {placing
               ? "جاري تأكيد الطلب..."
-              : coords
+              : deliveryFee != null
                 ? `تأكيد الطلب • ${formatIQD(total)}`
                 : "تأكيد الطلب"}
+
           </button>
         </div>
       </div>
