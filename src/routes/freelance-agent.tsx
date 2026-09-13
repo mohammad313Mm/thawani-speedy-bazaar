@@ -174,7 +174,7 @@ function FreelanceAgentPage() {
               <Info className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-bold text-foreground">تكلفة التوصيل داخل المنطقة: 2000 دينار عراقي</p>
+              <p className="text-sm font-bold text-foreground">تكلفة التوصيل داخل المنطقة: 1000 دينار عراقي</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 السعر النهائي قد يتغير حسب بعد المسافة أو حجم الطلب.
               </p>
