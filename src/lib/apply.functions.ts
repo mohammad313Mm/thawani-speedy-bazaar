@@ -59,7 +59,11 @@ export const submitApplication = createServerFn({ method: "POST" })
     const table = data.kind === "merchant" ? "merchant_applications" : "driver_applications";
     const row =
       data.kind === "merchant"
-        ? { ...base, store_name: data.store_name ?? null }
+        ? {
+            ...base,
+            store_name: data.store_name ?? null,
+            general_store_id: data.general_store_id ?? null,
+          }
         : { ...base, vehicle_type: data.vehicle_type ?? null };
 
     const { error } = await supabaseAdmin
