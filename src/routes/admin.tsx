@@ -273,6 +273,8 @@ function AdminPage() {
           <AreasPanel />
         ) : section === "support" ? (
           <AdminSupportChat />
+        ) : section === "general" ? (
+          <GeneralStoresPanel />
         ) : !area ? (
           <AreaSelector title={SECTION_LABELS[section]} onPick={setArea} />
         ) : (
