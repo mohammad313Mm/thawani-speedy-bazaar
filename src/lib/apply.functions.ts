@@ -11,6 +11,7 @@ const schema = z.object({
   full_name: z.string().min(1),
   phone: z.string().min(1),
   store_name: z.string().nullable().optional(),
+  general_store_id: z.string().uuid().nullable().optional(),
   vehicle_type: z.string().nullable().optional(),
   applicant_note: z.string().nullable().optional(),
   lat: z.number().min(-90).max(90).optional(),
