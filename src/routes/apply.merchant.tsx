@@ -76,6 +76,7 @@ function MerchantApplyPage() {
             kind: "merchant",
             full_name: fullName,
             phone: normalized,
+            general_store_id: generalStoreId || null,
             ...(currentCoords() ?? {}),
           },
         });
@@ -159,6 +160,24 @@ function MerchantApplyPage() {
               className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
             />
           </label>
+
+          {generalStores.length > 0 && (
+            <label className="block">
+              <span className="text-xs font-black text-foreground">
+                متجر من "العامة" (اختياري)
+              </span>
+              <select
+                value={generalStoreId}
+                onChange={(e) => setGeneralStoreId(e.target.value)}
+                className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
+              >
+                <option value="">متجر خاص بي</option>
+                {generalStores.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </label>
+          )}
 
           {error && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
