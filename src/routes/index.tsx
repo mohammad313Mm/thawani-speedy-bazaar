@@ -13,6 +13,7 @@ import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-sto
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
 import { useMyArea } from "../lib/use-area";
+import { listGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
