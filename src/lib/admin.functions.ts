@@ -638,3 +638,108 @@ export const adminTestMerchantPush = createServerFn({ method: "POST" })
       results,
     };
   });
+
+/* ============== "العامة" — admin-managed general store icons ============== */
+
+const generalStoreSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().trim().min(1).max(120),
+  logo_url: z.string().nullable().optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
+  phone: z.string().trim().max(30).nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  is_active: z.boolean().default(true),
+  is_available: z.boolean().default(true),
+  area_ids: z.array(z.string().uuid()).default([]),
+});
+
+export const adminListGeneralStores = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("stores")
+      .select("id, name, logo_url, description, phone, latitude, longitude, is_open, status, owner_id, created_at")
+      .eq("is_general", true)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const ids = (rows ?? []).map((r) => r.id as string);
+    let links: { store_id: string; area_id: string }[] = [];
+    if (ids.length) {
+      const { data: l } = await supabaseAdmin
+        .from("general_store_areas")
+        .select("store_id, area_id")
+        .in("store_id", ids);
+      links = (l ?? []) as { store_id: string; area_id: string }[];
+    }
+    const areasByStore: Record<string, string[]> = {};
+    for (const l of links) {
+      areasByStore[l.store_id] = [...(areasByStore[l.store_id] ?? []), l.area_id];
+    }
+    const { data: areas } = await supabaseAdmin
+      .from("delivery_areas")
+      .select("id, name_ar")
+      .order("name_ar");
+    return {
+      rows: (rows ?? []).map((r) => ({ ...r, area_ids: areasByStore[r.id as string] ?? [] })),
+      areas: (areas ?? []) as { id: string; name_ar: string }[],
+    };
+  });
+
+export const adminSaveGeneralStore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => generalStoreSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const row = {
+      name: data.name,
+      logo_url: data.logo_url ?? null,
+      description: data.description ?? null,
+      phone: data.phone ?? null,
+      latitude: data.latitude ?? null,
+      longitude: data.longitude ?? null,
+      is_general: true,
+      status: data.is_active ? ("active" as const) : ("suspended" as const),
+      is_open: data.is_available,
+    };
+    let storeId = data.id;
+    if (storeId) {
+      const { error } = await supabaseAdmin.from("stores").update(row).eq("id", storeId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: created, error } = await supabaseAdmin
+        .from("stores")
+        .insert(row)
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      storeId = created!.id as string;
+    }
+
+    await supabaseAdmin.from("general_store_areas").delete().eq("store_id", storeId);
+    if (data.area_ids.length) {
+      const { error } = await supabaseAdmin
+        .from("general_store_areas")
+        .insert(data.area_ids.map((area_id) => ({ store_id: storeId!, area_id })));
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true, id: storeId };
+  });
+
+export const adminDeleteGeneralStore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("stores")
+      .delete()
+      .eq("id", data.id)
+      .eq("is_general", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
