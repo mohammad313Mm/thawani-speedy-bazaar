@@ -2707,7 +2707,7 @@ function GeneralStoresPanel() {
       await adminSaveGeneralStore({
         data: {
           id: r.id, name: r.name, logo_url: r.logo_url, description: r.description,
-          phone: r.phone, latitude: r.latitude, longitude: r.longitude,
+          phone: r.phone,
           is_active: patch.is_active ?? r.status === "active",
           is_available: patch.is_available ?? r.is_open,
           area_ids: r.area_ids,
