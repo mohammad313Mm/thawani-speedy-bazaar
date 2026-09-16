@@ -709,8 +709,6 @@ export const adminSaveGeneralStore = createServerFn({ method: "POST" })
       logo_url: data.logo_url ?? null,
       description: data.description ?? null,
       phone: data.phone ?? null,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
       is_general: true,
       status: data.is_active ? ("active" as const) : ("suspended" as const),
       is_open: data.is_available,
