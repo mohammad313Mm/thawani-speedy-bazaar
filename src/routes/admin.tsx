@@ -2788,8 +2788,6 @@ function GeneralStoreEditor({
   const [logo, setLogo] = useState(row?.logo_url ?? "");
   const [description, setDescription] = useState(row?.description ?? "");
   const [phone, setPhone] = useState(row?.phone ?? "");
-  const [lat, setLat] = useState(row?.latitude != null ? String(row.latitude) : "");
-  const [lng, setLng] = useState(row?.longitude != null ? String(row.longitude) : "");
   const [areaIds, setAreaIds] = useState<string[]>(row?.area_ids ?? []);
   const [saving, setSaving] = useState(false);
 
