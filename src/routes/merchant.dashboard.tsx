@@ -171,7 +171,9 @@ function MerchantDashboard() {
     );
   }
 
-  if (!store.category) {
+  // "العامة" icons are created by the admin (name/logo/areas). Their owner only
+  // needs the normal dashboard, where the existing "تحديد موقعي" section lives.
+  if (!store.category && !store.is_general) {
     return <StoreSetup store={store} onSaved={(s) => setStore(s)} onSignOut={signOut} />;
   }
 
