@@ -2752,7 +2752,7 @@ function GeneralStoresPanel() {
                   : r.area_ids.map((id) => areas.find((a) => a.id === id)?.name_ar ?? "—").join("، ")}
               </p>
               {!(r.latitude && r.longitude) && (
-                <p className="text-[11px] font-bold text-destructive">لم يتم تحديد موقع المتجر (أجور التوصيل لن تُحتسب)</p>
+                <p className="text-[11px] font-bold text-destructive">لم يحدد صاحب المتجر موقع المتجر بعد (أجور التوصيل لن تُحتسب)</p>
               )}
             </div>
           </div>
