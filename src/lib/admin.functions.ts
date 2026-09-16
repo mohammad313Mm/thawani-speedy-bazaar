@@ -47,20 +47,30 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
       await supabaseAdmin.from("profiles").update({ status: "active" }).eq("id", updated.user_id);
 
       if (data.kind === "merchant") {
-        const { data: existing } = await supabaseAdmin
-          .from("stores")
-          .select("id")
-          .eq("owner_id", updated.user_id)
-          .maybeSingle();
-        if (!existing) {
-          await supabaseAdmin.from("stores").insert({
-            owner_id: updated.user_id,
-            name: (updated as { store_name?: string | null }).store_name || "متجري",
-            status: "active",
-            is_open: true,
-          });
+        // A general ("العامة") icon chosen at registration takes ownership of
+        // that existing store instead of creating a new one.
+        const generalStoreId = (updated as { general_store_id?: string | null }).general_store_id;
+        if (generalStoreId) {
+          await supabaseAdmin
+            .from("stores")
+            .update({ owner_id: updated.user_id, status: "active" })
+            .eq("id", generalStoreId);
         } else {
-          await supabaseAdmin.from("stores").update({ status: "active" }).eq("id", existing.id);
+          const { data: existing } = await supabaseAdmin
+            .from("stores")
+            .select("id")
+            .eq("owner_id", updated.user_id)
+            .maybeSingle();
+          if (!existing) {
+            await supabaseAdmin.from("stores").insert({
+              owner_id: updated.user_id,
+              name: (updated as { store_name?: string | null }).store_name || "متجري",
+              status: "active",
+              is_open: true,
+            });
+          } else {
+            await supabaseAdmin.from("stores").update({ status: "active" }).eq("id", existing.id);
+          }
         }
       }
     }
