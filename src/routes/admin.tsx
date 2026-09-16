@@ -2812,8 +2812,6 @@ function GeneralStoreEditor({
           logo_url: logo || null,
           description: description.trim() || null,
           phone: phone.trim() || null,
-          latitude: lat ? Number(lat) : null,
-          longitude: lng ? Number(lng) : null,
           is_active: row ? row.status === "active" : true,
           is_available: row ? row.is_open : true,
           area_ids: areaIds,
