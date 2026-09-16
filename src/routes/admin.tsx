@@ -48,6 +48,9 @@ import {
   adminListCategoryProducts,
   adminSaveCategoryProduct,
   adminTestMerchantPush,
+  adminListGeneralStores,
+  adminSaveGeneralStore,
+  adminDeleteGeneralStore,
   type MerchantPushResult,
 } from "../lib/admin.functions";
 import { compressAndUploadImage } from "../lib/image-compress";
@@ -2663,5 +2666,203 @@ function TaxiPanel({ areaId }: { areaId: string }) {
         </div>
       </section>
     </div>
+  );
+}
+
+/* ---------------- "العامة" — general store icons ---------------- */
+
+type GeneralRow = {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  description: string | null;
+  phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_open: boolean;
+  status: "active" | "suspended";
+  owner_id: string | null;
+  area_ids: string[];
+};
+
+function GeneralStoresPanel() {
+  const [rows, setRows] = useState<GeneralRow[]>([]);
+  const [areas, setAreas] = useState<{ id: string; name_ar: string }[]>([]);
+  const [editing, setEditing] = useState<GeneralRow | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await adminListGeneralStores();
+      setRows(res.rows as unknown as GeneralRow[]);
+      setAreas(res.areas);
+    } catch (e) {
+      window.alert((e as Error).message);
+    }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+
+  const save = async (r: GeneralRow, patch: Partial<{ is_active: boolean; is_available: boolean }>) => {
+    try {
+      await adminSaveGeneralStore({
+        data: {
+          id: r.id, name: r.name, logo_url: r.logo_url, description: r.description,
+          phone: r.phone, latitude: r.latitude, longitude: r.longitude,
+          is_active: patch.is_active ?? r.status === "active",
+          is_available: patch.is_available ?? r.is_open,
+          area_ids: r.area_ids,
+        },
+      });
+      void load();
+    } catch (e) { window.alert((e as Error).message); }
+  };
+
+  const del = async (r: GeneralRow) => {
+    if (!window.confirm(`حذف "${r.name}" نهائياً؟`)) return;
+    try { await adminDeleteGeneralStore({ data: { id: r.id } }); void load(); }
+    catch (e) { window.alert((e as Error).message); }
+  };
+
+  return (
+    <section className="space-y-3">
+      <button onClick={() => setCreating(true)} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground">
+        <Plus className="h-4 w-4" /> أيقونة جديدة
+      </button>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl bg-card p-6 text-center text-sm text-muted-foreground shadow-soft">لا توجد أيقونات في "العامة" بعد.</p>
+      ) : rows.map((r) => (
+        <article key={r.id} className="overflow-hidden rounded-2xl bg-card shadow-soft">
+          <div className="flex items-start gap-3 p-3">
+            {r.logo_url ? (
+              <img src={r.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted"><Globe className="h-6 w-6 text-muted-foreground" /></div>
+            )}
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="truncate text-sm font-black">{r.name}</p>
+              <div className="flex flex-wrap gap-1 text-[10px]">
+                <Badge tone={r.status === "active" ? "success" : "muted"}>{r.status === "active" ? "مفعّلة" : "معطّلة"}</Badge>
+                <Badge tone={r.is_open ? "success" : "danger"}>{r.is_open ? "متوفر" : "غير متوفر"}</Badge>
+                <Badge tone={r.owner_id ? "success" : "muted"}>{r.owner_id ? "لها صاحب متجر" : "بدون صاحب"}</Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                المناطق:{" "}
+                {r.area_ids.length === 0
+                  ? "لا توجد"
+                  : r.area_ids.map((id) => areas.find((a) => a.id === id)?.name_ar ?? "—").join("، ")}
+              </p>
+              {!(r.latitude && r.longitude) && (
+                <p className="text-[11px] font-bold text-destructive">لم يتم تحديد موقع المتجر (أجور التوصيل لن تُحتسب)</p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 px-3 pb-3">
+            <IconBtn onClick={() => setEditing(r)} label="تعديل"><Pencil className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => save(r, { is_active: r.status !== "active" })} label={r.status === "active" ? "تعطيل" : "تفعيل"}><Power className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => save(r, { is_available: !r.is_open })} label={r.is_open ? "جعله غير متوفر" : "جعله متوفر"}><Store className="h-3.5 w-3.5" /></IconBtn>
+            <IconBtn onClick={() => del(r)} label="حذف" tone="danger"><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+          </div>
+        </article>
+      ))}
+      {(creating || editing) && (
+        <GeneralStoreEditor
+          row={editing}
+          areas={areas}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={() => { setCreating(false); setEditing(null); void load(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function GeneralStoreEditor({
+  row, areas, onClose, onSaved,
+}: {
+  row: GeneralRow | null;
+  areas: { id: string; name_ar: string }[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [name, setName] = useState(row?.name ?? "");
+  const [logo, setLogo] = useState(row?.logo_url ?? "");
+  const [description, setDescription] = useState(row?.description ?? "");
+  const [phone, setPhone] = useState(row?.phone ?? "");
+  const [lat, setLat] = useState(row?.latitude != null ? String(row.latitude) : "");
+  const [lng, setLng] = useState(row?.longitude != null ? String(row.longitude) : "");
+  const [areaIds, setAreaIds] = useState<string[]>(row?.area_ids ?? []);
+  const [saving, setSaving] = useState(false);
+
+  const pickLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    setLogo(await compressAndUploadImage(f, "stores", { maxWidth: 600, quality: 0.85 }));
+  };
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) { window.alert("الموقع الجغرافي غير مدعوم"); return; }
+    navigator.geolocation.getCurrentPosition(
+      (p) => { setLat(String(p.coords.latitude)); setLng(String(p.coords.longitude)); },
+      () => window.alert("تعذر تحديد الموقع"),
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  };
+
+  const toggleArea = (id: string) =>
+    setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const save = async () => {
+    if (!name.trim()) { window.alert("الاسم مطلوب"); return; }
+    if (areaIds.length === 0) { window.alert("اختر منطقة واحدة على الأقل"); return; }
+    setSaving(true);
+    try {
+      await adminSaveGeneralStore({
+        data: {
+          id: row?.id,
+          name: name.trim(),
+          logo_url: logo || null,
+          description: description.trim() || null,
+          phone: phone.trim() || null,
+          latitude: lat ? Number(lat) : null,
+          longitude: lng ? Number(lng) : null,
+          is_active: row ? row.status === "active" : true,
+          is_available: row ? row.is_open : true,
+          area_ids: areaIds,
+        },
+      });
+      onSaved();
+    } catch (e) { window.alert((e as Error).message); } finally { setSaving(false); }
+  };
+
+  return (
+    <Modal title={row ? "تعديل أيقونة" : "أيقونة جديدة"} onClose={onClose}>
+      <ImagePicker url={logo} onPick={pickLogo} label="صورة الأيقونة" />
+      <Field label="الاسم" value={name} onChange={setName} />
+      <Field label="الوصف (اختياري)" value={description} onChange={setDescription} multiline />
+      <Field label="رقم الهاتف (اختياري)" value={phone} onChange={setPhone} dir="ltr" />
+      <div>
+        <label className="mb-1 block text-xs font-bold text-muted-foreground">مناطق الظهور</label>
+        <div className="flex flex-wrap gap-2">
+          {areas.map((a) => (
+            <button
+              key={a.id}
+              onClick={() => toggleArea(a.id)}
+              className={`rounded-full px-3 py-1.5 text-[11px] font-black ${
+                areaIds.includes(a.id) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {a.name_ar}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="خط العرض" value={lat} onChange={setLat} dir="ltr" />
+        <Field label="خط الطول" value={lng} onChange={setLng} dir="ltr" />
+      </div>
+      <button onClick={useMyLocation} className="w-full rounded-full bg-muted py-2 text-xs font-black">
+        <MapPin className="ml-1 inline h-3.5 w-3.5" /> تحديد الموقع من موقعي الحالي
+      </button>
+      <SaveBtn onClick={save} loading={saving} />
+    </Modal>
   );
 }
