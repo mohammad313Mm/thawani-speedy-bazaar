@@ -47,10 +47,11 @@ type StoreRow = {
   description: string | null;
   latitude: number | null;
   longitude: number | null;
+  is_general: boolean | null;
 };
 
 const STORE_SELECT =
-  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude";
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude, is_general";
 
 
 type ProductRow = {
