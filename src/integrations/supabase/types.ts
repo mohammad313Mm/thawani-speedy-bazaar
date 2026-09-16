@@ -471,6 +471,39 @@ export type Database = {
           },
         ]
       }
+      general_store_areas: {
+        Row: {
+          area_id: string
+          created_at: string
+          store_id: string
+        }
+        Insert: {
+          area_id: string
+          created_at?: string
+          store_id: string
+        }
+        Update: {
+          area_id?: string
+          created_at?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "general_store_areas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "general_store_areas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_job_secrets: {
         Row: {
           created_at: string
@@ -497,6 +530,7 @@ export type Database = {
           created_at: string
           email: string | null
           full_name: string
+          general_store_id: string | null
           id: string
           phone: string
           status: Database["public"]["Enums"]["application_status"]
@@ -511,6 +545,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name: string
+          general_store_id?: string | null
           id?: string
           phone: string
           status?: Database["public"]["Enums"]["application_status"]
@@ -525,6 +560,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           full_name?: string
+          general_store_id?: string | null
           id?: string
           phone?: string
           status?: Database["public"]["Enums"]["application_status"]
@@ -538,6 +574,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "delivery_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_applications_general_store_id_fkey"
+            columns: ["general_store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -646,6 +689,7 @@ export type Database = {
           delivery_available: boolean
           description: string | null
           id: string
+          is_general: boolean
           is_open: boolean
           latitude: number | null
           logo_url: string | null
@@ -669,6 +713,7 @@ export type Database = {
           delivery_available?: boolean
           description?: string | null
           id?: string
+          is_general?: boolean
           is_open?: boolean
           latitude?: number | null
           logo_url?: string | null
@@ -692,6 +737,7 @@ export type Database = {
           delivery_available?: boolean
           description?: string | null
           id?: string
+          is_general?: boolean
           is_open?: boolean
           latitude?: number | null
           logo_url?: string | null

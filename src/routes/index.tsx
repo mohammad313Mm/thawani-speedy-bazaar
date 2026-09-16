@@ -13,6 +13,7 @@ import { prefetchDbStores, useDbStores, useDbProductSearch } from "../lib/db-sto
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
 import { useMyArea } from "../lib/use-area";
+import { listGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 
 import splashLogo from "@/assets/splash-logo.png.asset.json";
@@ -378,10 +379,60 @@ function HomePage() {
                 ))}
               </div>
             </section>
+
+            <GeneralStoresSection areaId={area.area.id} />
           </>
         )}
 
       </main>
     </>
+  );
+}
+
+/* ---------------- "العامة" — admin-created store icons ---------------- */
+
+function GeneralStoresSection({ areaId }: { areaId: string }) {
+  const [stores, setStores] = useState<GeneralStorePublic[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    listGeneralStores({ data: { area_id: areaId } })
+      .then((r) => { if (alive) setStores(r.stores); })
+      .catch(() => { if (alive) setStores([]); });
+    return () => { alive = false; };
+  }, [areaId]);
+
+  if (stores.length === 0) return null;
+
+  return (
+    <section className="mt-8 animate-slide-up">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-black text-foreground">العامة</h3>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {stores.map((s) => (
+          <Link
+            key={s.id}
+            to="/general/$id"
+            params={{ id: s.id }}
+            className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition-transform active:scale-95"
+          >
+            {s.logo_url ? (
+              <img src={s.logo_url} alt={s.name} className="h-28 w-full object-cover" />
+            ) : (
+              <div className="h-28 w-full bg-muted" />
+            )}
+            <div className="flex items-center justify-between gap-2 p-3">
+              <p className="truncate text-sm font-black text-foreground">{s.name}</p>
+              {!s.is_open && (
+                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-black text-muted-foreground">
+                  غير متوفر
+                </span>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

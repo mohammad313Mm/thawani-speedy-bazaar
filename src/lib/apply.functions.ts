@@ -11,6 +11,7 @@ const schema = z.object({
   full_name: z.string().min(1),
   phone: z.string().min(1),
   store_name: z.string().nullable().optional(),
+  general_store_id: z.string().uuid().nullable().optional(),
   vehicle_type: z.string().nullable().optional(),
   applicant_note: z.string().nullable().optional(),
   lat: z.number().min(-90).max(90).optional(),
@@ -58,7 +59,11 @@ export const submitApplication = createServerFn({ method: "POST" })
     const table = data.kind === "merchant" ? "merchant_applications" : "driver_applications";
     const row =
       data.kind === "merchant"
-        ? { ...base, store_name: data.store_name ?? null }
+        ? {
+            ...base,
+            store_name: data.store_name ?? null,
+            general_store_id: data.general_store_id ?? null,
+          }
         : { ...base, vehicle_type: data.vehicle_type ?? null };
 
     const { error } = await supabaseAdmin
