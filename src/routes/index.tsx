@@ -378,6 +378,8 @@ function HomePage() {
                 ))}
               </div>
             </section>
+
+            <GeneralStoresSection areaId={area.area.id} />
           </>
         )}
 
