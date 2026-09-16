@@ -657,8 +657,8 @@ const generalStoreSchema = z.object({
   logo_url: z.string().nullable().optional(),
   description: z.string().trim().max(2000).nullable().optional(),
   phone: z.string().trim().max(30).nullable().optional(),
-  latitude: z.number().nullable().optional(),
-  longitude: z.number().nullable().optional(),
+  // NOTE: the store location is NOT admin-managed. The store owner sets it from
+  // the merchant dashboard ("تحديد موقعي"), exactly like ordinary stores.
   is_active: z.boolean().default(true),
   is_available: z.boolean().default(true),
   area_ids: z.array(z.string().uuid()).default([]),
@@ -709,8 +709,6 @@ export const adminSaveGeneralStore = createServerFn({ method: "POST" })
       logo_url: data.logo_url ?? null,
       description: data.description ?? null,
       phone: data.phone ?? null,
-      latitude: data.latitude ?? null,
-      longitude: data.longitude ?? null,
       is_general: true,
       status: data.is_active ? ("active" as const) : ("suspended" as const),
       is_open: data.is_available,

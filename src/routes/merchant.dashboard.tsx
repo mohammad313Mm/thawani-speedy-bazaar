@@ -47,10 +47,11 @@ type StoreRow = {
   description: string | null;
   latitude: number | null;
   longitude: number | null;
+  is_general: boolean | null;
 };
 
 const STORE_SELECT =
-  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude";
+  "id, name, is_open, status, logo_url, cover_url, owner_id, category, phone, description, latitude, longitude, is_general";
 
 
 type ProductRow = {
@@ -170,7 +171,9 @@ function MerchantDashboard() {
     );
   }
 
-  if (!store.category) {
+  // "العامة" icons are created by the admin (name/logo/areas). Their owner only
+  // needs the normal dashboard, where the existing "تحديد موقعي" section lives.
+  if (!store.category && !store.is_general) {
     return <StoreSetup store={store} onSaved={(s) => setStore(s)} onSignOut={signOut} />;
   }
 

@@ -73,6 +73,7 @@ function GeneralStorePage() {
     if (!store.is_open) { toast.error("المتجر غير متوفر حالياً"); return; }
     const saved = loadSavedLocation();
     if (!shownLocation || !saved) { toast.error("يرجى تحديد موقعك أولاً"); return; }
+    if (!quote) { toast.error("تعذر احتساب أجور التوصيل، لم يحدد المتجر موقعه بعد."); return; }
     if (!name.trim()) { toast.error("يرجى إدخال الاسم"); return; }
     if (phone.trim().length < 6) { toast.error("يرجى إدخال رقم هاتف صحيح"); return; }
     if (!details.trim()) { toast.error("يرجى كتابة تفاصيل طلبك"); return; }

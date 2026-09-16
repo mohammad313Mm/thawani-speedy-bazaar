@@ -2707,7 +2707,7 @@ function GeneralStoresPanel() {
       await adminSaveGeneralStore({
         data: {
           id: r.id, name: r.name, logo_url: r.logo_url, description: r.description,
-          phone: r.phone, latitude: r.latitude, longitude: r.longitude,
+          phone: r.phone,
           is_active: patch.is_active ?? r.status === "active",
           is_available: patch.is_available ?? r.is_open,
           area_ids: r.area_ids,
@@ -2752,7 +2752,7 @@ function GeneralStoresPanel() {
                   : r.area_ids.map((id) => areas.find((a) => a.id === id)?.name_ar ?? "—").join("، ")}
               </p>
               {!(r.latitude && r.longitude) && (
-                <p className="text-[11px] font-bold text-destructive">لم يتم تحديد موقع المتجر (أجور التوصيل لن تُحتسب)</p>
+                <p className="text-[11px] font-bold text-destructive">لم يحدد صاحب المتجر موقع المتجر بعد (أجور التوصيل لن تُحتسب)</p>
               )}
             </div>
           </div>
@@ -2788,8 +2788,6 @@ function GeneralStoreEditor({
   const [logo, setLogo] = useState(row?.logo_url ?? "");
   const [description, setDescription] = useState(row?.description ?? "");
   const [phone, setPhone] = useState(row?.phone ?? "");
-  const [lat, setLat] = useState(row?.latitude != null ? String(row.latitude) : "");
-  const [lng, setLng] = useState(row?.longitude != null ? String(row.longitude) : "");
   const [areaIds, setAreaIds] = useState<string[]>(row?.area_ids ?? []);
   const [saving, setSaving] = useState(false);
 
@@ -2798,14 +2796,6 @@ function GeneralStoreEditor({
     setLogo(await compressAndUploadImage(f, "stores", { maxWidth: 600, quality: 0.85 }));
   };
 
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { window.alert("الموقع الجغرافي غير مدعوم"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setLat(String(p.coords.latitude)); setLng(String(p.coords.longitude)); },
-      () => window.alert("تعذر تحديد الموقع"),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  };
 
   const toggleArea = (id: string) =>
     setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -2822,8 +2812,6 @@ function GeneralStoreEditor({
           logo_url: logo || null,
           description: description.trim() || null,
           phone: phone.trim() || null,
-          latitude: lat ? Number(lat) : null,
-          longitude: lng ? Number(lng) : null,
           is_active: row ? row.status === "active" : true,
           is_available: row ? row.is_open : true,
           area_ids: areaIds,
@@ -2855,13 +2843,26 @@ function GeneralStoreEditor({
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="خط العرض" value={lat} onChange={setLat} dir="ltr" />
-        <Field label="خط الطول" value={lng} onChange={setLng} dir="ltr" />
+      {/* Location is owner-managed (merchant dashboard → "تحديد موقعي"); read-only here. */}
+      <div className="rounded-2xl bg-muted/50 p-3 text-[11px] font-bold text-muted-foreground">
+        <MapPin className="ml-1 inline h-3.5 w-3.5" />
+        {row?.latitude != null && row?.longitude != null ? (
+          <>
+            موقع المتجر (يحدده صاحب المتجر):{" "}
+            <a
+              href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline"
+              dir="ltr"
+            >
+              {row.latitude.toFixed(5)}, {row.longitude.toFixed(5)}
+            </a>
+          </>
+        ) : (
+          "لم يحدد صاحب المتجر موقع المتجر بعد — يحدده من لوحة تحكم المتجر عبر زر «تحديد موقعي»."
+        )}
       </div>
-      <button onClick={useMyLocation} className="w-full rounded-full bg-muted py-2 text-xs font-black">
-        <MapPin className="ml-1 inline h-3.5 w-3.5" /> تحديد الموقع من موقعي الحالي
-      </button>
       <SaveBtn onClick={save} loading={saving} />
     </Modal>
   );
