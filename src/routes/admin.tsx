@@ -2796,14 +2796,6 @@ function GeneralStoreEditor({
     setLogo(await compressAndUploadImage(f, "stores", { maxWidth: 600, quality: 0.85 }));
   };
 
-  const useMyLocation = () => {
-    if (!navigator.geolocation) { window.alert("الموقع الجغرافي غير مدعوم"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setLat(String(p.coords.latitude)); setLng(String(p.coords.longitude)); },
-      () => window.alert("تعذر تحديد الموقع"),
-      { enableHighAccuracy: true, timeout: 15000 },
-    );
-  };
 
   const toggleArea = (id: string) =>
     setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
