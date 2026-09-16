@@ -24,6 +24,7 @@ import {
   LifeBuoy,
   Car,
   LayoutGrid,
+  Globe,
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
@@ -72,7 +73,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Section = "apps" | "orders" | "stores" | "drivers" | "taxi" | "categories" | "ads" | "areas" | "notifs" | "support";
+type Section = "apps" | "orders" | "stores" | "general" | "drivers" | "taxi" | "categories" | "ads" | "areas" | "notifs" | "support";
 type AppKind = "merchant" | "driver";
 
 type Application = {
@@ -229,6 +230,9 @@ function AdminPage() {
           <SectionBtn active={section === "stores"} onClick={() => goSection("stores")} icon={<Store className="h-4 w-4" />}>
             المتاجر
           </SectionBtn>
+          <SectionBtn active={section === "general"} onClick={() => goSection("general")} icon={<Globe className="h-4 w-4" />}>
+            العامة
+          </SectionBtn>
           <SectionBtn active={section === "drivers"} onClick={() => goSection("drivers")} icon={<Bike className="h-4 w-4" />}>
             المندوبين
           </SectionBtn>
@@ -295,6 +299,7 @@ const SECTION_LABELS: Record<Section, string> = {
   apps: "الطلبات",
   orders: "طلبات الزبائن",
   stores: "المتاجر",
+  general: "العامة",
   drivers: "المندوبين",
   taxi: "تكسي",
   categories: "الأقسام",
