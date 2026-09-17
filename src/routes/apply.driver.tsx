@@ -85,7 +85,7 @@ function DriverApplyPage() {
             kind: "driver",
             full_name: fullName,
             phone: normalized,
-            ...(currentCoords() ?? {}),
+            ...((await coordsForApplication()) ?? {}),
           },
         });
       } catch (err) {
