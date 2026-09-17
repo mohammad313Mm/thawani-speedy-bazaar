@@ -107,9 +107,13 @@ async function sendOne(
       android: {
         priority: "HIGH",
         notification: {
-          sound: "default",
+          // Ringtone shipped in android res/raw/order_ring.ogg (~60s).
+          sound: "order_ring",
           default_vibrate_timings: true,
-          channel_id: "orders_high_priority",
+          // Must stay in sync with CHANNEL_ID in src/lib/push-notifications.ts.
+          channel_id: "orders_ring_v2",
+          notification_priority: "PRIORITY_MAX",
+          visibility: "PUBLIC",
           tag: msg.tag,
         },
       },
