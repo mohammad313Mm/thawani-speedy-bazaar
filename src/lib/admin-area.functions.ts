@@ -33,12 +33,9 @@ export const adminAreaApplications = createServerFn({ method: "POST" })
       .eq("area_id", data.area_id);
     const ids = (profs ?? []).map((p) => p.id as string);
 
-    // Applicants who never shared their location have neither a request area nor
-    // a profile area. Those rows would otherwise be invisible in every area tab,
-    // so they are surfaced to the admin regardless of the selected area.
     const filter =
       ids.length > 0
-        ? `area_id.eq.${data.area_id},and(area_id.is.null,user_id.in.(${ids.join(",")})),and(area_id.is.null,user_id.not.in.(${ids.join(",")}))`
+        ? `area_id.eq.${data.area_id},and(area_id.is.null,user_id.in.(${ids.join(",")})),area_id.is.null`
         : `area_id.eq.${data.area_id},area_id.is.null`;
 
     const { data: rows, error } = await supabaseAdmin
@@ -48,7 +45,28 @@ export const adminAreaApplications = createServerFn({ method: "POST" })
       .or(filter)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return { rows: rows ?? [] };
+
+    // Applicants who never shared their location have neither a request area nor
+    // a profile area, so they belong to no area tab and would stay invisible.
+    // Keep those "unassigned" rows visible in every area; drop area-less rows
+    // whose applicant profile already belongs to a DIFFERENT area.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const list = (rows ?? []) as any[];
+    const unknownAreaUserIds = list
+      .filter((r) => r.area_id == null && !ids.includes(r.user_id))
+      .map((r) => r.user_id as string);
+
+    let elsewhere = new Set<string>();
+    if (unknownAreaUserIds.length > 0) {
+      const { data: others } = await supabaseAdmin
+        .from("profiles")
+        .select("id, area_id")
+        .in("id", unknownAreaUserIds)
+        .not("area_id", "is", null);
+      elsewhere = new Set((others ?? []).map((p) => p.id as string));
+    }
+
+    return { rows: list.filter((r) => !elsewhere.has(r.user_id)) };
   });
 
 /** Stores of one area. */
