@@ -33,10 +33,13 @@ export const adminAreaApplications = createServerFn({ method: "POST" })
       .eq("area_id", data.area_id);
     const ids = (profs ?? []).map((p) => p.id as string);
 
+    // Applicants who never shared their location have neither a request area nor
+    // a profile area. Those rows would otherwise be invisible in every area tab,
+    // so they are surfaced to the admin regardless of the selected area.
     const filter =
       ids.length > 0
-        ? `area_id.eq.${data.area_id},and(area_id.is.null,user_id.in.(${ids.join(",")}))`
-        : `area_id.eq.${data.area_id}`;
+        ? `area_id.eq.${data.area_id},and(area_id.is.null,user_id.in.(${ids.join(",")})),and(area_id.is.null,user_id.not.in.(${ids.join(",")}))`
+        : `area_id.eq.${data.area_id},area_id.is.null`;
 
     const { data: rows, error } = await supabaseAdmin
       .from(table)
