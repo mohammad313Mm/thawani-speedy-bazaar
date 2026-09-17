@@ -10,7 +10,13 @@
 import type { AppRole } from "./auth";
 
 // Must stay in sync with `channel_id` in src/lib/fcm.server.ts.
-const CHANNEL_ID = "orders_high_priority";
+// Android freezes a channel's sound/importance at creation time, so a channel
+// that was created silent can never be fixed in place — the only supported way
+// is to create a new id. v2 carries the 60s ringtone in res/raw/order_ring.ogg.
+const CHANNEL_ID = "orders_ring_v2";
+const LEGACY_CHANNEL_IDS = ["orders_high_priority"];
+/** File name (no extension) of the ringtone shipped in android res/raw. */
+const CHANNEL_SOUND = "order_ring";
 
 const DRIVER_ROUTE = "/driver/dashboard";
 const MERCHANT_ROUTE = "/merchant/dashboard";
