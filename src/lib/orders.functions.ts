@@ -134,18 +134,22 @@ export const placeOrder = createServerFn({ method: "POST" })
     // Push notification to the store owner (fire and forget; do not fail the
     // order if FCM has an issue).
     try {
-      const { data: store } = await supabaseAdmin
+      const { data: store, error: storeErr } = await supabaseAdmin
         .from("stores")
-        .select("owner_id, name_ar")
+        .select("owner_id, name")
         .eq("id", data.store_id)
         .maybeSingle();
+      if (storeErr) console.error("[placeOrder] store lookup failed", storeErr.message);
       const ownerId = (store as { owner_id: string | null } | null)?.owner_id;
+      if (!ownerId) console.error("[placeOrder] no store owner for store", data.store_id);
       if (ownerId) {
-        const { data: tokens } = await supabaseAdmin
+        const { data: tokens, error: tokErr } = await supabaseAdmin
           .from("device_tokens")
           .select("token")
           .eq("user_id", ownerId);
+        if (tokErr) console.error("[placeOrder] token lookup failed", tokErr.message);
         const list = (tokens ?? []).map((t) => t.token as string);
+        if (!list.length) console.error("[placeOrder] owner has no device tokens", ownerId);
         if (list.length) {
           const { sendFcmToTokens } = await import("./fcm.server");
           const orderNum = (inserted.local_order_id ?? inserted.id).slice(-6).toUpperCase();
