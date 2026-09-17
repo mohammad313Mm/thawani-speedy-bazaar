@@ -5,6 +5,26 @@ import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
 import { submitApplication } from "../lib/apply.functions";
 import { currentCoords } from "../lib/use-area";
+import { requestCurrentPosition, reverseGeocode, saveLocation } from "../lib/geo";
+
+/**
+ * The admin panel lists join requests per area, so a request submitted without
+ * coordinates ends up in no area at all. Ask for the location once (same
+ * mechanism used everywhere else) right before submitting.
+ */
+async function coordsForApplication(): Promise<{ lat: number; lng: number } | null> {
+  const saved = currentCoords();
+  if (saved) return saved;
+  try {
+    const res = await requestCurrentPosition();
+    if (!res.ok) return null;
+    const label = await reverseGeocode(res.lat, res.lng).catch(() => "موقعي الحالي");
+    saveLocation({ label, lat: res.lat, lng: res.lng, savedAt: new Date().toISOString() });
+    return { lat: res.lat, lng: res.lng };
+  } catch {
+    return null;
+  }
+}
 
 export const Route = createFileRoute("/apply/driver")({
   component: DriverApplyPage,
