@@ -134,7 +134,18 @@ async function ensureChannel(
       visibility: 1, // VISIBILITY_PUBLIC — visible on the lock screen
       vibration: true,
       lights: true,
+      // 60s ringtone; Android plays it until the user taps or dismisses.
+      sound: CHANNEL_SOUND,
     });
+    // Remove the old (silent) orders channel so the user isn't left with two
+    // entries in system settings. Failing here is harmless.
+    for (const id of LEGACY_CHANNEL_IDS) {
+      try {
+        await PushNotifications.deleteChannel({ id });
+      } catch {
+        /* channel may not exist */
+      }
+    }
     channelReady = true;
   } catch (err) {
     // Non-fatal: notifications still arrive on the fallback channel.
