@@ -235,14 +235,16 @@ function MerchantDashboard() {
         </div>
         <div className="mx-auto flex max-w-2xl gap-2 px-4 pb-3">
           <TabBtn active={tab === "orders"} onClick={() => setTab("orders")} icon={<ClipboardList className="h-4 w-4" />} label="الطلبات" />
-          <TabBtn active={tab === "products"} onClick={() => setTab("products")} icon={<Package className="h-4 w-4" />} label="المنتجات" />
+          {!store.is_general && (
+            <TabBtn active={tab === "products"} onClick={() => setTab("products")} icon={<Package className="h-4 w-4" />} label="المنتجات" />
+          )}
           <TabBtn active={tab === "status"} onClick={() => setTab("status")} icon={<Power className="h-4 w-4" />} label="حالة المتجر" />
         </div>
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         {tab === "orders" && <OrdersPanel storeId={store.id} storeName={store.name} />}
-        {tab === "products" && <ProductsPanel storeId={store.id} />}
+        {tab === "products" && !store.is_general && <ProductsPanel storeId={store.id} />}
         {tab === "status" && (
           <>
             <StatusPanel store={store} onUpdated={setStore} />
