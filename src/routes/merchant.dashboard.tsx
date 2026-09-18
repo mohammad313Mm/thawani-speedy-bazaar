@@ -174,7 +174,30 @@ function MerchantDashboard() {
     navigate({ to: "/merchant-login" });
   };
 
-  if (checking || !store || !userId) {
+  if (checking || !userId) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  // After login the owner picks which side to manage.
+  if (!mode) {
+    return <ModeChooser onPick={setMode} onSignOut={signOut} />;
+  }
+
+  // "العامة": pick one admin-created icon, then save phone + location.
+  if (mode === "general" && !generalStore) {
+    return (
+      <GeneralClaimFlow
+        onBack={() => setMode(null)}
+        onClaimed={(s) => setStore(s)}
+      />
+    );
+  }
+
+  if (!store) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
