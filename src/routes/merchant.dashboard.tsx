@@ -1343,7 +1343,7 @@ function GeneralClaimFlow({
 
   useEffect(() => {
     let alive = true;
-    listClaimableGeneralStores({ data: {} })
+    listClaimableGeneralStores()
       .then((r) => alive && setList(r.stores))
       .catch((e) => alive && setErr((e as Error).message))
       .finally(() => alive && setLoading(false));

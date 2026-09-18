@@ -69,19 +69,22 @@ export const syncMyStoreArea = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = await admin();
-    const { data: store } = await db
+    const { data: owned } = await db
       .from("stores")
       .select("id, latitude, longitude")
-      .eq("owner_id", context.userId)
-      .maybeSingle();
-    const row = store as { id: string; latitude: number | null; longitude: number | null } | null;
-    if (!row) return { area: null };
-    const id =
-      row.latitude != null && row.longitude != null
-        ? await areaForPoint(row.latitude, row.longitude)
-        : null;
-    await db.from("stores").update({ area_id: id }).eq("id", row.id);
-    return { area: await areaInfo(id) };
+      .eq("owner_id", context.userId);
+    const rows = (owned ?? []) as { id: string; latitude: number | null; longitude: number | null }[];
+    if (rows.length === 0) return { area: null };
+    let last: string | null = null;
+    for (const row of rows) {
+      const id =
+        row.latitude != null && row.longitude != null
+          ? await areaForPoint(row.latitude, row.longitude)
+          : null;
+      await db.from("stores").update({ area_id: id }).eq("id", row.id);
+      last = id ?? last;
+    }
+    return { area: await areaInfo(last) };
   });
 
 /** Public (area-scoped): active stores inside the caller's resolved area. */
