@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
