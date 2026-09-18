@@ -187,6 +187,88 @@ export const placeOrder = createServerFn({ method: "POST" })
       console.error("[placeOrder] push notify failed", e);
     }
 
+    // Simultaneous fan-out at creation time: qualified drivers in the same
+    // area + admins get the new-order push at the same moment as the owner.
+    // The notification tag (`order-<id>`) makes Android replace any earlier
+    // notification for this order, so the later merchant-accept fan-out
+    // (notifyDriversForOrder) never produces a duplicate on screen.
+    try {
+      const { sendFcmToTokens } = await import("./fcm.server");
+      const orderNum = (inserted.local_order_id ?? inserted.id).slice(-6).toUpperCase();
+      const totalFmt = `${Math.round(total).toLocaleString("ar-IQ")} د.ع`;
+      const address = data.address.trim() || "بدون عنوان";
+
+      // Qualified drivers: same rule as notifyDriversForOrder — drivers whose
+      // profile belongs to the order's area, holding a driver-role token.
+      const { data: areaDrivers } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("area_id", areaId);
+      const driverIds = (areaDrivers ?? []).map((p) => p.id as string);
+      const { data: driverTokens } = driverIds.length
+        ? await supabaseAdmin
+            .from("device_tokens")
+            .select("token")
+            .eq("role", "driver")
+            .in("user_id", driverIds)
+        : { data: [] as { token: string }[] };
+      const driverList = (driverTokens ?? []).map((t) => t.token as string);
+      if (driverList.length) {
+        const { data: storeRow2 } = await supabaseAdmin
+          .from("stores")
+          .select("name")
+          .eq("id", data.store_id)
+          .maybeSingle();
+        const storeName = (storeRow2 as { name: string | null } | null)?.name || "متجر";
+        const driverResult = await sendFcmToTokens(driverList, {
+          title: "طلب توصيل جديد",
+          body: [
+            `المتجر: ${storeName}`,
+            `العنوان: ${address}`,
+            `الإجمالي: ${totalFmt}`,
+          ].join("\n"),
+          tag: `order-${inserted.id}`,
+          data: {
+            order_id: inserted.id,
+            order_num: orderNum,
+            store_name: storeName,
+            address,
+            total: String(total),
+            route: "/driver/dashboard",
+            kind: "driver_order",
+          },
+        });
+        if (driverResult.invalidTokens.length) {
+          await supabaseAdmin.from("device_tokens").delete().in("token", driverResult.invalidTokens);
+        }
+      }
+
+      // Admins: any device registered with the admin role.
+      const { data: adminTokens } = await supabaseAdmin
+        .from("device_tokens")
+        .select("token")
+        .eq("role", "admin");
+      const adminList = (adminTokens ?? []).map((t) => t.token as string);
+      if (adminList.length) {
+        const adminResult = await sendFcmToTokens(adminList, {
+          title: "طلب جديد",
+          body: [`العنوان: ${address}`, `الإجمالي: ${totalFmt}`].join("\n"),
+          tag: `order-${inserted.id}`,
+          data: {
+            order_id: inserted.id,
+            order_num: orderNum,
+            route: "/admin",
+            kind: "store_order",
+          },
+        });
+        if (adminResult.invalidTokens.length) {
+          await supabaseAdmin.from("device_tokens").delete().in("token", adminResult.invalidTokens);
+        }
+      }
+    } catch (e) {
+      console.error("[placeOrder] driver/admin fan-out failed", e);
+    }
+
     return { ok: true, subtotal, delivery_fee, total };
   });
 
