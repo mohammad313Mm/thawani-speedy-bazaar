@@ -5,7 +5,6 @@ import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
 import { submitApplication } from "../lib/apply.functions";
 import { currentCoords } from "../lib/use-area";
-import { listGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 export const Route = createFileRoute("/apply/merchant")({
   component: MerchantApplyPage,
@@ -18,16 +17,6 @@ function MerchantApplyPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [generalStores, setGeneralStores] = useState<GeneralStorePublic[]>([]);
-  const [generalStoreId, setGeneralStoreId] = useState("");
-
-  useEffect(() => {
-    let alive = true;
-    listGeneralStores({ data: {} })
-      .then((r) => { if (alive) setGeneralStores(r.stores); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
