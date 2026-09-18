@@ -91,6 +91,7 @@ export function GlobalOrderListener() {
         .from("stores")
         .select("id, name")
         .eq("owner_id", user.id)
+        .limit(1)
         .maybeSingle();
       if (cancelled || !data) return;
       setStoreId((data as { id: string }).id);
