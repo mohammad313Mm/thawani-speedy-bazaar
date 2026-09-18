@@ -1,11 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowRight, Store, CheckCircle2, Loader2 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { normalizePhone, phoneToEmail } from "../lib/phone-auth";
 import { submitApplication } from "../lib/apply.functions";
 import { currentCoords } from "../lib/use-area";
-import { listGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 export const Route = createFileRoute("/apply/merchant")({
   component: MerchantApplyPage,
@@ -18,16 +17,6 @@ function MerchantApplyPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [generalStores, setGeneralStores] = useState<GeneralStorePublic[]>([]);
-  const [generalStoreId, setGeneralStoreId] = useState("");
-
-  useEffect(() => {
-    let alive = true;
-    listGeneralStores({ data: {} })
-      .then((r) => { if (alive) setGeneralStores(r.stores); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +65,6 @@ function MerchantApplyPage() {
             kind: "merchant",
             full_name: fullName,
             phone: normalized,
-            general_store_id: generalStoreId || null,
             ...(currentCoords() ?? {}),
           },
         });
@@ -161,23 +149,6 @@ function MerchantApplyPage() {
             />
           </label>
 
-          {generalStores.length > 0 && (
-            <label className="block">
-              <span className="text-xs font-black text-foreground">
-                متجر من "العامة" (اختياري)
-              </span>
-              <select
-                value={generalStoreId}
-                onChange={(e) => setGeneralStoreId(e.target.value)}
-                className="mt-2 h-12 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
-              >
-                <option value="">متجر خاص بي</option>
-                {generalStores.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </label>
-          )}
 
           {error && (
             <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">

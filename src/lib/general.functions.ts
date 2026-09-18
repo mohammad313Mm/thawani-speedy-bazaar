@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   feeForDistance,
   haversineKm,
@@ -232,4 +233,103 @@ export const placeGeneralOrder = createServerFn({ method: "POST" })
     }
 
     return { ok: true, local_order_id, delivery_fee, distance_km, total };
+  });
+
+/* ============== Merchant side: claiming an admin-created "العامة" store ============== */
+
+/**
+ * Signed-in merchant: the admin-created "العامة" icons that are still free
+ * (no owner yet). Dynamic — always read from the database.
+ */
+export const listClaimableGeneralStores = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("stores")
+      .select("id, name, logo_url, description, is_open, owner_id")
+      .eq("is_general", true)
+      .eq("status", "active")
+      .order("name");
+    if (error) throw new Error(error.message);
+    const stores = (rows ?? [])
+      .filter((s) => !s.owner_id || s.owner_id === context.userId)
+      .map((s) => ({
+        id: s.id as string,
+        name: s.name as string,
+        logo_url: s.logo_url as string | null,
+        description: s.description as string | null,
+        is_open: s.is_open as boolean,
+      })) satisfies GeneralStorePublic[];
+    return { stores };
+  });
+
+const claimSchema = z.object({
+  store_id: z.string().uuid(),
+  phone: z.string().min(6).max(30),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+/**
+ * Signed-in approved merchant takes ownership of one free "العامة" icon and
+ * saves its phone + location. Area binding reuses `area_for_point` and the
+ * existing `general_store_areas` link table.
+ */
+export const claimGeneralStore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => claimSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const isMerchant = (roles ?? []).some((r) => r.role === "merchant");
+    if (!isMerchant) throw new Error("حسابك غير معتمد كصاحب متجر بعد.");
+
+    const { data: row, error } = await supabaseAdmin
+      .from("stores")
+      .select("id, owner_id, is_general, status")
+      .eq("id", data.store_id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const store = row as
+      | { id: string; owner_id: string | null; is_general: boolean; status: string }
+      | null;
+    if (!store || !store.is_general || store.status !== "active") {
+      throw new Error("هذا المتجر غير متاح.");
+    }
+    if (store.owner_id && store.owner_id !== userId) {
+      throw new Error("تم اختيار هذا المتجر من قبل صاحب متجر آخر.");
+    }
+
+    const { data: resolved } = await supabaseAdmin.rpc("area_for_point" as never, {
+      _lat: data.lat,
+      _lng: data.lng,
+    } as never);
+    const areaId = (resolved as string | null) ?? null;
+
+    const { error: upErr } = await supabaseAdmin
+      .from("stores")
+      .update({
+        owner_id: userId,
+        phone: data.phone,
+        latitude: data.lat,
+        longitude: data.lng,
+        area_id: areaId,
+        is_open: true,
+      })
+      .eq("id", store.id);
+    if (upErr) throw new Error(upErr.message);
+
+    if (areaId) {
+      await supabaseAdmin
+        .from("general_store_areas")
+        .upsert({ store_id: store.id, area_id: areaId }, { onConflict: "store_id,area_id" });
+    }
+
+    return { ok: true as const, area_id: areaId };
   });

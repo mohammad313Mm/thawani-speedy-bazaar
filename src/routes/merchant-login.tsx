@@ -24,6 +24,7 @@ function MerchantLoginPage() {
         .from("stores")
         .select("id")
         .eq("owner_id", data.user.id)
+        .limit(1)
         .maybeSingle();
       if (store) navigate({ to: "/merchant/dashboard" });
     })();
@@ -65,6 +66,7 @@ function MerchantLoginPage() {
         .from("stores")
         .select("id")
         .eq("owner_id", signIn.user.id)
+        .limit(1)
         .maybeSingle();
 
       if (!store || (app && app.status !== "approved")) {

@@ -60,6 +60,8 @@ export const adminActOnApplication = createServerFn({ method: "POST" })
             .from("stores")
             .select("id")
             .eq("owner_id", updated.user_id)
+            .eq("is_general", false)
+            .limit(1)
             .maybeSingle();
           if (!existing) {
             await supabaseAdmin.from("stores").insert({
