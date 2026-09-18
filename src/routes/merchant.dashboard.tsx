@@ -115,9 +115,20 @@ function MerchantDashboard() {
   useMyArea();
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const [store, setStore] = useState<StoreRow | null>(null);
+  const [stores, setStores] = useState<StoreRow[]>([]);
+  const [mode, setMode] = useState<"regular" | "general" | null>(null);
   const [checking, setChecking] = useState(true);
   const [tab, setTab] = useState<Tab>("orders");
+
+  const regularStore = stores.find((s) => !s.is_general) ?? null;
+  const generalStore = stores.find((s) => s.is_general) ?? null;
+  const store = mode === "general" ? generalStore : regularStore;
+
+  const setStore = (s: StoreRow) =>
+    setStores((prev) => {
+      const next = prev.filter((p) => p.id !== s.id);
+      return [...next, s];
+    });
 
   useEffect(() => {
     (async () => {
@@ -127,17 +138,17 @@ function MerchantDashboard() {
         return;
       }
       setUserId(data.user.id);
-      const { data: s } = await supabase
+      const { data: rows } = await supabase
         .from("stores")
         .select(STORE_SELECT)
-        .eq("owner_id", data.user.id)
-        .maybeSingle();
-      if (!s) {
+        .eq("owner_id", data.user.id);
+      const list = (rows ?? []) as StoreRow[];
+      if (list.length === 0) {
         await supabase.auth.signOut();
         navigate({ to: "/merchant-login" });
         return;
       }
-      setStore(s as StoreRow);
+      setStores(list);
       setChecking(false);
     })();
   }, [navigate]);
