@@ -27,6 +27,7 @@ import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { notifyDriversForOrder } from "../lib/notify.functions";
 import { syncMyStoreArea } from "../lib/area.functions";
 import { useMyArea } from "../lib/use-area";
+import { claimGeneralStore, listClaimableGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 export const Route = createFileRoute("/merchant/dashboard")({
   component: MerchantDashboard,
@@ -1269,5 +1270,228 @@ function StoreLocationSection({
     <div className="mt-4 rounded-3xl bg-card p-4 text-right shadow-soft">
       <StoreLocationPicker coords={coords} onChange={persist} saving={saving} />
     </div>
+  );
+}
+
+/* ============ MODE CHOOSER (بقية المتاجر | العامة) ============ */
+
+function ModeChooser({
+  onPick,
+  onSignOut,
+}: {
+  onPick: (m: "regular" | "general") => void;
+  onSignOut: () => void;
+}) {
+  return (
+    <main className="mx-auto max-w-md px-4 py-10">
+      <div className="mb-6 text-center">
+        <h1 className="text-xl font-black text-foreground">اختر نوع المتجر</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          يمكنك إدارة متجرك الخاص أو متجر من «العامة»
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <button
+          onClick={() => onPick("regular")}
+          className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 text-right shadow-soft"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Package className="h-6 w-6" />
+          </div>
+          <span className="text-base font-black text-foreground">بقية المتاجر</span>
+        </button>
+
+        <button
+          onClick={() => onPick("general")}
+          className="flex w-full items-center gap-3 rounded-2xl bg-card p-4 text-right shadow-soft"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 text-foreground">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <span className="text-base font-black text-foreground">العامة</span>
+        </button>
+      </div>
+
+      <button
+        onClick={onSignOut}
+        className="mt-8 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-destructive/10 text-sm font-black text-destructive"
+      >
+        <LogOut className="h-4 w-4" />
+        تسجيل الخروج
+      </button>
+    </main>
+  );
+}
+
+/* ============ العامة: pick an admin-created store, then phone + location ============ */
+
+function GeneralClaimFlow({
+  onBack,
+  onClaimed,
+}: {
+  onBack: () => void;
+  onClaimed: (s: StoreRow) => void;
+}) {
+  const [list, setList] = useState<GeneralStorePublic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [picked, setPicked] = useState<GeneralStorePublic | null>(null);
+  const [phone, setPhone] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    listClaimableGeneralStores({ data: {} })
+      .then((r) => alive && setList(r.stores))
+      .catch((e) => alive && setErr((e as Error).message))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const save = async () => {
+    if (!picked) return;
+    setErr(null);
+    if (!phone.trim()) {
+      setErr("يرجى إدخال رقم الهاتف");
+      return;
+    }
+    if (!coords) {
+      setErr("يرجى تحديد موقع المتجر قبل الحفظ");
+      return;
+    }
+    setBusy(true);
+    try {
+      await claimGeneralStore({
+        data: { store_id: picked.id, phone: phone.trim(), lat: coords.lat, lng: coords.lng },
+      });
+      const { data } = await supabase
+        .from("stores")
+        .select(STORE_SELECT)
+        .eq("id", picked.id)
+        .single();
+      onClaimed(data as StoreRow);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  if (!picked) {
+    return (
+      <main className="mx-auto max-w-md px-4 py-6">
+        <div className="mb-4 flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </button>
+          <h1 className="text-lg font-black text-foreground">اختر متجر العامة</h1>
+        </div>
+
+        {err && (
+          <p className="mb-3 rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
+            {err}
+          </p>
+        )}
+
+        {list.length === 0 ? (
+          <p className="rounded-2xl bg-card p-4 text-center text-sm text-muted-foreground shadow-soft">
+            لا توجد متاجر متاحة في «العامة» حالياً.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {list.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => setPicked(s)}
+                className="flex w-full items-center gap-3 rounded-2xl bg-card p-3 text-right shadow-soft"
+              >
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-muted">
+                  {s.logo_url && (
+                    <img src={s.logo_url} alt="" className="h-full w-full object-cover" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-foreground">{s.name}</p>
+                  {s.description && (
+                    <p className="truncate text-[11px] text-muted-foreground">{s.description}</p>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-md space-y-3 px-4 py-6">
+      <div className="mb-1 flex items-center gap-3">
+        <button
+          onClick={() => setPicked(null)}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
+        >
+          <ArrowRight className="h-5 w-5" />
+        </button>
+        <h1 className="text-lg font-black text-foreground">معلومات المتجر</h1>
+      </div>
+
+      <div className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+          {picked.logo_url && (
+            <img src={picked.logo_url} alt="" className="h-full w-full object-cover" />
+          )}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-black text-foreground">{picked.name}</p>
+          {picked.description && (
+            <p className="truncate text-[11px] text-muted-foreground">{picked.description}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-2xl bg-card p-4 shadow-soft">
+        <Field label="رقم الهاتف">
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            dir="ltr"
+            inputMode="tel"
+            className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+          />
+        </Field>
+
+        <StoreLocationPicker coords={coords} onChange={setCoords} />
+
+        {err && (
+          <p className="rounded-xl bg-destructive/10 px-3 py-2 text-xs font-bold text-destructive">
+            {err}
+          </p>
+        )}
+
+        <button
+          onClick={save}
+          disabled={busy}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-primary-foreground shadow-soft disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ المعلومات"}
+        </button>
+      </div>
+    </main>
   );
 }
