@@ -43,7 +43,7 @@ function ProfilePage() {
   const isMerchant = roles.includes("merchant");
   const isDriver = roles.includes("driver");
   const { isTaxiDriver } = useIsTaxiDriver();
-  const needsPush = !!user && (isMerchant || isDriver || isTaxiDriver);
+  const needsPush = !!user && (isMerchant || isDriver || roles.includes("admin") || isTaxiDriver);
 
   const [pushState, setPushState] = useState<PushPermState | null>(null);
   const [requesting, setRequesting] = useState(false);

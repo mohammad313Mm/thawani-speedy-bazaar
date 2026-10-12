@@ -22,7 +22,7 @@ export function PushPermissionNotice() {
   const [hidden, setHidden] = useState(false);
 
   const needsPush =
-    !!user && (roles.includes("merchant") || roles.includes("driver") || isTaxiDriver);
+    !!user && (roles.includes("merchant") || roles.includes("driver") || roles.includes("admin") || isTaxiDriver);
 
   const refresh = useCallback(() => {
     if (!needsPush) return;
