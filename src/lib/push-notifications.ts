@@ -27,7 +27,7 @@ const TAXI_ROUTE = "/taxi-orders";
  * drivers sign in as normal customers and are authorized by the admin through
  * the taxi_drivers table (see is_taxi_driver).
  */
-export type DeviceRole = "merchant" | "driver" | "taxi";
+export type DeviceRole = "merchant" | "driver" | "taxi" | "admin";
 
 let listenersBound = false;
 let channelReady = false;
@@ -97,12 +97,15 @@ function pickRole(roles: AppRole[], isTaxiDriver: boolean): DeviceRole | null {
   if (roles.includes("driver")) return "driver";
   if (roles.includes("merchant")) return "merchant";
   if (isTaxiDriver) return "taxi";
+  // Owner/admin devices get the new-order push sent to role "admin".
+  if (roles.includes("admin")) return "admin";
   return null;
 }
 
 function defaultRoute(): string {
   if (currentUserRole === "driver") return DRIVER_ROUTE;
   if (currentUserRole === "taxi") return TAXI_ROUTE;
+  if (currentUserRole === "admin") return "/admin";
   return MERCHANT_ROUTE;
 }
 
