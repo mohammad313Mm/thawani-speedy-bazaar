@@ -9,147 +9,47 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminLoginRouteImport } from './routes/admin-login'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as CartRouteImport } from './routes/cart'
-import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as DriverAuthRouteImport } from './routes/driver-auth'
-import { Route as DriverLoginRouteImport } from './routes/driver-login'
-import { Route as FavoritesRouteImport } from './routes/favorites'
-import { Route as FreelanceAgentRouteImport } from './routes/freelance-agent'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
-import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
-import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as OrdersRouteImport } from './routes/orders'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ProfileRouteImport } from './routes/profile'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SupportRouteImport } from './routes/support'
-import { Route as TaxiRouteImport } from './routes/taxi'
-import { Route as TaxiLoginRouteImport } from './routes/taxi-login'
-import { Route as TaxiOrdersRouteImport } from './routes/taxi-orders'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
-import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
-import { Route as CategoryKeyRouteImport } from './routes/category.$key'
-import { Route as DriverDashboardRouteImport } from './routes/driver.dashboard'
-import { Route as GeneralIdRouteImport } from './routes/general.$id'
-import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
-import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as TaxiOrdersRouteImport } from './routes/taxi-orders'
+import { Route as TaxiLoginRouteImport } from './routes/taxi-login'
+import { Route as TaxiRouteImport } from './routes/taxi'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
+import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as FreelanceAgentRouteImport } from './routes/freelance-agent'
+import { Route as FavoritesRouteImport } from './routes/favorites'
+import { Route as DriverLoginRouteImport } from './routes/driver-login'
+import { Route as DriverAuthRouteImport } from './routes/driver-auth'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CartRouteImport } from './routes/cart'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoreIdRouteImport } from './routes/store.$id'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as ProductIdRouteImport } from './routes/product.$id'
+import { Route as MerchantDashboardRouteImport } from './routes/merchant.dashboard'
+import { Route as GeneralIdRouteImport } from './routes/general.$id'
+import { Route as DriverDashboardRouteImport } from './routes/driver.dashboard'
+import { Route as CategoryKeyRouteImport } from './routes/category.$key'
+import { Route as ApplyMerchantRouteImport } from './routes/apply.merchant'
+import { Route as ApplyDriverRouteImport } from './routes/apply.driver'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as ApiPublicOrderEscalationRouteImport } from './routes/api/public/order-escalation'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin-login',
-  path: '/admin-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CartRoute = CartRouteImport.update({
-  id: '/cart',
-  path: '/cart',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DriverAuthRoute = DriverAuthRouteImport.update({
-  id: '/driver-auth',
-  path: '/driver-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DriverLoginRoute = DriverLoginRouteImport.update({
-  id: '/driver-login',
-  path: '/driver-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FavoritesRoute = FavoritesRouteImport.update({
-  id: '/favorites',
-  path: '/favorites',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FreelanceAgentRoute = FreelanceAgentRouteImport.update({
-  id: '/freelance-agent',
-  path: '/freelance-agent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MerchantAuthRoute = MerchantAuthRouteImport.update({
-  id: '/merchant-auth',
-  path: '/merchant-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MerchantLoginRoute = MerchantLoginRouteImport.update({
-  id: '/merchant-login',
-  path: '/merchant-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NotificationsRoute = NotificationsRouteImport.update({
-  id: '/notifications',
-  path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OrdersRoute = OrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfileRoute = ProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SupportRoute = SupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TaxiRoute = TaxiRouteImport.update({
-  id: '/taxi',
-  path: '/taxi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TaxiLoginRoute = TaxiLoginRouteImport.update({
-  id: '/taxi-login',
-  path: '/taxi-login',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TaxiOrdersRoute = TaxiOrdersRouteImport.update({
@@ -157,56 +57,109 @@ const TaxiOrdersRoute = TaxiOrdersRouteImport.update({
   path: '/taxi-orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const TaxiLoginRoute = TaxiLoginRouteImport.update({
+  id: '/taxi-login',
+  path: '/taxi-login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApplyDriverRoute = ApplyDriverRouteImport.update({
-  id: '/apply/driver',
-  path: '/apply/driver',
+const TaxiRoute = TaxiRouteImport.update({
+  id: '/taxi',
+  path: '/taxi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApplyMerchantRoute = ApplyMerchantRouteImport.update({
-  id: '/apply/merchant',
-  path: '/apply/merchant',
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CategoryKeyRoute = CategoryKeyRouteImport.update({
-  id: '/category/$key',
-  path: '/category/$key',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DriverDashboardRoute = DriverDashboardRouteImport.update({
-  id: '/driver/dashboard',
-  path: '/driver/dashboard',
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GeneralIdRoute = GeneralIdRouteImport.update({
-  id: '/general/$id',
-  path: '/general/$id',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
-  id: '/merchant/dashboard',
-  path: '/merchant/dashboard',
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductIdRoute = ProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantLoginRoute = MerchantLoginRouteImport.update({
+  id: '/merchant-login',
+  path: '/merchant-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MerchantAuthRoute = MerchantAuthRouteImport.update({
+  id: '/merchant-auth',
+  path: '/merchant-auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreelanceAgentRoute = FreelanceAgentRouteImport.update({
+  id: '/freelance-agent',
+  path: '/freelance-agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverLoginRoute = DriverLoginRouteImport.update({
+  id: '/driver-login',
+  path: '/driver-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverAuthRoute = DriverAuthRouteImport.update({
+  id: '/driver-auth',
+  path: '/driver-auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CartRoute = CartRouteImport.update({
+  id: '/cart',
+  path: '/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoreIdRoute = StoreIdRouteImport.update({
@@ -214,15 +167,51 @@ const StoreIdRoute = StoreIdRouteImport.update({
   path: '/store/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const ProductIdRoute = ProductIdRouteImport.update({
+  id: '/product/$id',
+  path: '/product/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
+const MerchantDashboardRoute = MerchantDashboardRouteImport.update({
+  id: '/merchant/dashboard',
+  path: '/merchant/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GeneralIdRoute = GeneralIdRouteImport.update({
+  id: '/general/$id',
+  path: '/general/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverDashboardRoute = DriverDashboardRouteImport.update({
+  id: '/driver/dashboard',
+  path: '/driver/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CategoryKeyRoute = CategoryKeyRouteImport.update({
+  id: '/category/$key',
+  path: '/category/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyMerchantRoute = ApplyMerchantRouteImport.update({
+  id: '/apply/merchant',
+  path: '/apply/merchant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplyDriverRoute = ApplyDriverRouteImport.update({
+  id: '/apply/driver',
+  path: '/apply/driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicOrderEscalationRoute =
@@ -231,6 +220,17 @@ const ApiPublicOrderEscalationRoute =
     path: '/api/public/order-escalation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicImgSplatRoute = ApiPublicImgSplatRouteImport.update({
   id: '/api/public/img/$',
   path: '/api/public/img/$',
@@ -517,151 +517,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin-login': {
-      id: '/admin-login'
-      path: '/admin-login'
-      fullPath: '/admin-login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cart': {
-      id: '/cart'
-      path: '/cart'
-      fullPath: '/cart'
-      preLoaderRoute: typeof CartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/driver-auth': {
-      id: '/driver-auth'
-      path: '/driver-auth'
-      fullPath: '/driver-auth'
-      preLoaderRoute: typeof DriverAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/driver-login': {
-      id: '/driver-login'
-      path: '/driver-login'
-      fullPath: '/driver-login'
-      preLoaderRoute: typeof DriverLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/favorites': {
-      id: '/favorites'
-      path: '/favorites'
-      fullPath: '/favorites'
-      preLoaderRoute: typeof FavoritesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/freelance-agent': {
-      id: '/freelance-agent'
-      path: '/freelance-agent'
-      fullPath: '/freelance-agent'
-      preLoaderRoute: typeof FreelanceAgentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/merchant-auth': {
-      id: '/merchant-auth'
-      path: '/merchant-auth'
-      fullPath: '/merchant-auth'
-      preLoaderRoute: typeof MerchantAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/merchant-login': {
-      id: '/merchant-login'
-      path: '/merchant-login'
-      fullPath: '/merchant-login'
-      preLoaderRoute: typeof MerchantLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/notifications': {
-      id: '/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/orders': {
-      id: '/orders'
-      path: '/orders'
-      fullPath: '/orders'
-      preLoaderRoute: typeof OrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profile': {
-      id: '/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof ProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/support': {
-      id: '/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof SupportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/taxi': {
-      id: '/taxi'
-      path: '/taxi'
-      fullPath: '/taxi'
-      preLoaderRoute: typeof TaxiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/taxi-login': {
-      id: '/taxi-login'
-      path: '/taxi-login'
-      fullPath: '/taxi-login'
-      preLoaderRoute: typeof TaxiLoginRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/taxi-orders': {
@@ -671,74 +531,151 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TaxiOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
+    '/taxi-login': {
+      id: '/taxi-login'
+      path: '/taxi-login'
+      fullPath: '/taxi-login'
+      preLoaderRoute: typeof TaxiLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+    '/taxi': {
+      id: '/taxi'
+      path: '/taxi'
+      fullPath: '/taxi'
+      preLoaderRoute: typeof TaxiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/apply/driver': {
-      id: '/apply/driver'
-      path: '/apply/driver'
-      fullPath: '/apply/driver'
-      preLoaderRoute: typeof ApplyDriverRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/apply/merchant': {
-      id: '/apply/merchant'
-      path: '/apply/merchant'
-      fullPath: '/apply/merchant'
-      preLoaderRoute: typeof ApplyMerchantRouteImport
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/category/$key': {
-      id: '/category/$key'
-      path: '/category/$key'
-      fullPath: '/category/$key'
-      preLoaderRoute: typeof CategoryKeyRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/driver/dashboard': {
-      id: '/driver/dashboard'
-      path: '/driver/dashboard'
-      fullPath: '/driver/dashboard'
-      preLoaderRoute: typeof DriverDashboardRouteImport
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/general/$id': {
-      id: '/general/$id'
-      path: '/general/$id'
-      fullPath: '/general/$id'
-      preLoaderRoute: typeof GeneralIdRouteImport
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/merchant/dashboard': {
-      id: '/merchant/dashboard'
-      path: '/merchant/dashboard'
-      fullPath: '/merchant/dashboard'
-      preLoaderRoute: typeof MerchantDashboardRouteImport
+    '/merchant-login': {
+      id: '/merchant-login'
+      path: '/merchant-login'
+      fullPath: '/merchant-login'
+      preLoaderRoute: typeof MerchantLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/product/$id': {
-      id: '/product/$id'
-      path: '/product/$id'
-      fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdRouteImport
+    '/merchant-auth': {
+      id: '/merchant-auth'
+      path: '/merchant-auth'
+      fullPath: '/merchant-auth'
+      preLoaderRoute: typeof MerchantAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/freelance-agent': {
+      id: '/freelance-agent'
+      path: '/freelance-agent'
+      fullPath: '/freelance-agent'
+      preLoaderRoute: typeof FreelanceAgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver-login': {
+      id: '/driver-login'
+      path: '/driver-login'
+      fullPath: '/driver-login'
+      preLoaderRoute: typeof DriverLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver-auth': {
+      id: '/driver-auth'
+      path: '/driver-auth'
+      fullPath: '/driver-auth'
+      preLoaderRoute: typeof DriverAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cart': {
+      id: '/cart'
+      path: '/cart'
+      fullPath: '/cart'
+      preLoaderRoute: typeof CartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/store/$id': {
@@ -748,11 +685,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/product/$id': {
+      id: '/product/$id'
+      path: '/product/$id'
+      fullPath: '/product/$id'
+      preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/merchant/dashboard': {
+      id: '/merchant/dashboard'
+      path: '/merchant/dashboard'
+      fullPath: '/merchant/dashboard'
+      preLoaderRoute: typeof MerchantDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/general/$id': {
+      id: '/general/$id'
+      path: '/general/$id'
+      fullPath: '/general/$id'
+      preLoaderRoute: typeof GeneralIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver/dashboard': {
+      id: '/driver/dashboard'
+      path: '/driver/dashboard'
+      fullPath: '/driver/dashboard'
+      preLoaderRoute: typeof DriverDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/category/$key': {
+      id: '/category/$key'
+      path: '/category/$key'
+      fullPath: '/category/$key'
+      preLoaderRoute: typeof CategoryKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply/merchant': {
+      id: '/apply/merchant'
+      path: '/apply/merchant'
+      fullPath: '/apply/merchant'
+      preLoaderRoute: typeof ApplyMerchantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apply/driver': {
+      id: '/apply/driver'
+      path: '/apply/driver'
+      fullPath: '/apply/driver'
+      preLoaderRoute: typeof ApplyDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/order-escalation': {
+      id: '/api/public/order-escalation'
+      path: '/api/public/order-escalation'
+      fullPath: '/api/public/order-escalation'
+      preLoaderRoute: typeof ApiPublicOrderEscalationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -762,11 +762,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/order-escalation': {
-      id: '/api/public/order-escalation'
-      path: '/api/public/order-escalation'
-      fullPath: '/api/public/order-escalation'
-      preLoaderRoute: typeof ApiPublicOrderEscalationRouteImport
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/img/$': {

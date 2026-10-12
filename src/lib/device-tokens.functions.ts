@@ -22,6 +22,14 @@ export const registerDeviceToken = createServerFn({ method: "POST" })
       });
       if (isTaxi !== true) throw new Error("Forbidden");
     }
+    // "admin" devices receive every new order — only real admins may register one.
+    if (data.role === "admin") {
+      const { data: isAdmin } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+      if (isAdmin !== true) throw new Error("Forbidden");
+    }
     // Move token off any previous owner (device re-used), then upsert.
     await supabaseAdmin
       .from("device_tokens")
