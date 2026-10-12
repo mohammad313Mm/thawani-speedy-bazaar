@@ -1,5 +1,16 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { CartItem } from "./cart";
+import { supabase } from "../integrations/supabase/client";
+
+/** Customer orders stay visible in «طلباتي» for 10 days — same window as the admin cleanup. */
+export const ORDER_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
+const withinRetention = (o: Order) => Date.now() - o.createdAt < ORDER_RETENTION_MS;
+
+function mapRemoteStatus(s: string): OrderStatus {
+  if (s === "rejected") return "cancelled";
+  if (s in STATUS_LABEL) return s as OrderStatus;
+  return "accepted";
+}
 
 export type OrderStatus =
   | "pending"
@@ -50,6 +61,8 @@ export interface Order {
   notes?: string;
   paymentMethod: "cod" | "wallet";
   driver?: { name: string; phone: string; rating: number };
+  /** True when the status comes from the server copy of the order. */
+  remote?: boolean;
 }
 
 interface OrdersContextValue {
@@ -70,10 +83,70 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
-      if (raw) setOrders(JSON.parse(raw));
+      if (raw) setOrders((JSON.parse(raw) as Order[]).filter(withinRetention));
     } catch {}
     setHydrated(true);
   }, []);
+
+  // Restore the signed-in customer's orders (last 10 days) from the server, so
+  // they survive app restarts, sign-out/in and reinstall.
+  useEffect(() => {
+    if (!hydrated) return;
+    let alive = true;
+    const load = async () => {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id;
+      if (!uid) return;
+      const since = new Date(Date.now() - ORDER_RETENTION_MS).toISOString();
+      const { data } = await supabase
+        .from("customer_orders")
+        .select("id, local_order_id, store_id, items, subtotal, delivery_fee, total, status, created_at, address, customer_phone, notes, payment_method")
+        .eq("customer_id", uid)
+        .gte("created_at", since)
+        .order("created_at", { ascending: false });
+      if (!alive || !data) return;
+      setOrders((prev) => {
+        const byId = new Map(prev.map((o) => [o.id, o]));
+        for (const r of data) {
+          const id = r.local_order_id ?? r.id;
+          const local = byId.get(id);
+          const raw = Array.isArray(r.items) ? (r.items as Array<{ name?: string; qty?: number; price?: number }>) : [];
+          const items = local?.items ?? (raw.map((it, i) => ({
+            productId: `${r.id}-${i}`,
+            quantity: it.qty ?? 1,
+            product: { name: it.name ?? "", price: it.price ?? 0 },
+          })) as unknown as CartItem[]);
+          byId.set(id, {
+            ...(local ?? {}),
+            id,
+            storeId: r.store_id,
+            items,
+            subtotal: r.subtotal,
+            deliveryFee: r.delivery_fee,
+            discount: local?.discount ?? 0,
+            total: r.total,
+            status: mapRemoteStatus(r.status),
+            createdAt: new Date(r.created_at).getTime(),
+            etaMin: local?.etaMin ?? 30,
+            address: r.address,
+            phone: r.customer_phone,
+            notes: r.notes ?? undefined,
+            paymentMethod: r.payment_method === "wallet" ? "wallet" : "cod",
+            remote: true,
+          });
+        }
+        return [...byId.values()].filter(withinRetention).sort((a, b) => b.createdAt - a.createdAt);
+      });
+    };
+    load();
+    const { data: sub } = supabase.auth.onAuthStateChange((e) => {
+      if (e === "SIGNED_IN") load();
+    });
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -85,7 +158,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     const t = setInterval(() => {
       setOrders((prev) =>
-        prev.map((o) => {
+        prev.filter(withinRetention).map((o) => {
+          if (o.remote) return o;
           if (o.status === "delivered" || o.status === "cancelled") return o;
           const elapsed = (Date.now() - o.createdAt) / 1000;
           // advance one step every ~20s of wall time
