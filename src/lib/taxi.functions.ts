@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePhone } from "./phone-auth";
+import { taxiVehicleTypeSchema } from "./taxi-vehicle";
 
 // Taxi module: customer requests + admin-managed taxi driver accounts.
 
@@ -11,6 +12,7 @@ const inputSchema = z.object({
   customer_phone: z.string().trim().min(6).max(30),
   address: z.string().trim().min(1).max(500),
   notes: z.string().trim().max(1000).nullable().optional(),
+  vehicle_type: taxiVehicleTypeSchema,
   customer_lat: z.number().nullable().optional(),
   customer_lng: z.number().nullable().optional(),
 });
@@ -42,6 +44,7 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
         customer_phone: data.customer_phone,
         address: data.address,
         notes: data.notes || null,
+        vehicle_type: data.vehicle_type,
         customer_lat: data.customer_lat ?? null,
         customer_lng: data.customer_lng ?? null,
         status: "pending",

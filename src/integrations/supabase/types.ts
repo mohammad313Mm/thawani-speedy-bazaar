@@ -876,6 +876,7 @@ export type Database = {
           rejected_at: string | null
           status: string
           updated_at: string
+          vehicle_type: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -895,6 +896,7 @@ export type Database = {
           rejected_at?: string | null
           status?: string
           updated_at?: string
+          vehicle_type?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -914,6 +916,7 @@ export type Database = {
           rejected_at?: string | null
           status?: string
           updated_at?: string
+          vehicle_type?: string | null
         }
         Relationships: [
           {

@@ -19,6 +19,16 @@ import { listGeneralStores, type GeneralStorePublic } from "../lib/general.funct
 import splashLogo from "@/assets/splash-logo.png.asset.json";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "ثواني — الطلب والتوصيل" },
+      { name: "description", content: "متاجر وخدمات التوصيل والتكسي في منطقتك عبر ثواني." },
+      { property: "og:title", content: "ثواني — الطلب والتوصيل" },
+      { property: "og:description", content: "متاجر وخدمات التوصيل والتكسي في منطقتك عبر ثواني." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: HomePage,
 });
 

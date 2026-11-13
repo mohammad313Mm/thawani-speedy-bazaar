@@ -8,6 +8,7 @@ import { useAuth } from "../lib/auth";
 import { taxiRespondToRequest } from "../lib/taxi.functions";
 import { stopRingtone } from "../lib/alert-sound";
 import type { TaxiRequestRow } from "../components/TaxiRequestListener";
+import { taxiVehicleLabel } from "../lib/taxi-vehicle";
 
 export const Route = createFileRoute("/taxi-orders")({
   head: () => ({
@@ -125,6 +126,7 @@ function TaxiOrdersPage() {
               </span>
             </div>
             <div className="space-y-1.5 text-sm text-muted-foreground">
+              <p className="font-bold text-foreground">نوع المركبة: {taxiVehicleLabel(r.vehicle_type)}</p>
               <p className="flex items-center gap-2" dir="ltr">
                 <Phone className="h-4 w-4 shrink-0" /> {r.customer_phone}
               </p>

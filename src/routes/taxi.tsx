@@ -7,9 +7,21 @@ import { useAuth } from "../lib/auth";
 import { placeTaxiRequest } from "../lib/taxi.functions";
 import { loadSavedLocation } from "../lib/geo";
 import { useLocationPicker } from "../lib/use-location";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { taxiVehicleTypeSchema, type TaxiVehicleType } from "../lib/taxi-vehicle";
 
 
 export const Route = createFileRoute("/taxi")({
+  head: () => ({
+    meta: [
+      { title: "طلب تكسي — ثواني" },
+      { name: "description", content: "اطلب تكسي أو تكتك إلى موقعك عبر ثواني." },
+      { property: "og:title", content: "طلب تكسي — ثواني" },
+      { property: "og:description", content: "اطلب تكسي أو تكتك إلى موقعك عبر ثواني." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: TaxiPage,
 });
 
@@ -59,11 +71,16 @@ function TaxiPage() {
   const { user } = useAuth();
   const [location, setLocation] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
+  const [vehicleType, setVehicleType] = useState<TaxiVehicleType | "">("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
+    if (!vehicleType) {
+      toast.error("يرجى اختيار نوع المركبة");
+      return;
+    }
     if (!location) {
       toast.error("يرجى تحديد موقعك أولاً");
       return;
@@ -82,6 +99,7 @@ function TaxiPage() {
           customer_phone: phone.trim(),
           address: location,
           notes: notes.trim() || null,
+          vehicle_type: vehicleType,
           customer_lat: saved?.lat ?? null,
           customer_lng: saved?.lng ?? null,
         },
@@ -127,6 +145,29 @@ function TaxiPage() {
             placeholder="ملاحظة اختيارية..."
             className="w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm font-medium text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:shadow-elegant"
           />
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+          <label htmlFor="taxi-vehicle-type" className="mb-2 block text-sm font-bold text-foreground">
+            نوع المركبة (إجباري)
+          </label>
+          <Select
+            dir="rtl"
+            required
+            value={vehicleType}
+            onValueChange={(value) => {
+              const parsed = taxiVehicleTypeSchema.safeParse(value);
+              if (parsed.success) setVehicleType(parsed.data);
+            }}
+          >
+            <SelectTrigger id="taxi-vehicle-type" aria-required="true" className="h-12 rounded-2xl border-border bg-background px-4 font-medium text-foreground">
+              <SelectValue placeholder="اختر نوع المركبة" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="taxi">تكسي</SelectItem>
+              <SelectItem value="tuktuk">تكتك</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft sm:grid-cols-2">

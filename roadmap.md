@@ -1,0 +1,4 @@
+- [x] Inspect existing taxi request storage and customer, admin, driver displays.
+- [x] Add optional storage for legacy compatibility and required selection for new requests.
+- [x] Verify required selection, both allowed values, submission payload, mobile display, schema, and legacy compatibility.
+- [ ] Confirm a real submitted request in admin and taxi-account screens; blocked pending a live taxi request, avoided during testing to prevent dispatching drivers.

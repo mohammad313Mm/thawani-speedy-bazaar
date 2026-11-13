@@ -9,6 +9,7 @@ import { supabase } from "../integrations/supabase/client";
 import { useIsTaxiDriver } from "../lib/use-taxi-driver";
 import { startRingtone, stopRingtone } from "../lib/alert-sound";
 import { taxiRespondToRequest } from "../lib/taxi.functions";
+import { taxiVehicleLabel } from "../lib/taxi-vehicle";
 
 export type TaxiRequestRow = {
   id: string;
@@ -17,6 +18,7 @@ export type TaxiRequestRow = {
   customer_phone: string;
   address: string;
   notes: string | null;
+  vehicle_type?: string | null;
   customer_lat: number | null;
   customer_lng: number | null;
   status: string;
@@ -108,6 +110,7 @@ export function TaxiRequestListener() {
 
         <div className="space-y-2 rounded-2xl bg-muted/60 p-3 text-sm">
           <p className="font-bold text-foreground">{incoming.customer_name || "زبون"}</p>
+          <p className="font-bold text-foreground">نوع المركبة: {taxiVehicleLabel(incoming.vehicle_type)}</p>
           <p className="flex items-center gap-2 text-muted-foreground" dir="ltr">
             <Phone className="h-4 w-4 shrink-0" /> {incoming.customer_phone}
           </p>

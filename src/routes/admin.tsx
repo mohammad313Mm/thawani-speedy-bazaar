@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
+import { taxiVehicleLabel } from "../lib/taxi-vehicle";
 import {
   adminActOnApplication,
   adminSaveAd,
@@ -73,6 +74,16 @@ import {
 } from "../lib/taxi.functions";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [
+      { title: "لوحة الإدارة — ثواني" },
+      { name: "description", content: "إدارة طلبات وخدمات ثواني." },
+      { property: "og:title", content: "لوحة الإدارة — ثواني" },
+      { property: "og:description", content: "إدارة طلبات وخدمات ثواني." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AdminPage,
 });
 
@@ -2505,6 +2516,7 @@ type TaxiRequestAdminRow = {
   notes: string | null;
   status: string;
   driver_phone: string | null;
+  vehicle_type?: string | null;
   created_at: string;
   customer_lat: number | null;
   customer_lng: number | null;
@@ -2657,6 +2669,7 @@ function TaxiPanel({ areaId }: { areaId: string }) {
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">{r.address}</p>
+              <p className="mt-1 text-xs font-bold text-foreground">نوع المركبة: {taxiVehicleLabel(r.vehicle_type)}</p>
               {r.notes && <p className="text-xs text-muted-foreground">ملاحظات: {r.notes}</p>}
               <p className="mt-1 text-[11px] text-muted-foreground">
                 السائق: {r.driver_phone ?? "—"} · {new Date(r.created_at).toLocaleString("ar-IQ")}
