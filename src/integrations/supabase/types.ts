@@ -590,6 +590,8 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          discount_active: boolean
+          discount_price_iqd: number | null
           id: string
           image_url: string | null
           is_available: boolean
@@ -603,6 +605,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          discount_active?: boolean
+          discount_price_iqd?: number | null
           id?: string
           image_url?: string | null
           is_available?: boolean
@@ -616,6 +620,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          discount_active?: boolean
+          discount_price_iqd?: number | null
           id?: string
           image_url?: string | null
           is_available?: boolean

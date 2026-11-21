@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { OfferPrice } from "./OfferFields";
 import { Plus, Heart } from "lucide-react";
 import { toast } from "sonner";
 import type { Product } from "../lib/data";
@@ -40,15 +41,8 @@ export function ProductCard({ product }: { product: Product }) {
           <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
             {product.description}
           </p>
-          <div className="mt-auto flex items-baseline gap-2">
-            <span className="text-sm font-black text-primary">
-              {formatIQD(product.discountPrice ?? product.price)}
-            </span>
-            {hasDiscount && (
-              <span className="text-[11px] font-semibold text-muted-foreground line-through">
-                {formatIQD(product.price)}
-              </span>
-            )}
+          <div className="mt-auto">
+            <OfferPrice price={product.price} discount={hasDiscount ? product.discountPrice : null} />
           </div>
         </div>
       </Link>

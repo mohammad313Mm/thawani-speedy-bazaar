@@ -8,6 +8,13 @@
       "when": 1794582586313,
       "tag": "0000_taxi_request_vehicle_type",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1795254108096,
+      "tag": "0001_product_offers",
+      "breakpoints": true
     }
   ]
 }

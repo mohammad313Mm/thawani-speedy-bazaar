@@ -180,6 +180,37 @@ export const searchAreaProducts = createServerFn({ method: "POST" })
     return { products: rows ?? [] };
   });
 
+/** Public (area-scoped): stores in the caller's area that have at least one active offer, with those products. */
+export const listAreaOffers = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => coordsSchema.parse(d))
+  .handler(async ({ data }) => {
+    const areaId = await areaForPoint(data.lat, data.lng);
+    if (!areaId) return { stores: [] };
+    const db = await admin();
+    const { data: rows, error } = await db
+      .from("products")
+      .select("id, store_id, name_ar, description, price_iqd, discount_price_iqd, discount_active, image_url, category, is_available, sort_order, stores!inner(id,name,logo_url,cover_url,category,is_open,status,area_id)")
+      .eq("discount_active", true)
+      .not("discount_price_iqd", "is", null)
+      .eq("stores.status", "active")
+      .eq("stores.area_id", areaId)
+      .order("sort_order");
+    if (error) throw new Error(error.message);
+    type Row = { id: string; store_id: string; name_ar: string; description: string | null; price_iqd: number;
+      discount_price_iqd: number | null; discount_active: boolean; image_url: string | null; category: string | null;
+      is_available: boolean; sort_order: number;
+      stores: { id: string; name: string; logo_url: string | null; cover_url: string | null; category: string | null; is_open: boolean } };
+    const byStore = new Map<string, { id: string; name: string; logo_url: string | null; cover_url: string | null; category: string | null; is_open: boolean; products: Omit<Row, "stores">[] }>();
+    for (const r of (rows ?? []) as unknown as Row[]) {
+      if (r.discount_price_iqd == null || r.discount_price_iqd >= r.price_iqd) continue;
+      const { stores: st, ...prod } = r;
+      let entry = byStore.get(st.id);
+      if (!entry) { entry = { ...st, products: [] }; byStore.set(st.id, entry); }
+      entry.products.push(prod);
+    }
+    return { stores: [...byStore.values()] };
+  });
+
 /** Public (area-scoped): ads for the caller's area (global ads have no area). */
 export const listAreaAds = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>

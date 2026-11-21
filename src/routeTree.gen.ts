@@ -23,6 +23,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MerchantAuthRouteImport } from './routes/merchant-auth'
 import { Route as MerchantLoginRouteImport } from './routes/merchant-login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as OffersRouteImport } from './routes/offers'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -115,6 +116,11 @@ const MerchantLoginRoute = MerchantLoginRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OffersRoute = OffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrdersRoute = OrdersRouteImport.update({
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offers': typeof OffersRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offers': typeof OffersRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -331,6 +339,7 @@ export interface FileRoutesById {
   '/merchant-auth': typeof MerchantAuthRoute
   '/merchant-login': typeof MerchantLoginRoute
   '/notifications': typeof NotificationsRoute
+  '/offers': typeof OffersRoute
   '/orders': typeof OrdersRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
+    | '/offers'
     | '/orders'
     | '/privacy'
     | '/profile'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
+    | '/offers'
     | '/orders'
     | '/privacy'
     | '/profile'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/merchant-auth'
     | '/merchant-login'
     | '/notifications'
+    | '/offers'
     | '/orders'
     | '/privacy'
     | '/profile'
@@ -490,6 +502,7 @@ export interface RootRouteChildren {
   MerchantAuthRoute: typeof MerchantAuthRoute
   MerchantLoginRoute: typeof MerchantLoginRoute
   NotificationsRoute: typeof NotificationsRoute
+  OffersRoute: typeof OffersRoute
   OrdersRoute: typeof OrdersRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
@@ -613,6 +626,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offers': {
+      id: '/offers'
+      path: '/offers'
+      fullPath: '/offers'
+      preLoaderRoute: typeof OffersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/orders': {
@@ -794,6 +814,7 @@ const rootRouteChildren: RootRouteChildren = {
   MerchantAuthRoute: MerchantAuthRoute,
   MerchantLoginRoute: MerchantLoginRoute,
   NotificationsRoute: NotificationsRoute,
+  OffersRoute: OffersRoute,
   OrdersRoute: OrdersRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,

@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { OfferFields, OfferPrice } from "../components/OfferFields";
+import { validateOffer } from "../lib/offers";
 import { useEffect, useState, useCallback } from "react";
 import AreaPolygonEditor from "@/components/AreaPolygonEditor";
 import { parseBoundary, type BoundaryPoint } from "@/lib/areas";
@@ -926,6 +928,8 @@ type ProductRow = {
   name_ar: string;
   description: string | null;
   price_iqd: number;
+  discount_price_iqd?: number | null;
+  discount_active?: boolean | null;
   image_url: string | null;
   category: string | null;
   is_available: boolean;
@@ -998,7 +1002,7 @@ function ProductsPanel({ store, onBack }: { store: StoreRow; onBack: () => void 
               )}
               <div className="space-y-1 p-3">
                 <p className="truncate text-sm font-black">{p.name_ar}</p>
-                <p className="text-xs font-bold text-primary">{p.price_iqd.toLocaleString("ar-IQ")} د.ع</p>
+                <p><OfferPrice price={p.price_iqd} discount={p.discount_active ? p.discount_price_iqd : null} /></p>
                 <Badge tone={p.is_available ? "success" : "muted"}>{p.is_available ? "متوفر" : "غير متوفر"}</Badge>
                 <div className="flex gap-1 pt-1">
                   <IconBtn onClick={() => setEditing(p)} label="تعديل"><Pencil className="h-3 w-3" /></IconBtn>
@@ -1028,6 +1032,9 @@ function ProductEditor({
   const [name, setName] = useState(product?.name_ar ?? "");
   const [desc, setDesc] = useState(product?.description ?? "");
   const [price, setPrice] = useState(String(product?.price_iqd ?? ""));
+  const [discount, setDiscount] = useState(product?.discount_price_iqd != null ? String(product.discount_price_iqd) : "");
+  const [offerActive, setOfferActive] = useState(!!product?.discount_active);
+  const [offerErr, setOfferErr] = useState<string | null>(null);
   const [category, setCategory] = useState(product?.category ?? "");
   const [image, setImage] = useState<string>(product?.image_url ?? "");
   const [saving, setSaving] = useState(false);
@@ -1041,6 +1048,11 @@ function ProductEditor({
 
   const save = async () => {
     if (!name.trim() || !price) { window.alert("الاسم والسعر مطلوبان"); return; }
+    const priceNum = Math.round(Number(price) || 0);
+    const discountNum = discount.trim() ? Number(discount) : null;
+    const oErr = validateOffer(priceNum, discountNum, offerActive);
+    setOfferErr(oErr);
+    if (oErr) return;
     setSaving(true);
     try {
       await adminSaveProduct({
@@ -1051,6 +1063,8 @@ function ProductEditor({
           name_ar: name.trim(),
           description: desc || null,
           price_iqd: Math.round(Number(price) || 0),
+          discount_price_iqd: discount.trim() ? Number(discount) : null,
+          discount_active: offerActive && !!discount.trim(),
           image_url: image || null,
           category: category || null,
           is_available: product?.is_available ?? true,
@@ -1066,6 +1080,7 @@ function ProductEditor({
       <ImagePicker url={image} onPick={pickImage} label="صورة المنتج" />
       <Field label="اسم المنتج" value={name} onChange={setName} />
       <Field label="السعر (د.ع)" value={price} onChange={setPrice} type="number" />
+      <OfferFields discount={discount} onDiscount={setDiscount} active={offerActive} onActive={setOfferActive} error={offerErr} />
       <Field label="التصنيف" value={category} onChange={setCategory} />
       <Field label="الوصف" value={desc} onChange={setDesc} multiline />
       <SaveBtn onClick={save} loading={saving} />
@@ -1756,7 +1771,7 @@ function CategoryProductsPanel({ category, onBack }: { category: AppCategoryRow;
               <div className="space-y-1 p-3">
                 <p className="truncate text-sm font-black">{p.name_ar}</p>
                 {p.description && <p className="line-clamp-2 text-[11px] text-muted-foreground">{p.description}</p>}
-                <p className="text-xs font-bold text-primary">{p.price_iqd.toLocaleString("ar-IQ")} د.ع</p>
+                <p><OfferPrice price={p.price_iqd} discount={p.discount_active ? p.discount_price_iqd : null} /></p>
                 <Badge tone={p.is_available ? "success" : "muted"}>{p.is_available ? "متوفر" : "غير متوفر"}</Badge>
                 <div className="flex gap-1 pt-1">
                   <IconBtn onClick={() => setEditing(p)} label="تعديل"><Pencil className="h-3 w-3" /></IconBtn>
@@ -1786,6 +1801,9 @@ function CategoryProductEditor({
   const [name, setName] = useState(product?.name_ar ?? "");
   const [desc, setDesc] = useState(product?.description ?? "");
   const [price, setPrice] = useState(String(product?.price_iqd ?? ""));
+  const [discount, setDiscount] = useState(product?.discount_price_iqd != null ? String(product.discount_price_iqd) : "");
+  const [offerActive, setOfferActive] = useState(!!product?.discount_active);
+  const [offerErr, setOfferErr] = useState<string | null>(null);
   const [image, setImage] = useState(product?.image_url ?? "");
   const [saving, setSaving] = useState(false);
 
@@ -1796,6 +1814,11 @@ function CategoryProductEditor({
 
   const save = async () => {
     if (!name.trim()) { window.alert("اسم المنتج مطلوب"); return; }
+    const priceNum = Math.round(Number(price) || 0);
+    const discountNum = discount.trim() ? Number(discount) : null;
+    const oErr = validateOffer(priceNum, discountNum, offerActive);
+    setOfferErr(oErr);
+    if (oErr) return;
     setSaving(true);
     try {
       await adminSaveCategoryProduct({
@@ -1807,6 +1830,8 @@ function CategoryProductEditor({
           description: desc.trim() || null,
           image_url: image || null,
           price_iqd: Math.round(Number(price) || 0),
+          discount_price_iqd: discount.trim() ? Number(discount) : null,
+          discount_active: offerActive && !!discount.trim(),
           is_available: product?.is_available ?? true,
           sort_order: product?.sort_order ?? 0,
         },
@@ -1821,6 +1846,7 @@ function CategoryProductEditor({
       <Field label="اسم المنتج" value={name} onChange={setName} />
       <Field label="الوصف" value={desc} onChange={setDesc} multiline />
       <Field label="السعر (د.ع)" value={price} onChange={setPrice} type="number" />
+      <OfferFields discount={discount} onDiscount={setDiscount} active={offerActive} onActive={setOfferActive} error={offerErr} />
       <SaveBtn onClick={save} loading={saving} />
     </Modal>
   );

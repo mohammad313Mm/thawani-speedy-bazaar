@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { effectivePrice } from "./offers";
 import { z } from "zod";
 import {
   feeForDistance,
@@ -36,7 +37,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     const productIds = data.items.map((it) => it.product_id);
     const { data: products, error: prodErr } = await supabaseAdmin
       .from("products")
-      .select("id, store_id, name_ar, price_iqd, is_available")
+      .select("id, store_id, name_ar, price_iqd, discount_price_iqd, discount_active, is_available")
       .in("id", productIds);
     if (prodErr) throw new Error(prodErr.message);
 
@@ -44,7 +45,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     for (const p of products ?? []) {
       priceMap.set(p.id as string, {
         name: (p as { name_ar: string }).name_ar,
-        price: (p as { price_iqd: number }).price_iqd,
+        price: effectivePrice(p as { price_iqd: number; discount_price_iqd: number | null; discount_active: boolean }),
         store_id: (p as { store_id: string }).store_id,
         available: (p as { is_available: boolean }).is_available,
       });

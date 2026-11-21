@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { OfferFields, OfferPrice } from "../components/OfferFields";
+import { validateOffer } from "../lib/offers";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
@@ -61,6 +63,8 @@ type ProductRow = {
   name_ar: string;
   description: string | null;
   price_iqd: number;
+  discount_price_iqd?: number | null;
+  discount_active?: boolean | null;
   image_url: string | null;
   is_available: boolean;
   sort_order: number;
@@ -564,7 +568,7 @@ function ProductsPanel({ storeId }: { storeId: string }) {
               {p.description && (
                 <p className="line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
               )}
-              <p className="mt-1 text-sm font-black text-primary">{formatIQD(p.price_iqd)}</p>
+              <p className="mt-1"><OfferPrice price={p.price_iqd} discount={p.discount_active ? p.discount_price_iqd : null} /></p>
               <div className="mt-1 flex flex-wrap items-center gap-1">
                 {p.category && (
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
@@ -627,6 +631,9 @@ function ProductEditor({
   const [name, setName] = useState(initial?.name_ar ?? "");
   const [desc, setDesc] = useState(initial?.description ?? "");
   const [price, setPrice] = useState<string>(String(initial?.price_iqd ?? ""));
+  const [discount, setDiscount] = useState<string>(initial?.discount_price_iqd != null ? String(initial.discount_price_iqd) : "");
+  const [offerActive, setOfferActive] = useState<boolean>(!!initial?.discount_active);
+  const [offerErr, setOfferErr] = useState<string | null>(null);
   const [category, setCategory] = useState<string>(initial?.category ?? "");
   const [newCategory, setNewCategory] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
@@ -652,6 +659,10 @@ function ProductEditor({
       setErr("الاسم والسعر مطلوبان");
       return;
     }
+    const discountNum = discount.trim() ? Number(discount) : null;
+    const oErr = validateOffer(Math.round(priceNum), discountNum, offerActive);
+    setOfferErr(oErr);
+    if (oErr) return;
     setBusy(true);
     try {
       const row = {
@@ -659,6 +670,8 @@ function ProductEditor({
         name_ar: name.trim(),
         description: desc.trim() || null,
         price_iqd: Math.round(priceNum),
+        discount_price_iqd: discountNum,
+        discount_active: offerActive && discountNum != null,
         image_url: image,
         category: (addingCategory ? newCategory.trim() : category.trim()) || null,
         is_available: available,
@@ -726,6 +739,8 @@ function ProductEditor({
               className="mt-1 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:border-primary"
             />
           </label>
+
+          <OfferFields discount={discount} onDiscount={setDiscount} active={offerActive} onActive={setOfferActive} error={offerErr} />
 
           <label className="block">
             <span className="text-xs font-black">الوصف</span>

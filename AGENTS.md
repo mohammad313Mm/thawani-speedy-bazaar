@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep taxi vehicle validation and label resolution in `src/lib/taxi-vehicle.ts`; a shared definition enforces the two allowed new-request values while safely displaying legacy rows without a selection.
+- Keep offer (discount) price rules in `src/lib/offers.ts`; orders, customer product mapping and admin/merchant validation share it so the charged price never diverges from the shown one.

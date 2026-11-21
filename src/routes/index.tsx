@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { Search, MapPin, Loader2 } from "lucide-react";
 import { AppHeader } from "../components/AppHeader";
-import { CategoryCard } from "../components/CategoryCard";
+import { CategoryCard, OffersCard } from "../components/CategoryCard";
 import { BannerCarousel } from "../components/BannerCarousel";
 
 
@@ -384,6 +384,7 @@ function HomePage() {
                 <h3 className="text-lg font-black text-foreground">الأقسام الرئيسية</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
+                <OffersCard />
                 {categories.map((c) => (
                   <CategoryCard key={c.key} category={c} />
                 ))}

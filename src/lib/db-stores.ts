@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
 import type { CategoryKey, Store, Product } from "./data";
 import { currentCoords } from "./use-area";
+import { hasActiveOffer } from "./offers";
 import {
   listAreaStores,
   getAreaStore,
@@ -39,6 +40,8 @@ export type DbProductRow = {
   name_ar: string;
   description: string | null;
   price_iqd: number;
+  discount_price_iqd?: number | null;
+  discount_active?: boolean | null;
   image_url: string | null;
   category: string | null;
   is_available: boolean;
@@ -122,6 +125,7 @@ export function adaptDbProduct(row: DbProductRow): Product {
     name: row.name_ar,
     description: row.description ?? "",
     price: row.price_iqd,
+    ...(hasActiveOffer(row) ? { discountPrice: row.discount_price_iqd as number } : {}),
     image:
       row.image_url ||
       "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",

@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { OfferPrice } from "../components/OfferFields";
 import { ArrowRight, Minus, Plus, Star, Clock, Heart, Share2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { productById, storeById } from "../lib/data";
@@ -124,12 +125,7 @@ function ProductPage() {
         </div>
 
         <div className="mt-3 flex items-baseline gap-3">
-          <span className="text-2xl font-black text-primary">{formatIQD(basePrice)}</span>
-          {product.discountPrice && (
-            <span className="text-sm font-semibold text-muted-foreground line-through">
-              {formatIQD(product.price)}
-            </span>
-          )}
+          <OfferPrice price={product.price} discount={product.discountPrice ?? null} size="lg" />
           <span className="mr-auto inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" /> {formatMinutes(product.prepMin)}
           </span>

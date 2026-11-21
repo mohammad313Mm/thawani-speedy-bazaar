@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { validateOffer } from "./offers";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -226,6 +227,8 @@ const productSchema = z.object({
   name_ar: z.string().min(1),
   description: z.string().nullable().optional(),
   price_iqd: z.number().int().min(0),
+  discount_price_iqd: z.number().int().min(0).nullable().optional(),
+  discount_active: z.boolean().optional(),
   image_url: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
   is_available: z.boolean().default(true),
@@ -237,6 +240,9 @@ export const adminSaveProduct = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => productSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdminCaller(context);
+    const offerErr = data.discount_active !== undefined || data.discount_price_iqd !== undefined
+      ? validateOffer(data.price_iqd, data.discount_price_iqd ?? null, !!data.discount_active) : null;
+    if (offerErr) throw new Error(offerErr);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { id, ...row } = data;
     if (id) {
@@ -452,6 +458,8 @@ const categoryProductSchema = z.object({
   description: z.string().trim().nullable().optional(),
   image_url: z.string().nullable().optional(),
   price_iqd: z.number().int().min(0).default(0),
+  discount_price_iqd: z.number().int().min(0).nullable().optional(),
+  discount_active: z.boolean().optional(),
   is_available: z.boolean().default(true),
   sort_order: z.number().int().default(0),
 });
@@ -510,6 +518,9 @@ export const adminSaveCategoryProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const catOfferErr = data.discount_active !== undefined
+      ? validateOffer(data.price_iqd, data.discount_price_iqd ?? null, data.discount_active) : null;
+    if (catOfferErr) throw new Error(catOfferErr);
     const storeId = await ensureCategoryStore(supabaseAdmin, data.category_key, data.category_name);
     const row = {
       store_id: storeId,
@@ -517,6 +528,7 @@ export const adminSaveCategoryProduct = createServerFn({ method: "POST" })
       description: data.description ?? null,
       image_url: data.image_url ?? null,
       price_iqd: data.price_iqd,
+      ...(data.discount_active !== undefined ? { discount_active: data.discount_active, discount_price_iqd: data.discount_price_iqd ?? null } : {}),
       category: data.category_key,
       is_available: data.is_available,
       sort_order: data.sort_order,

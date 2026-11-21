@@ -78,3 +78,22 @@ export function CategoryCard({ category }: { category: Category }) {
 
   );
 }
+
+/** "عروض ثواني" tile — same look as the other home tiles, placed first. */
+export function OffersCard() {
+  const category: Category = {
+    key: "offers",
+    name: "عروض ثواني",
+    description: "خصومات المتاجر في منطقتك",
+    icon: "🏷️",
+    color: "from-[oklch(0.62_0.22_15)] to-[oklch(0.72_0.2_40)]",
+  };
+  return (
+    <Link
+      to="/offers"
+      className="group relative flex flex-col justify-between overflow-hidden rounded-3xl p-4 text-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-elegant"
+    >
+      <CardBody category={category} cta="تصفح العروض" />
+    </Link>
+  );
+}
