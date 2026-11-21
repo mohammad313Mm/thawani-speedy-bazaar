@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "../integrations/supabase/client";
 import { listAreaOffers } from "../lib/area.functions";
 import { currentCoords } from "../lib/use-area";
-import { OfferPrice } from "../components/OfferFields";
 
 export const Route = createFileRoute("/offers")({
   head: () => ({
@@ -83,24 +82,13 @@ function OffersPage() {
                   </div>
                   <span className="rounded-full bg-background/90 px-3 py-1 text-sm font-black text-foreground">{s.name}</span>
                 </div>
+                <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-black text-primary-foreground shadow-elegant">
+                  <Tag className="h-3.5 w-3.5" /> {s.products.length} {s.products.length === 1 ? "عرض" : s.products.length === 2 ? "عرضان" : "عروض"}
+                </span>
                 {!s.is_open && (
-                  <span className="absolute left-3 top-3 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">مغلق</span>
+                  <span className="absolute left-3 top-10 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">مغلق</span>
                 )}
               </div>
-              <ul className="divide-y divide-border/60">
-                {s.products.map((p) => (
-                  <li key={p.id} className="flex items-center gap-3 p-3">
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                      {p.image_url && <img src={p.image_url} alt="" className="h-full w-full object-cover" />}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-black text-foreground">{p.name_ar}</p>
-                      {!p.is_available && <p className="text-[10px] font-bold text-muted-foreground">غير متوفر حاليًا</p>}
-                    </div>
-                    <OfferPrice price={p.price_iqd} discount={p.discount_price_iqd} />
-                  </li>
-                ))}
-              </ul>
             </Link>
           ))}
         </div>

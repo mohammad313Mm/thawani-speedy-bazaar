@@ -21,7 +21,9 @@ function StorePage() {
 
   const products = useMemo(() => {
     if (!store) return [];
-    return staticStore ? productsByStore(store.id) : dbProducts;
+    const list = staticStore ? productsByStore(store.id) : dbProducts;
+    // Discounted products first (stable sort keeps original order within each group).
+    return [...list].sort((a, b) => Number(b.discountPrice != null) - Number(a.discountPrice != null));
   }, [store, staticStore, dbProducts]);
   const categories = useMemo(
     () => Array.from(new Set(products.map((p) => p.category))),
