@@ -963,6 +963,10 @@ export type Database = {
       area_for_point: { Args: { _lat: number; _lng: number }; Returns: string }
       cleanup_old_records: { Args: never; Returns: Json }
       current_area_id: { Args: never; Returns: string }
+      delete_finished_customer_order: {
+        Args: { _order_id: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

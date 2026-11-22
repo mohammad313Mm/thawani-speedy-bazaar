@@ -346,6 +346,21 @@ export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminDeleteFinishedOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdminCaller(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Status restriction and linked-notice deletion are one database transaction.
+    const { data: deletedId, error } = await supabaseAdmin.rpc("delete_finished_customer_order", {
+      _order_id: data.id,
+    });
+    if (error) throw new Error(error.message);
+    if (deletedId !== data.id) throw new Error("تعذر حذف الطلب المحدد");
+    return { ok: true };
+  });
+
 /* ============== Broadcast notifications ============== */
 
 export const adminSendBroadcast = createServerFn({ method: "POST" })

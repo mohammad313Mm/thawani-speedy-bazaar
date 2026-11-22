@@ -29,9 +29,18 @@ import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { notifyDriversForOrder } from "../lib/notify.functions";
 import { syncMyStoreArea } from "../lib/area.functions";
 import { useMyArea } from "../lib/use-area";
+import { useOrderDeletionRefresh } from "../lib/use-order-deletion-refresh";
 import { claimGeneralStore, listClaimableGeneralStores, type GeneralStorePublic } from "../lib/general.functions";
 
 export const Route = createFileRoute("/merchant/dashboard")({
+  head: () => ({ meta: [
+    { title: "طلبات متجري — ثواني" },
+    { name: "description", content: "إدارة طلبات ومنتجات متجرك في ثواني." },
+    { property: "og:title", content: "طلبات متجري — ثواني" },
+    { property: "og:description", content: "إدارة طلبات ومنتجات متجرك في ثواني." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: MerchantDashboard,
 });
 
@@ -314,6 +323,8 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
       setIncoming((cur) => cur ?? fresh);
     }
   };
+
+  useOrderDeletionRefresh(load);
 
   useEffect(() => {
     load();

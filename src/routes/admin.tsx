@@ -31,6 +31,8 @@ import {
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
 import { taxiVehicleLabel } from "../lib/taxi-vehicle";
+import { Button } from "@/components/ui/button";
+import { isFinishedOrder } from "../lib/order-deletion";
 import {
   adminActOnApplication,
   adminSaveAd,
@@ -43,6 +45,7 @@ import {
   adminDeleteProduct,
   adminListOrders,
   adminUpdateOrderStatus,
+  adminDeleteFinishedOrder,
   adminSendBroadcast,
   adminDeleteBroadcast,
   adminSaveAppCategory,
@@ -2401,6 +2404,8 @@ function OrdersPanel({ areaId }: { areaId: string }) {
   const [stores, setStores] = useState<Record<string, { id: string; name: string }>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "pending" | "active" | "done">("pending");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -2435,8 +2440,24 @@ function OrdersPanel({ areaId }: { areaId: string }) {
     if (filter === "all") return true;
     if (filter === "pending") return o.status === "pending";
     if (filter === "active") return ["accepted", "preparing", "ready", "driver_assigned"].includes(o.status);
-    return ["delivered", "rejected", "cancelled"].includes(o.status);
+    return isFinishedOrder(o.status);
   });
+
+  const deleteFinished = async (order: AdminOrderRow) => {
+    if (deletingId || filter !== "done" || !isFinishedOrder(order.status)) return;
+    if (!window.confirm("هل أنت متأكد من حذف هذا الطلب نهائياً؟")) return;
+    setDeletingId(order.id);
+    setDeleteError("");
+    try {
+      await adminDeleteFinishedOrder({ data: { id: order.id } });
+      setOrders((current) => current.filter((row) => row.id !== order.id));
+      await load();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "تعذر حذف الطلب، حاول مجدداً.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -2454,6 +2475,7 @@ function OrdersPanel({ areaId }: { areaId: string }) {
         ))}
       </div>
 
+      {deleteError && <p role="alert" className="text-sm text-destructive">{deleteError}</p>}
       {loading ? (
         <div className="py-8 text-center text-xs text-muted-foreground">جاري التحميل...</div>
       ) : filtered.length === 0 ? (
@@ -2472,9 +2494,18 @@ function OrdersPanel({ areaId }: { areaId: string }) {
                   {new Date(o.created_at).toLocaleString("ar-IQ")}
                 </p>
               </div>
-              <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
-                {ORDER_STATUS_LABEL[o.status] ?? o.status}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+                  {ORDER_STATUS_LABEL[o.status] ?? o.status}
+                </span>
+                {filter === "done" && isFinishedOrder(o.status) && (
+                  <Button variant="ghost" size="icon" className="text-destructive"
+                    title="حذف الطلب نهائياً" aria-label="حذف الطلب نهائياً"
+                    disabled={deletingId !== null} onClick={() => deleteFinished(o)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">

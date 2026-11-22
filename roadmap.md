@@ -2,3 +2,6 @@
 - [x] Add optional storage for legacy compatibility and required selection for new requests.
 - [x] Verify required selection, both allowed values, submission payload, mobile display, schema, and legacy compatibility.
 - [ ] Confirm a real submitted request in admin and taxi-account screens; blocked pending a live taxi request, avoided during testing to prevent dispatching drivers.
+- [x] Add confirmed admin-only deletion of finished customer orders and linked notices.
+- [x] Remove deleted order caches and refresh customer, merchant and driver screens.
+- [x] Test deletion restrictions, isolated deletion, confirmation and read-back without deleting existing orders.

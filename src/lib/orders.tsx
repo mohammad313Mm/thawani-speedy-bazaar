@@ -1,6 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { CartItem } from "./cart";
 import { supabase } from "../integrations/supabase/client";
+import { retainedOrderCache } from "./order-deletion";
+import { useOrderDeletionRefresh } from "./use-order-deletion-refresh";
 
 /** Customer orders stay visible in «طلباتي» for 10 days — same window as the admin cleanup. */
 export const ORDER_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
@@ -79,6 +81,9 @@ const KEY = "thawani-orders";
 export function OrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
+  const inFlightIds = useRef(new Set<string>());
+  useOrderDeletionRefresh(() => setRefreshVersion((value) => value + 1), hydrated);
 
   useEffect(() => {
     try {
@@ -106,7 +111,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         .order("created_at", { ascending: false });
       if (!alive || !data) return;
       setOrders((prev) => {
-        const byId = new Map(prev.map((o) => [o.id, o]));
+        const serverIds = new Set(data.map((row) => row.local_order_id ?? row.id));
+        for (const id of serverIds) inFlightIds.current.delete(id);
+        const byId = new Map(retainedOrderCache(prev, serverIds, inFlightIds.current).map((o) => [o.id, o]));
         for (const r of data) {
           const id = r.local_order_id ?? r.id;
           const local = byId.get(id);
@@ -146,7 +153,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       alive = false;
       sub.subscription.unsubscribe();
     };
-  }, [hydrated]);
+  }, [hydrated, refreshVersion]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -190,6 +197,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       createdAt: Date.now(),
       status: o.status ?? "pending",
     };
+    inFlightIds.current.add(order.id);
     setOrders((prev) => [order, ...prev]);
     return order;
   };
@@ -208,6 +216,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   };
 
   const cancelOrder = (id: string) => {
+    inFlightIds.current.delete(id);
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: "cancelled" } : o)));
   };
 

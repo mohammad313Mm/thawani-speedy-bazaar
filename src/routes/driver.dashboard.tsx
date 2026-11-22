@@ -8,8 +8,17 @@ import { ActiveDeliveryDetails, type ActiveOrder } from "../components/ActiveDel
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { useMyArea } from "../lib/use-area";
+import { useOrderDeletionRefresh } from "../lib/use-order-deletion-refresh";
 
 export const Route = createFileRoute("/driver/dashboard")({
+  head: () => ({ meta: [
+    { title: "طلبات التوصيل — ثواني" },
+    { name: "description", content: "متابعة طلبات مندوب التوصيل في ثواني." },
+    { property: "og:title", content: "طلبات التوصيل — ثواني" },
+    { property: "og:description", content: "متابعة طلبات مندوب التوصيل في ثواني." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: DriverDashboardPage,
 });
 
@@ -106,6 +115,8 @@ function DriverDashboardPage() {
       setStores(map);
     }
   }, [user]);
+
+  useOrderDeletionRefresh(loadOrders, !!user);
 
   useEffect(() => {
     if (!user) return;
