@@ -33,6 +33,7 @@ import { useAuth } from "../lib/auth";
 import { taxiVehicleLabel } from "../lib/taxi-vehicle";
 import { Button } from "@/components/ui/button";
 import { isFinishedOrder } from "../lib/order-deletion";
+import { groupOrdersByStore } from "../lib/admin-order-groups";
 import {
   adminActOnApplication,
   adminSaveAd,
@@ -2399,6 +2400,89 @@ const ORDER_STATUS_LABEL: Record<string, string> = {
   cancelled: "ملغي",
 };
 
+function OrderCard({
+  order: o,
+  storeName,
+  showDelete,
+  deleting,
+  onDelete,
+  onAct,
+}: {
+  order: AdminOrderRow;
+  storeName: string;
+  showDelete: boolean;
+  deleting: boolean;
+  onDelete: (order: AdminOrderRow) => void;
+  onAct: (id: string, status: string) => void;
+}) {
+  return (
+    <article className="rounded-2xl bg-card p-4 shadow-soft">
+      <div className="mb-2 flex items-center justify-between">
+        <div>
+          <p className="text-xs font-black text-foreground" dir="ltr">
+            #{(o.local_order_id ?? o.id).slice(-6).toUpperCase()}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {new Date(o.created_at).toLocaleString("ar-IQ")}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
+            {ORDER_STATUS_LABEL[o.status] ?? o.status}
+          </span>
+          {showDelete && (
+            <Button variant="ghost" size="icon" className="text-destructive"
+              title="حذف الطلب نهائياً" aria-label="حذف الطلب نهائياً"
+              disabled={deleting} onClick={() => onDelete(o)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+        <p><span className="font-bold text-foreground">المتجر:</span> {storeName}</p>
+        <p><span className="font-bold text-foreground">الزبون:</span> {o.customer_name ?? "—"}</p>
+        <p dir="ltr"><span className="font-bold text-foreground">الهاتف:</span> {o.customer_phone}</p>
+        <p><span className="font-bold text-foreground">العنوان:</span> {o.address}</p>
+        {o.notes && <p><span className="font-bold text-foreground">ملاحظات:</span> {o.notes}</p>}
+        <p><span className="font-bold text-foreground">الدفع:</span> {o.payment_method === "cod" ? "عند الاستلام" : o.payment_method}</p>
+      </div>
+
+      <div className="mt-2 space-y-1 border-t border-border/60 pt-2 text-xs">
+        {(o.items ?? []).map((it, i) => (
+          <div key={i} className="flex justify-between">
+            <span>{it.name} × {it.qty}</span>
+            <span className="text-muted-foreground">{(it.price * it.qty).toLocaleString("ar-IQ")} د.ع</span>
+          </div>
+        ))}
+        <div className="flex justify-between pt-1"><span>التوصيل</span><span>{o.delivery_fee.toLocaleString("ar-IQ")} د.ع</span></div>
+        <div className="flex justify-between border-t border-border/60 pt-1 font-black">
+          <span>الإجمالي</span>
+          <span className="text-primary">{o.total.toLocaleString("ar-IQ")} د.ع</span>
+        </div>
+      </div>
+
+      {o.status === "pending" && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => onAct(o.id, "rejected")}
+            className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-xs font-black text-destructive"
+          >
+            <X className="h-4 w-4" /> رفض
+          </button>
+          <button
+            onClick={() => onAct(o.id, "accepted")}
+            className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-black text-primary-foreground"
+          >
+            <Check className="h-4 w-4" /> موافقة
+          </button>
+        </div>
+      )}
+    </article>
+  );
+}
+
 function OrdersPanel({ areaId }: { areaId: string }) {
   const [orders, setOrders] = useState<AdminOrderRow[]>([]);
   const [stores, setStores] = useState<Record<string, { id: string; name: string }>>({});
@@ -2482,72 +2566,45 @@ function OrdersPanel({ areaId }: { areaId: string }) {
         <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           لا توجد طلبات في هذا القسم.
         </div>
+      ) : filter === "done" ? (
+        <div className="space-y-4">
+          {groupOrdersByStore(filtered).map((group) => (
+            <section key={group.storeId} className="space-y-2">
+              <div className="flex items-center gap-2 px-1">
+                <h3 className="text-sm font-black text-foreground">
+                  {stores[group.storeId]?.name ?? "متجر غير محدد"}
+                </h3>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black text-primary">
+                  {group.orders.length} طلب
+                </span>
+              </div>
+              <div className="space-y-3">
+                {group.orders.map((o) => (
+                  <OrderCard
+                    key={o.id}
+                    order={o}
+                    storeName={stores[group.storeId]?.name ?? "—"}
+                    showDelete={isFinishedOrder(o.status)}
+                    deleting={deletingId !== null}
+                    onDelete={deleteFinished}
+                    onAct={act}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       ) : (
         filtered.map((o) => (
-          <article key={o.id} className="rounded-2xl bg-card p-4 shadow-soft">
-            <div className="mb-2 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-black text-foreground" dir="ltr">
-                  #{(o.local_order_id ?? o.id).slice(-6).toUpperCase()}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {new Date(o.created_at).toLocaleString("ar-IQ")}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-black text-primary">
-                  {ORDER_STATUS_LABEL[o.status] ?? o.status}
-                </span>
-                {filter === "done" && isFinishedOrder(o.status) && (
-                  <Button variant="ghost" size="icon" className="text-destructive"
-                    title="حذف الطلب نهائياً" aria-label="حذف الطلب نهائياً"
-                    disabled={deletingId !== null} onClick={() => deleteFinished(o)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-1 border-t border-border/60 pt-2 text-xs text-muted-foreground">
-              <p><span className="font-bold text-foreground">المتجر:</span> {stores[o.store_id]?.name ?? "—"}</p>
-              <p><span className="font-bold text-foreground">الزبون:</span> {o.customer_name ?? "—"}</p>
-              <p dir="ltr"><span className="font-bold text-foreground">الهاتف:</span> {o.customer_phone}</p>
-              <p><span className="font-bold text-foreground">العنوان:</span> {o.address}</p>
-              {o.notes && <p><span className="font-bold text-foreground">ملاحظات:</span> {o.notes}</p>}
-              <p><span className="font-bold text-foreground">الدفع:</span> {o.payment_method === "cod" ? "عند الاستلام" : o.payment_method}</p>
-            </div>
-
-            <div className="mt-2 space-y-1 border-t border-border/60 pt-2 text-xs">
-              {(o.items ?? []).map((it, i) => (
-                <div key={i} className="flex justify-between">
-                  <span>{it.name} × {it.qty}</span>
-                  <span className="text-muted-foreground">{(it.price * it.qty).toLocaleString("ar-IQ")} د.ع</span>
-                </div>
-              ))}
-              <div className="flex justify-between pt-1"><span>التوصيل</span><span>{o.delivery_fee.toLocaleString("ar-IQ")} د.ع</span></div>
-              <div className="flex justify-between border-t border-border/60 pt-1 font-black">
-                <span>الإجمالي</span>
-                <span className="text-primary">{o.total.toLocaleString("ar-IQ")} د.ع</span>
-              </div>
-            </div>
-
-            {o.status === "pending" && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => act(o.id, "rejected")}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-destructive/10 py-2.5 text-xs font-black text-destructive"
-                >
-                  <X className="h-4 w-4" /> رفض
-                </button>
-                <button
-                  onClick={() => act(o.id, "accepted")}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2.5 text-xs font-black text-primary-foreground"
-                >
-                  <Check className="h-4 w-4" /> موافقة
-                </button>
-              </div>
-            )}
-          </article>
+          <OrderCard
+            key={o.id}
+            order={o}
+            storeName={stores[o.store_id]?.name ?? "—"}
+            showDelete={false}
+            deleting={deletingId !== null}
+            onDelete={deleteFinished}
+            onAct={act}
+          />
         ))
       )}
     </div>
