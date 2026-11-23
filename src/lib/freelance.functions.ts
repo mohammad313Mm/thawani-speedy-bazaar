@@ -75,8 +75,8 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
         delivery_fee: FREELANCE_FEE,
         total: FREELANCE_FEE,
         payment_method: "cod",
-        // Straight into the drivers pool — no merchant approval step.
-        status: "searching_driver",
+        // Waits for the owner's approval in the admin panel first.
+        status: "pending",
         area_id: areaId,
         customer_lat: data.customer_lat ?? null,
         customer_lng: data.customer_lng ?? null,
@@ -85,48 +85,17 @@ export const placeFreelanceOrder = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
-    // Push notification fan-out to drivers (best effort).
+    // Owner approval comes first: notify admins with the same push used for
+    // regular new orders. Drivers are notified once the owner approves.
     try {
-      // Only drivers registered inside the same area are notified.
-      const { data: areaDrivers } = await supabaseAdmin
-        .from("profiles")
-        .select("id")
-        .eq("area_id", areaId);
-      const driverIds = (areaDrivers ?? []).map((p) => p.id as string);
-      const { data: tokens } = driverIds.length
-        ? await supabaseAdmin
-            .from("device_tokens")
-            .select("token")
-            .eq("role", "driver")
-            .in("user_id", driverIds)
-        : { data: [] as { token: string }[] };
-      const list = (tokens ?? []).map((t) => t.token as string);
-      if (list.length) {
-        const { sendFcmToTokens } = await import("./fcm.server");
-        const result = await sendFcmToTokens(list, {
-          title: "طلب مندوب حر جديد",
-          body: [
-            `الطلب: ${data.details.slice(0, 80)}`,
-            `العنوان: ${data.address}`,
-            `الإجمالي: ${FREELANCE_FEE.toLocaleString("ar-IQ")} د.ع`,
-          ].join("\n"),
-          tag: `order-${inserted.id}`,
-          data: {
-            order_id: inserted.id as string,
-            order_num: localId,
-            store_name: FREELANCE_STORE_NAME,
-            address: data.address,
-            total: String(FREELANCE_FEE),
-            route: "/driver/dashboard",
-            kind: "driver_order",
-          },
-        });
-        if (result.invalidTokens.length) {
-          await supabaseAdmin.from("device_tokens").delete().in("token", result.invalidTokens);
-        }
-      }
+      const { notifyAdminsNewFreelanceOrder } = await import("./freelance.server");
+      await notifyAdminsNewFreelanceOrder(supabaseAdmin, {
+        id: inserted.id as string,
+        localId,
+        address: data.address,
+      });
     } catch (e) {
-      console.error("[placeFreelanceOrder] push notify failed", e);
+      console.error("[placeFreelanceOrder] admin push failed", e);
     }
 
     return { ok: true, order_id: inserted.id as string, local_order_id: localId };

@@ -338,11 +338,23 @@ export const adminUpdateOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdminCaller(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Freelance ("مندوب حر") orders: owner approval releases them to the
+    // drivers pool exactly as before (status + same driver push).
+    const { isFreelanceOrder, notifyDriversFreelanceOrder } = await import("./freelance.server");
+    const freelance = data.status === "accepted" ? await isFreelanceOrder(supabaseAdmin, data.id) : null;
+    const nextStatus = freelance ? "searching_driver" : data.status;
     const { error } = await supabaseAdmin
       .from("customer_orders")
-      .update({ status: data.status })
+      .update({ status: nextStatus })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    if (freelance) {
+      try {
+        await notifyDriversFreelanceOrder(supabaseAdmin, freelance);
+      } catch (e) {
+        console.error("[adminUpdateOrderStatus] freelance driver push failed", e);
+      }
+    }
     return { ok: true };
   });
 
