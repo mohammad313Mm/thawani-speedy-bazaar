@@ -5,7 +5,7 @@ import { z } from "zod";
 // need from the market and the request goes straight into the drivers pool.
 
 const FREELANCE_STORE_NAME = "مندوب حر";
-const FREELANCE_FEE = 2000;
+const FREELANCE_FEE = 1500;
 
 const inputSchema = z.object({
   customer_id: z.string().uuid().nullable().optional(),
