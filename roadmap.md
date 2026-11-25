@@ -5,3 +5,6 @@
 - [x] Add confirmed admin-only deletion of finished customer orders and linked notices.
 - [x] Remove deleted order caches and refresh customer, merchant and driver screens.
 - [x] Test deletion restrictions, isolated deletion, confirmation and read-back without deleting existing orders.
+- [x] Fix only general-order admin push using the existing FCM sender and registered admin devices.
+- [x] Test a general order and inspect FCM targeting/send results without changing other notification flows; FCM accepted both admin devices, and the marked test order was removed through existing admin controls.
+- [ ] Confirm notification on the owner's locked phone with the app closed; requires owner confirmation.

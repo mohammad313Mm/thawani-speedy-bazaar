@@ -183,6 +183,60 @@ export const placeGeneralOrder = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
+    // Start the admin push independently of the merchant send: a merchant's
+    // missing/stale token or FCM error must never suppress the owner's push.
+    // Use the same registered admin devices and sender as regular orders.
+    const adminPush = (async () => {
+      const { data: adminTokens, error: tokenError } = await supabaseAdmin
+        .from("device_tokens")
+        .select("token")
+        .eq("role", "admin");
+      if (tokenError) throw new Error(`Admin token lookup failed: ${tokenError.message}`);
+      const list = [...new Set((adminTokens ?? []).map((t) => t.token as string))];
+      if (!list.length) {
+        console.warn("[placeGeneralOrder] admin has no registered devices", inserted.id);
+        return;
+      }
+      const { sendFcmToTokens } = await import("./fcm.server");
+      const orderNum = (inserted.local_order_id ?? inserted.id).slice(-6).toUpperCase();
+      const result = await sendFcmToTokens(list, {
+        title: "طلب جديد من العامة",
+        body: [
+          `المتجر: ${store.name}`,
+          `الطلب: ${orderNum}`,
+          data.details.slice(0, 200),
+        ].join("\n"),
+        tag: `order-${inserted.id}`,
+        data: {
+          order_id: inserted.id,
+          order_num: orderNum,
+          store_name: store.name,
+          address: data.address,
+          total: String(total),
+          area_id: areaId,
+          route: "/admin",
+          kind: "general_order",
+        },
+      });
+      // Counts only: never log device registration tokens or customer details.
+      console.info("[placeGeneralOrder] admin push result", {
+        order_id: inserted.id,
+        targeted: list.length,
+        sent: result.sent,
+        failed: result.failed,
+        invalid: result.invalidTokens.length,
+      });
+      if (result.invalidTokens.length) {
+        const { error } = await supabaseAdmin
+          .from("device_tokens")
+          .delete()
+          .in("token", result.invalidTokens);
+        if (error) throw new Error(`Invalid admin token cleanup failed: ${error.message}`);
+      }
+    })().catch((e) => {
+      console.error("[placeGeneralOrder] admin push failed", e);
+    });
+
     // Same notification pipeline as regular store orders.
     try {
       if (store.owner_id) {
@@ -231,6 +285,10 @@ export const placeGeneralOrder = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[placeGeneralOrder] notify failed", e);
     }
+
+    // Await delivery submission before the Worker response ends. This does not
+    // depend on the admin dashboard being open and leaves escalation untouched.
+    await adminPush;
 
     return { ok: true, local_order_id, delivery_fee, distance_km, total };
   });
