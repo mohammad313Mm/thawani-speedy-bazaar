@@ -54,6 +54,52 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
       .single();
     if (insErr) throw new Error(insErr.message);
 
+    const pushBody = [
+      `الموقع: ${data.address}`,
+      `الملاحظات: ${data.notes || "لا توجد ملاحظات"}`,
+    ].join("\n");
+
+    // Owner push, started independently of the driver fan-out so a driver-side
+    // failure can never suppress it. Same sender and registered admin devices
+    // as store / general orders; only the route differs from the driver push.
+    const adminPush = (async () => {
+      const { data: adminTokens, error: tokenError } = await supabaseAdmin
+        .from("device_tokens")
+        .select("token")
+        .eq("role", "admin");
+      if (tokenError) throw new Error(`Admin token lookup failed: ${tokenError.message}`);
+      const list = [...new Set((adminTokens ?? []).map((t) => t.token as string))];
+      if (!list.length) {
+        console.warn("[placeTaxiRequest] admin has no registered devices", inserted.id);
+        return;
+      }
+      const { sendFcmToTokens } = await import("./fcm.server");
+      const result = await sendFcmToTokens(list, {
+        title: "طلب تكسي جديد",
+        body: pushBody,
+        tag: `taxi-${inserted.id}`,
+        data: {
+          order_id: inserted.id as string,
+          area_id: areaId,
+          route: "/admin",
+          kind: "taxi_request",
+        },
+      });
+      // Counts only: never log device registration tokens or customer details.
+      console.info("[placeTaxiRequest] admin push result", {
+        request_id: inserted.id,
+        targeted: list.length,
+        sent: result.sent,
+        failed: result.failed,
+        invalid: result.invalidTokens.length,
+      });
+      if (result.invalidTokens.length) {
+        await supabaseAdmin.from("device_tokens").delete().in("token", result.invalidTokens);
+      }
+    })().catch((e) => {
+      console.error("[placeTaxiRequest] admin push failed", e);
+    });
+
     // Best-effort push fan-out to taxi drivers.
     try {
       // Mirror is_taxi_driver(): an active row matches either by user_id or by
@@ -91,7 +137,7 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
         const { sendFcmToTokens } = await import("./fcm.server");
         const result = await sendFcmToTokens(list, {
           title: "طلب تكسي جديد",
-          body: [`الموقع: ${data.address}`, `الملاحظات: ${data.notes || "لا توجد ملاحظات"}`].join("\n"),
+          body: pushBody,
           tag: `taxi-${inserted.id}`,
           data: {
             order_id: inserted.id as string,
@@ -106,6 +152,10 @@ export const placeTaxiRequest = createServerFn({ method: "POST" })
     } catch (e) {
       console.error("[placeTaxiRequest] push notify failed", e);
     }
+
+    // Await delivery to FCM before responding: the Worker may be terminated
+    // once the response is sent, which would drop the owner's push.
+    await adminPush;
 
     return { ok: true, request_id: inserted.id as string, local_ref: localRef };
   });
