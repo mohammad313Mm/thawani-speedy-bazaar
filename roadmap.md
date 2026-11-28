@@ -7,4 +7,4 @@
 - [x] Test deletion restrictions, isolated deletion, confirmation and read-back without deleting existing orders.
 - [x] Fix only general-order admin push using the existing FCM sender and registered admin devices.
 - [x] Test a general order and inspect FCM targeting/send results without changing other notification flows; FCM accepted both admin devices, and the marked test order was removed through existing admin controls.
-- [x] Confirm real notification receipt on the owner's phone; owner confirmed receipt with the screen locked. Foreground and background states were not separately device-tested.
+- [x] Confirm real notification receipt on the owner's phone; owner confirmed receipt with the screen locked. Foreground and background states were not separately device-tested.- [x] Keep owner-approved orders visible to the store as «بانتظار التسليم» until the driver delivers; guard against stale store cards overwriting the approval. Not yet tried on real phones.

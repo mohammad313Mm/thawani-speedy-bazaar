@@ -13,3 +13,4 @@
 - Keep offer (discount) price rules in `src/lib/offers.ts`; orders, customer product mapping and admin/merchant validation share it so the charged price never diverges from the shown one.
 - Delete finished orders through the admin-verified server function and atomic service-only database function; shared deletion refresh and cache reconciliation prevent stale copies without changing order workflows.
 - Dispatch general-order admin push independently of merchant notifications through the existing FCM sender and registered admin devices, awaiting it before responding so merchant errors or Worker termination cannot suppress it.
+- Keep the store owner's order labels and allowed status transitions in `src/lib/merchant-order-status.ts`, backed by the `customer_orders_guard_status_regression` trigger; a stale incoming-order card must never pull an approved order out of the active lists.

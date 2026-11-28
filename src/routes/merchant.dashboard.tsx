@@ -27,6 +27,7 @@ import { formatIQD } from "../lib/format";
 import { IncomingOrderModal } from "../components/IncomingOrderModal";
 import { DeleteAccountButton } from "../components/DeleteAccountButton";
 import { notifyDriversForOrder } from "../lib/notify.functions";
+import { merchantAllowedFrom, merchantOrderLabel } from "../lib/merchant-order-status";
 import { syncMyStoreArea } from "../lib/area.functions";
 import { useMyArea } from "../lib/use-area";
 import { useOrderDeletionRefresh } from "../lib/use-order-deletion-refresh";
@@ -111,19 +112,6 @@ type OrderRow = {
   customer_lng: number | null;
 };
 
-const ORDER_LABEL: Record<OrderStatus, string> = {
-  pending: "قيد المراجعة",
-  accepted: "مقبول",
-  preparing: "قيد التحضير",
-  ready: "جاهز للاستلام",
-  picked_up: "تم التسليم للمندوب",
-  delivered: "تم التوصيل",
-  rejected: "مرفوض",
-  cancelled: "ملغي",
-  missed: "فاتك الطلب",
-  searching_driver: "البحث عن مندوب",
-  driver_assigned: "تم تعيين المندوب",
-};
 
 function MerchantDashboard() {
   useMyArea();
@@ -343,7 +331,11 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
   }, [storeId]);
 
   const updateStatus = async (id: string, status: OrderStatus) => {
-    await supabase.from("customer_orders").update({ status }).eq("id", id);
+    // Never overwrite an order the owner already approved (stale ringing card).
+    const from = merchantAllowedFrom(status);
+    let q = supabase.from("customer_orders").update({ status }).eq("id", id);
+    if (from) q = q.in("status", from);
+    await q;
   };
 
   const handleAccept = async (o: OrderRow) => {
@@ -419,7 +411,7 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
                   </p>
                 </div>
                 <span className={`rounded-full px-2 py-1 text-[10px] font-black ${statusChip(o.status)}`}>
-                  {ORDER_LABEL[o.status]}
+                  {merchantOrderLabel(o.status)}
                 </span>
               </div>
 
@@ -496,6 +488,7 @@ function OrdersPanel({ storeId, storeName }: { storeId: string; storeName: strin
 function statusChip(s: OrderStatus): string {
   switch (s) {
     case "pending": return "bg-warning/15 text-warning";
+    case "accepted":
     case "preparing":
     case "searching_driver": return "bg-primary/15 text-primary";
     case "ready":

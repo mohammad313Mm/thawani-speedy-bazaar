@@ -284,7 +284,8 @@ export function GlobalOrderListener() {
         await supabase
           .from("customer_orders")
           .update({ status: "searching_driver" })
-          .eq("id", row.id);
+          .eq("id", row.id)
+          .in("status", ["pending", "missed"]);
         try {
           await notifyDriversForOrder({ data: { order_id: row.id } });
         } catch (e) {
@@ -324,7 +325,8 @@ export function GlobalOrderListener() {
         await supabase
           .from("customer_orders")
           .update({ status: "rejected" })
-          .eq("id", row.id);
+          .eq("id", row.id)
+          .in("status", ["pending", "missed"]);
       }
       // For drivers, "reject" simply dismisses — the order stays in the pool.
     } finally {
@@ -339,7 +341,8 @@ export function GlobalOrderListener() {
         await supabase
           .from("customer_orders")
           .update({ status: "missed" })
-          .eq("id", row.id);
+          .eq("id", row.id)
+          .in("status", ["pending"]);
       }
     } finally {
       close();
