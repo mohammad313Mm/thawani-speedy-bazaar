@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Send, MessageCircle, ArrowRight, MapPin } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { notifySupportMessage } from "../lib/support.functions";
 
 type ChatMsg = {
   id: string;
@@ -163,14 +165,21 @@ function AdminThreadView({ thread, onBack }: { thread: Thread; onBack: () => voi
     endRef.current?.scrollIntoView({ block: "end" });
   }, [msgs.length]);
 
+  const notify = useServerFn(notifySupportMessage);
   const send = async () => {
     const body = text.trim();
     if (!body) return;
     setSending(true);
-    const { error } = await supabase
+    const { data: row, error } = await supabase
       .from("support_chat_messages")
-      .insert({ user_id: thread.user_id, sender: "admin", body });
+      .insert({ user_id: thread.user_id, sender: "admin", body })
+      .select("id")
+      .single();
     setSending(false);
+    if (!error && row) {
+      // Push to the customer's phone; a failure here must not undo the reply.
+      notify({ data: { message_id: row.id } }).catch((e) => console.error("[support] push failed", e));
+    }
     if (!error) {
       setText("");
       load();

@@ -8,3 +8,6 @@
 - [x] Fix only general-order admin push using the existing FCM sender and registered admin devices.
 - [x] Test a general order and inspect FCM targeting/send results without changing other notification flows; FCM accepted both admin devices, and the marked test order was removed through existing admin controls.
 - [x] Confirm real notification receipt on the owner's phone; owner confirmed receipt with the screen locked. Foreground and background states were not separately device-tested.- [x] Keep owner-approved orders visible to the store as «بانتظار التسليم» until the driver delivers; guard against stale store cards overwriting the approval. Not yet tried on real phones.
+
+- [x] Support chat push both ways (customer → owner, owner reply → customer) through the existing FCM sender, once per message.
+- [ ] Confirm on real phones: owner receives the support push; a customer receives the reply after publishing and opening the support page once (no customer device is registered yet).

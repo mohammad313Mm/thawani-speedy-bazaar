@@ -249,8 +249,9 @@ function PushBootstrap() {
       if (!hasWorkRole) {
         // Roles and the taxi check land a tick after the user; skipping here
         // (instead of resetting) avoids unregistering during that gap.
+        // Plain customers register too (silently, no prompt) so support
+        // replies can reach them.
         if (checking) return;
-        if (!isTaxiDriver) return;
       }
       await mod.initPushNotifications(user.id, roles, isTaxiDriver, (path) => {
         router.navigate({ to: path });

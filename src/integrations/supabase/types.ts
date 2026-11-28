@@ -770,6 +770,7 @@ export type Database = {
           body: string
           created_at: string
           id: string
+          push_sent_at: string | null
           sender: string
           user_id: string
         }
@@ -777,6 +778,7 @@ export type Database = {
           body: string
           created_at?: string
           id?: string
+          push_sent_at?: string | null
           sender: string
           user_id: string
         }
@@ -784,6 +786,7 @@ export type Database = {
           body?: string
           created_at?: string
           id?: string
+          push_sent_at?: string | null
           sender?: string
           user_id?: string
         }

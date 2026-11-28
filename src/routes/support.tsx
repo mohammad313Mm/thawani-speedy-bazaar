@@ -3,6 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, LifeBuoy, Send, LogIn } from "lucide-react";
 import { supabase } from "../integrations/supabase/client";
 import { useAuth } from "../lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { useRouter } from "@tanstack/react-router";
+import { useIsTaxiDriver } from "../lib/use-taxi-driver";
+import { notifySupportMessage } from "../lib/support.functions";
+import { requestPushPermission } from "../lib/push-notifications";
 
 export const Route = createFileRoute("/support")({
   head: () => ({
@@ -88,6 +93,17 @@ function SupportChat({ userId }: { userId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const notify = useServerFn(notifySupportMessage);
+  const router = useRouter();
+  const { roles } = useAuth();
+  const { isTaxiDriver, checking } = useIsTaxiDriver();
+
+  // Replies arrive as push, so make sure this device may show them and is
+  // registered. No-op in a browser or when permission is already granted.
+  useEffect(() => {
+    if (checking) return;
+    void requestPushPermission(userId, roles, isTaxiDriver, (path) => router.navigate({ to: path }));
+  }, [userId, roles, isTaxiDriver, checking, router]);
 
   const load = useCallback(async () => {
     const { data } = await supabase
@@ -123,10 +139,16 @@ function SupportChat({ userId }: { userId: string }) {
     if (!body || sending) return;
     setError(null);
     setSending(true);
-    const { error: err } = await supabase
+    const { data: row, error: err } = await supabase
       .from("support_chat_messages")
-      .insert({ user_id: userId, sender: "user", body });
+      .insert({ user_id: userId, sender: "user", body })
+      .select("id")
+      .single();
     setSending(false);
+    if (!err && row) {
+      // Push to the owner's phone; a failure here must not undo the message.
+      notify({ data: { message_id: row.id } }).catch((e) => console.error("[support] push failed", e));
+    }
     if (err) {
       setError("تعذّر إرسال الرسالة، حاول مرة أخرى.");
       return;

@@ -27,7 +27,7 @@ const TAXI_ROUTE = "/taxi-orders";
  * drivers sign in as normal customers and are authorized by the admin through
  * the taxi_drivers table (see is_taxi_driver).
  */
-export type DeviceRole = "merchant" | "driver" | "taxi" | "admin";
+export type DeviceRole = "merchant" | "driver" | "taxi" | "admin" | "customer";
 
 let listenersBound = false;
 let channelReady = false;
@@ -99,13 +99,15 @@ function pickRole(roles: AppRole[], isTaxiDriver: boolean): DeviceRole | null {
   if (isTaxiDriver) return "taxi";
   // Owner/admin devices get the new-order push sent to role "admin".
   if (roles.includes("admin")) return "admin";
-  return null;
+  // Everyone else is a customer: their device only gets support-chat replies.
+  return "customer";
 }
 
 function defaultRoute(): string {
   if (currentUserRole === "driver") return DRIVER_ROUTE;
   if (currentUserRole === "taxi") return TAXI_ROUTE;
   if (currentUserRole === "admin") return "/admin";
+  if (currentUserRole === "customer") return "/support";
   return MERCHANT_ROUTE;
 }
 
@@ -223,6 +225,12 @@ export async function initPushNotifications(
       return;
     }
     let status = perm.receive;
+    // Customers are never prompted at app start — the support page asks when
+    // they open it (requestPushPermission), then lands back here as granted.
+    if (status !== "granted" && role === "customer") {
+      lastStep = "زبون: الإذن يُطلب من صفحة الدعم";
+      return;
+    }
     if (status !== "granted") {
       const req = await PushNotifications.requestPermissions();
       status = req.receive;
