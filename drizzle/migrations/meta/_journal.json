@@ -36,6 +36,13 @@
       "when": 1795855628610,
       "tag": "0004_support_chat_push_claim",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795886356871,
+      "tag": "0005_order_cleanup_30_days",
+      "breakpoints": true
     }
   ]
 }

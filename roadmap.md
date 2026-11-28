@@ -11,3 +11,4 @@
 
 - [x] Support chat push both ways (customer → owner, owner reply → customer) through the existing FCM sender, once per message.
 - [ ] Confirm on real phones: owner receives the support push; a customer receives the reply after publishing and opening the support page once (no customer device is registered yet).
+- [x] Change only automatic order deletion to 30 full days from original creation; verified real cleanup on rolled-back customer/taxi fixtures just before/at/after 30 days, recent updates, active states and linked notices. Existing daily schedule, access rights, application retention and all screen code remain unchanged.
